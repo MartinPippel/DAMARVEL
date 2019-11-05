@@ -638,7 +638,7 @@ function setLAfilterChainsOptions()
             
             if [[ -n ${FIX_FILT_LAFILTER_DUST} ]]
             then 
-            	FILT_LAFILTERCHAINS_OPT="${FILT_LAFILTERCHAINS_OPT} -D ${FIX_FILT_LAFILTER_DUST}"
+            	FILT_LAFILTERCHAINS_OPT="${FILT_LAFILTERCHAINS_OPT} -l ${FIX_FILT_LAFILTER_DUST}"
             	FIX_FILT_LAFILTER_REPEATTRACK=${tmp}
         	else
         		FIX_FILT_LAFILTER_REPEATTRACK=${tmp}_${FIX_REPMASK_TANMASK_TRACK}_dust
