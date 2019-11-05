@@ -941,10 +941,7 @@ then
             rm $x
         done 
  
-        if [[ -z ${FILT_LAFILTERCHAINS_OPT} ]]
-        then 
-            setLAfilterChainsOptions
-        fi
+        setLAfilterChainsOptions
 
         ### create LAfilter commands
         for x in $(seq 1 ${fixblocks})
