@@ -1378,6 +1378,7 @@ then
         
         echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} -S filt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las" > ${currentPhase}_${sID}_LAmerge_single_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_LAmerge_single_${FIX_DB%.db}.${slurmID}.version
+	fi
 fi
 
 exit 0
