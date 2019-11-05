@@ -11,6 +11,7 @@ then
     exit 1
 fi
 
+source ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 if [[ ! -n "${FIX_SCRUB_TYPE}" ]]
