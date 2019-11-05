@@ -464,7 +464,7 @@ function setLAfilterOptions()
 	fi
 }
 
-function setLAfilterChains()
+function setLAfilterChainsOptions()
 {
     FILT_LAFILTERCHAINS_OPT=""
     	
