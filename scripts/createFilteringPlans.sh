@@ -7,12 +7,11 @@ currentPhase="filt"
 
 if [[ ! -f ${configFile} ]]
 then 
-    (>&2 echo "cannot access config file ${configFile}")
+	(>&2 echo "[ERROR] createFilteringPlans.sh: cannot access config file ${configFile}")
     exit 1
 fi
 
-source ${configFile}
-source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 if [[ -z ${FIX_FILT_SCRUB_TYPE} ]]
 then
@@ -777,6 +776,7 @@ then
 fi
 
 sName=$(getStepName Filt ${FIX_FILT_TYPE} $((${currentStep}-1)))
+sID=$(prependZero ${currentStep})
 
 if [[ ${FIX_SCRUB_TYPE} -eq 0 ]]
 then 
@@ -790,13 +790,6 @@ then
 else
 	(>&2 echo "ERROR - Scrubbing Type: ${FIX_SCRUB_TYPE} unsupported!")
     exit 1		
-fi
-
-if [[ ${currentStep} -lt 10 ]]
-then 
-	sID=0${currentStep}
-else
-	sID=${currentStep}
 fi
 
 #type-0 steps: 1-createSubdirFILT_FSUFFIX, 2-LAfilter, 3-LAmerge

@@ -11,8 +11,7 @@ then
     exit 1
 fi
 
-source ${configFile}
-source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 if [[ ! -n "${FIX_SCRUB_TYPE}" ]]
 then 
@@ -606,31 +605,8 @@ then
 fi
 
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
-
-if [[ -z ${FIX_DALIGN_OUTDIR} ]]
-then
-	FIX_DALIGN_OUTDIR="dalign"
-fi
-
-if [[ -z ${FIX_REPCOMP_OUTDIR} ]]
-then
-	FIX_REPCOMP_OUTDIR="repcomp"
-fi
-
-if [[ -z ${FIX_FORCEALIGN_OUTDIR} ]]
-then
-	FIX_FORCEALIGN_OUTDIR="forcealign"
-fi
-	
-
 sName=$(getStepName Scrub ${FIX_SCRUB_TYPE} $((${currentStep}-1)))
-
-if [[ ${currentStep} -lt 10 ]]
-then 
-	sID=0${currentStep}
-else
-	sID=${currentStep}
-fi
+sID=$(prependZero ${currentStep})
 
 if [[ ${FIX_SCRUB_TYPE} -eq 0 ]]
 then
