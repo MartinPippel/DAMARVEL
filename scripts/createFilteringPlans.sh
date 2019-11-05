@@ -222,27 +222,31 @@ function setLAfilterOptions()
         if [[ -n ${FIX_SCRUB_LAGAP_DISCARD_CHIMERS} ]]
         then 
             ptype=""
+        	d=""
             if [[ ${FIX_FILT_SCRUB_TYPE} -eq 1 ]]
             then 
                 ptype="dalign"
+                d=${FIX_DALIGN_OUTDIR}
             elif [[ ${FIX_FILT_SCRUB_TYPE} -eq 2 ]]
             then 
                 ptype="repcomp"
+                d=${FIX_REPCOMP_OUTDIR}
             elif [[ ${FIX_FILT_SCRUB_TYPE} -eq 3 ]]
             then 
                 ptype="forcealign"
+                d=${FIX_FORCEALIGNALIGN_OUTDIR}
             fi
             for x in $(seq 1 ${fixblocks})
             do     
-                cat ${FIX_DB%.db}.${x}.${ptype}Gap.chimers.txt
-            done > ${FIX_DB%.db}.${ptype}Gap.chimers.txt
+                cat ${d}/${FIX_DB%.db}.${x}.${ptype}Gap.chimers.txt
+        	done > ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db}.${ptype}Gap.chimers.txt
 
             ## if additional reads have to be excluded append them to final gapChimer file
             if [[ -n ${FIX_FILT_LAFILTER_EXCLUDEREADS} ]]
             then 
-                cat ${FIX_FILT_LAFILTER_EXCLUDEREADS} >> ${FIX_DB%.db}.${ptype}Gap.chimers.txt
+                cat ${FIX_FILT_LAFILTER_EXCLUDEREADS} >> ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db}.${ptype}Gap.chimers.txt
             fi  
-            FILT_LAFILTER_OPT="${FILT_LAFILTER_OPT} -x ${FIX_DB%.db}.${ptype}Gap.chimers.txt"
+            FILT_LAFILTER_OPT="${FILT_LAFILTER_OPT} -x ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db}.${ptype}Gap.chimers.txt"
         else
             FILT_LAFILTER_OPT="${FILT_LAFILTER_OPT} -x ${FIX_FILT_LAFILTER_EXCLUDEREADS}"
         fi        
