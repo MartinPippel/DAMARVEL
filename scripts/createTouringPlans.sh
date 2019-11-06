@@ -3,6 +3,7 @@
 configFile=$1
 currentStep=$2
 slurmID=$3
+currentPhase="tour"
 
 if [[ ! -f ${configFile} ]]
 then 
@@ -11,6 +12,7 @@ then
 fi
 
 source ${configFile}
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 if [[ -z ${FIX_FILT_SCRUB_TYPE} ]]
 then
@@ -53,59 +55,6 @@ then
     (>&2 echo "patched database ${FIX_DB%.db}.db missing")
     exit 1
 fi
-
-function getNumOfDbBlocks()
-{
-    db=$1
-    if [[ ! -f $db ]]
-    then
-        (>&2 echo "database $db not found")
-        exit 1
-    fi
-
-    blocks=$(grep block $db | awk '{print $3}')
-    if [[ ! -n $blocks ]]
-    then 
-        (>&2 echo "database $db has not been partitioned. Run DBsplit first!")
-        exit 1
-    fi 
-    echo ${blocks}
-}
-
-function getSubDirName()
-{
-    runID=$1
-    blockID=$2
-
-    dname="d${runID}"
-
-    if [[ $runID -lt 10 ]]
-    then 
-        dname="d00${runID}"
-    elif [[ $runID -lt 100 ]]
-    then 
-        dname="d0${runID}"
-    fi
-
-    bname="${blockID}"
-
-    if [[ ${blockID} -lt 10 ]]
-    then 
-        bname="0000${blockID}"
-    elif [[ ${blockID} -lt 100 ]]
-    then 
-        bname="000${blockID}"
-    elif [[ ${blockID} -lt 1000 ]]
-    then 
-        bname="00${blockID}"           
-    elif [[ ${blockID} -lt 10000 ]]
-    then 
-        bname="0${blockID}"           
-    fi
-    echo ${dname}_${bname}                 
-}
-
-fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
 function setLAqOptions()
 {
@@ -280,6 +229,10 @@ then
     exit 1
 fi
 
+fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
+sName=$(getStepName Tour ${FIX_TOUR_TYPE} $((${currentStep}-1)))
+sID=$(prependZero ${currentStep})
+
 myTypes=("1-OGbuild, 2-OGtour, 3-tour2fasta, 4-OGlayout, 5-statistics")
 #type-0 steps: 1-OGbuild, 2-OGtour, 3-tour2fasta, 4-OGlayout, 5-statistics
 if [[ ${FIX_TOUR_TYPE} -eq 0 ]]
@@ -288,7 +241,7 @@ then
     if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls tour_01_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -297,15 +250,15 @@ then
         ### find and set OGbuild options 
         setOGbuildOptions
         ### create OGbuild commands
-        echo "if [[ -d ${FIX_FILT_OUTDIR}/tour ]]; then rm -rf ${FIX_FILT_OUTDIR}/tour; fi" > tour_01_OGbuild_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "mkdir -p ${FIX_FILT_OUTDIR}/tour" >> tour_01_OGbuild_single_${FIX_DB%.db}.${slurmID}.plan        
-        echo "${MARVEL_PATH}/bin/OGbuild${TOUR_OGBUILD_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/tour/${PROJECT_ID}_${FIX_FILT_OUTDIR}" >> tour_01_OGbuild_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > tour_01_OGbuild_single_${FIX_DB%.db}.${slurmID}.version
+        echo "if [[ -d ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour ]]; then mv ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour_$(date '+%Y-%m-%d_%H-%M-%S'); fi" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "mkdir -p ${FIX_FILT_OUTDIR}/tour" >> ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan        
+        echo "${MARVEL_PATH}/bin/OGbuild${TOUR_OGBUILD_OPT} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DAZZ_DB%.db}.filt.las ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour/${PROJECT_ID}_${FIX_FILT_OUTDIR}" >> ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.version
     ### OGtour
     elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls tour_02_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -317,19 +270,19 @@ then
         ### find and set OGbuild options 
         setOGtourOptions
         ### create OGbuild commands    
-        for x in ${FIX_FILT_OUTDIR}/tour/*[0-9].graphml; 
+        for x in ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour/*[0-9].graphml; 
         do 
             if [[ -s ${x} ]]
             then
-                echo "${MARVEL_PATH}/scripts/OGtour.py${TOUR_OGTOUR_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB} $x"
+                echo "${MARVEL_PATH}/scripts/OGtour.py${TOUR_OGTOUR_OPT} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB} $x"
             fi 
-    	done > tour_02_OGtour_block_${FIX_DB%.db}.${slurmID}.plan
-    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > tour_02_OGtour_block_${FIX_DB%.db}.${slurmID}.version        
+    	done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
+    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version        
     ### tour2fasta
     elif [[ ${currentStep} -eq 3 ]]
     then
         ### clean up plans 
-        for x in $(ls tour_03_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -340,19 +293,19 @@ then
         fi
         ### find and set OGbuild options 
         settour2fastaOptions
-        for x in ${FIX_FILT_OUTDIR}/tour/*[0-9].tour.paths;
+        for x in ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour/*[0-9].tour.paths;
         do 
             if [[ -s ${x} ]]
             then
-                echo "${MARVEL_PATH}/scripts/tour2fasta.py${TOUR_2FASTA_OPT} -p$(basename ${x%.tour.paths}) ${FIX_FILT_OUTDIR}/${FIX_DB} ${x%.tour.paths}.graphml $x"
+                echo "${MARVEL_PATH}/scripts/tour2fasta.py${TOUR_2FASTA_OPT} -p$(basename ${x%.tour.paths}) ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB} ${x%.tour.paths}.graphml $x"
             fi
-    	done > tour_03_tour2fasta_block_${FIX_DB%.db}.${slurmID}.plan
-    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > tour_03_tour2fasta_block_${FIX_DB%.db}.${slurmID}.version
+    	done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
+    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version
     ### OGlayout
     elif [[ ${currentStep} -eq 4 ]]
     then
         ### clean up plans 
-        for x in $(ls tour_04_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -364,19 +317,19 @@ then
         ### find and set OGbuild options 
         setOGlayoutOptions   
 
-        for x in ${FIX_FILT_OUTDIR}/tour/*[0-9].tour.paths; 
+        for x in ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour/*[0-9].tour.paths; 
         do 
             if [[ -s ${x} ]]
             then
                 echo "${MARVEL_PATH}/bin/OGlayout${TOUR_OGLAYOUT_OPT} ${x%.paths}.graphml ${x%.paths}.layout.${FIX_TOUR_OGLAYOUT_OUTPUTFORMAT}" 
             fi
-    	done > tour_04_OGlayout_block_${FIX_DB%.db}.${slurmID}.plan
-    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > tour_04_OGlayout_block_${FIX_DB%.db}.${slurmID}.version
+    	done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
+    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version
     ### statistics
     elif [[ ${currentStep} -eq 5 ]]
     then
         ### clean up plans 
-        for x in $(ls tour_05_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -400,18 +353,10 @@ then
 		if [[ -n ${MARVEL_STATS} && ${MARVEL_STATS} -gt 0 ]]
    		then
 	        ### create assemblyStats plan
-	        echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 6" > tour_05_marvelStats_block_${FIX_DB%.db}.${slurmID}.plan
+	        echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 6" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
 		fi
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > tour_05_marvelStats_block_${FIX_DB%.db}.${slurmID}.version
-    else
-        (>&2 echo "step ${currentStep} in FIX_TOUR_TYPE ${FIX_TOUR_TYPE} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${FIX_TOUR_TYPE}]}")
-        exit 1            
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version
     fi
-else
-    (>&2 echo "unknown FIX_TOUR_TYPE ${FIX_TOUR_TYPE}")
-    (>&2 echo "supported types")
-    x=0; while [ $x -lt ${#myTypes[*]} ]; do (>&2 echo "type-${x} steps: ${myTypes[${x}]}"); done    
 fi
 
 exit 0

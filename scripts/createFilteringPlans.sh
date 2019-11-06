@@ -56,8 +56,6 @@ then
     exit 1
 fi
 
-fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
-
 function setLArepeatOptions()
 {
     if [[ ${#FIX_SCRUB_LAREPEAT_LEAVE_COV[*]} -ne ${#FIX_SCRUB_LAREPEAT_ENTER_COV[*]} || ${#FIX_SCRUB_LAREPEAT_ENTER_COV[*]} -ne ${#FIX_SCRUB_LAREPEAT_COV[*]} ]]
@@ -780,22 +778,9 @@ then
     exit 1
 fi
 
+fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 sName=$(getStepName Filt ${FIX_FILT_TYPE} $((${currentStep}-1)))
 sID=$(prependZero ${currentStep})
-
-if [[ ${FIX_SCRUB_TYPE} -eq 0 ]]
-then 
-	FIX_SCRUB_NAME="${FIX_DALIGN_OUTDIR}"
-elif [[ ${FIX_SCRUB_TYPE} -eq 1 ]]
-then 
-	FIX_SCRUB_NAME="${FIX_REPCOMP_OUTDIR}"
-elif [[ ${FIX_SCRUB_TYPE} -eq 2 ]]
-then 
-	FIX_SCRUB_NAME="${FIX_FORCEALIGN_OUTDIR}"
-else
-	(>&2 echo "ERROR - Scrubbing Type: ${FIX_SCRUB_TYPE} unsupported!")
-    exit 1		
-fi
 
 #type-0 steps: 1-createSubdirFILT_FSUFFIX, 2-LAfilter, 3-LAmerge
 if [[ ${FIX_FILT_TYPE} -eq 0 ]]
