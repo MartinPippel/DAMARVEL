@@ -3,6 +3,8 @@
 configFile=$1
 currentStep=$2
 slurmID=$3
+currentPhase="corr"
+
 
 if [[ ! -f ${configFile} ]]
 then 
@@ -11,6 +13,7 @@ then
 fi
 
 source ${configFile}
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 if [[ -z ${FIX_FILT_SCRUB_TYPE} ]]
 then
@@ -59,57 +62,6 @@ then
     (>&2 echo "corrected database unknown - You have to set the variable COR_DB")
     exit 1
 fi
-
-function getNumOfDbBlocks()
-{
-    db=$1
-    if [[ ! -f $db ]]
-    then
-        (>&2 echo "database $db not found")
-        exit 1
-    fi
-
-    blocks=$(grep block $db | awk '{print $3}')
-    if [[ ! -n $blocks ]]
-    then 
-        (>&2 echo "database $db has not been partitioned. Run DBsplit first!")
-        exit 1
-    fi 
-    echo ${blocks}
-}
-
-function getSubDirName()
-{
-    runID=$1
-    blockID=$2
-
-    dname="d${runID}"
-
-    if [[ $runID -lt 10 ]]
-    then 
-        dname="d00${runID}"
-    elif [[ $runID -lt 100 ]]
-    then 
-        dname="d0${runID}"
-    fi
-
-    bname="${blockID}"
-
-    if [[ ${blockID} -lt 10 ]]
-    then 
-        bname="0000${blockID}"
-    elif [[ ${blockID} -lt 100 ]]
-    then 
-        bname="000${blockID}"
-    elif [[ ${blockID} -lt 1000 ]]
-    then 
-        bname="00${blockID}"           
-    elif [[ ${blockID} -lt 10000 ]]
-    then 
-        bname="0${blockID}"           
-    fi
-    echo ${dname}_${bname}                 
-}
 
 function setLAfilterOptions()
 {
@@ -234,12 +186,6 @@ function setTourToFastaOptions()
 	fi
 }
 
-fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
-
-if [[ -z ${COR_DIR} ]]
-then 
-    COR_DIR=correction
-fi
 
 ## ensure some paths
 if [[ -z "${MARVEL_SOURCE_PATH}" || ! -d  "${MARVEL_SOURCE_PATH}" ]]
@@ -247,6 +193,10 @@ then
     (>&2 echo "ERROR - You have to set MARVEL_SOURCE_PATH. Used to report git version.")
     exit 1
 fi
+
+fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
+sName=$(getStepName Corr ${FIX_CORR_TYPE} $((${currentStep}-1)))
+sID=$(prependZero ${currentStep})
 
 myTypes=("1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics")
 #type-0 steps: 1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics
@@ -256,7 +206,7 @@ then
     if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_01_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -264,28 +214,17 @@ then
         setLAfilterOptions
         setpath2ridsOptions
 
-        # create sym links 
-        if [[ -d ${FIX_FILT_OUTDIR}/${COR_DIR} ]]
-        then
-            rm -r ${FIX_FILT_OUTDIR}/${COR_DIR}
-        fi 
-
-        mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/reads
-        mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs
-
-        for x in ${FIX_FILT_OUTDIR}/tour/*[0-9].tour.paths; 
-        do 
-            ln -s -r ${x} ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/$(basename ${x%.tour.paths}.tour.paths); 
-            ln -s -r ${x%.tour.paths}.graphml ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/$(basename ${x%.tour.paths}.graphml); 
-        done
-
-        echo "cat ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.paths | awk '{if (NF > 4) print \$0}' | ${MARVEL_PATH}/scripts/paths2rids.py - ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.version
+        # create sym links
+        echo "if [[ -d ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR} ]]; then mv ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}_$(stat --format='%Y' ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR} | date '+%Y-%m-%d_%H-%M-%S'); fi" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "mkdir -p ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/reads ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/contigs" >> ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "for x in ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/tour/*[0-9].tour.paths; do ln -s -r \${x} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/contigs/\$(basename \${x%.tour.paths}.tour.paths) && ln -s -r \${x%.tour.paths}.graphml ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/contigs/\$(basename \${x%.tour.paths}.graphml); done" >> ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "cat ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/contigs/*.paths | awk '{if (NF > 4) print \$0}' | ${MARVEL_PATH}/scripts/paths2rids.py - ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_CORR_PATHS2RIDS_FILE}" >> ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.version
     ### LAcorrect
     elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_02_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -294,14 +233,14 @@ then
 
         for x in $(seq 1 ${fixblocks})
         do 
-            echo "${MARVEL_PATH}/bin/LAcorrect${COR_LACORRECT_OPT} -b ${x} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.${x}.filt.las ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.${x}"
-        done > corr_02_LAcorrect_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_02_LAcorrect_block_${FIX_DB%.db}.${slurmID}.version
+        echo "${MARVEL_PATH}/bin/LAcorrect${COR_LACORRECT_OPT} -b ${x} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/reads/${FIX_DB%.db}.${x}"
+        done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_${FIX_DB%.db}.${slurmID}.version
     ### prepare corrected db 
     elif [[ ${currentStep} -eq 3 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_03_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -311,13 +250,13 @@ then
             setLAfilterOptions
         fi
 
-        echo "if [[ -f ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.db ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}; fi" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db} ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.[0-9]*.[0-9]*.fasta" >> corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.version            
+        echo "if [[ -f ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/${COR_DB%.db}.db ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/${COR_DB%.db}; fi" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/${COR_DB%.db} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/reads/${FIX_DB%.db}.[0-9]*.[0-9]*.fasta" >> ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.version            
     elif [[ ${currentStep} -eq 4 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_04_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -328,14 +267,14 @@ then
         setTourToFastaOptions
         for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.tour.paths
         do 
-            echo "${MARVEL_PATH}/scripts/tour2fasta.py${COR_TOURTOFASTA_OPT} -p $(basename ${x%.tour.paths}) -c ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${x%.tour.paths}.graphml ${x}" 
-        done > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.version
+            echo "${MARVEL_PATH}/scripts/tour2fasta.py${COR_TOURTOFASTA_OPT} -p $(basename ${x%.tour.paths}) -c ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${COR_DIR}/${COR_DB%.db} ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_DB%.db} ${x%.tour.paths}.graphml ${x}" 
+        done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version
     ### statistics
     elif [[ ${currentStep} -eq 5 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_05_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -345,6 +284,7 @@ then
             setLAfilterOptions
         fi
         
+        run=0
         if [[ -n ${SLURM_STATS} && ${SLURM_STATS} -gt 0 ]]
    		then
 	        ### run slurm stats - on the master node !!! Because sacct is not available on compute nodes
@@ -360,20 +300,16 @@ then
 	    if [[ -n ${MARVEL_STATS} && ${MARVEL_STATS} -gt 0 ]]
    		then
    	    	### create assemblyStats plan 
-        	echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 7" > corr_05_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
-        	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_05_marvelStats_single_${FIX_DB%.db}.${slurmID}.version
-    	fi    	
-    else
-        (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
-        exit 1            
+        	echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 7" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan
+        	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.version
+        	run=1
+    	fi    
+    	
+    	if [[ $run -eq 0 ]]
+    	then 
+    		touch ${currentPhase}_${sID}_${sName}_single_${FIX_DB%.db}.${slurmID}.plan	
+    	fi
     fi
-else
-    (>&2 echo "unknown FIX_TOUR_TYPE ${FIX_CORR_TYPE}")
-    (>&2 echo "supported types")
-    x=0; while [ $x -lt ${#myTypes[*]} ]; do (>&2 echo "type-${x} steps: ${myTypes[${x}]}"); done    
-    
-    exit 1
 fi
 
 exit 0
