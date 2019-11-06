@@ -142,7 +142,7 @@ function setLAcorrectOptions()
     then
         setLAfilterOptions
     fi
-    COR_LACORRECT_OPT="${COR_LACORRECT_OPT} -r ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}"
+    COR_LACORRECT_OPT="${COR_LACORRECT_OPT} -r ${FIX_FILT_OUTDIR}_${FIX_SCRUB_NAME}_FTYPE${FIX_FILT_TYPE}/${FIX_CORR_PATHS2RIDS_FILE}"
 
     if [[ -z ${SCRUB_LAQ_OPT} ]]
     then
