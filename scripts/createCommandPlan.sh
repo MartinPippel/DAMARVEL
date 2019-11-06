@@ -30,21 +30,21 @@ then
     fi
 elif [[ ${currentPhase} -eq -1 ]]
 then	 
-	if [[ ! -f ${RAW_DB%db}.db ]]
+	if [[ ! -f ${RAW_DB%.db}.db ]]
 	then 
-		if [[ ! -f ${DB_PATH}/${RAW_DB%db}.db ]]
+		if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db ]]
 		then 
-			(>&2 echo "Cannot find initial databases ${RAW_DB%db}.db in directory ${DB_PATH}")
+			(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db in directory ${DB_PATH}")
 	        exit 1	
 		fi		
-		cp ${DB_PATH}/${RAW_DB%db}.db ${DB_PATH}/.${RAW_DB%db}.idx ${DB_PATH}/.${RAW_DB%db}.bps .
-		if [[ -f ${DB_PATH}/.${RAW_DB%db}.pacbio.anno && -f ${DB_PATH}/.${RAW_DB%db}.pacbio.data ]]
+		cp ${DB_PATH}/${RAW_DB%.db}.db ${DB_PATH}/.${RAW_DB%.db}.idx ${DB_PATH}/.${RAW_DB%.db}.bps .
+		if [[ -f ${DB_PATH}/.${RAW_DB%.db}.pacbio.anno && -f ${DB_PATH}/.${RAW_DB%.db}.pacbio.data ]]
 		then 
-			cp 	${DB_PATH}/.${RAW_DB%db}.pacbio.anno ${DB_PATH}/.${RAW_DB%db}.pacbio.data .
+			cp 	${DB_PATH}/.${RAW_DB%.db}.pacbio.anno ${DB_PATH}/.${RAW_DB%.db}.pacbio.data .
 		fi
-		if [[ -f ${DB_PATH}/.${RAW_DB%db}.seqID.anno && -f ${DB_PATH}/.${RAW_DB%db}.seqID.data ]]
+		if [[ -f ${DB_PATH}/.${RAW_DB%.db}.seqID.anno && -f ${DB_PATH}/.${RAW_DB%.db}.seqID.data ]]
 		then 
-			cp 	${DB_PATH}/.${RAW_DB%db}.seqID.anno ${DB_PATH}/.${RAW_DB%db}.seqID.data .
+			cp 	${DB_PATH}/.${RAW_DB%.db}.seqID.anno ${DB_PATH}/.${RAW_DB%.db}.seqID.data .
 		fi
 	fi		
     ${SUBMIT_SCRIPTS_PATH}/createMitoAssemblyPlans.sh ${configFile} ${currentStep} ${slurmID}
@@ -55,14 +55,14 @@ then
     fi
 elif [[ ${currentPhase} -eq 0 ]]
 then	 
-	if [[ ! -f ${RAW_DAZZ_DB%db}.db ]]
+	if [[ ! -f ${RAW_DAZZ_DB%.db}.db ]]
 	then 
-		if [[ ! -f ${DB_PATH}/${RAW_DB%db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%db}.db ]]
+		if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ]]
 		then 
-			(>&2 echo "Cannot find initial databases ${RAW_DB%db}.db and ${RAW_DAZZ_DB%db}.db in directory ${DB_PATH}")
+			(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db and ${RAW_DAZZ_DB%.db}.db in directory ${DB_PATH}")
 	        exit 1	
 		fi		
-		ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%db}.db ${DB_PATH}/.${RAW_DAZZ_DB%db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%db}.bps .
+		ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ${DB_PATH}/.${RAW_DAZZ_DB%.db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%.db}.bps .
 	fi		
     ${SUBMIT_SCRIPTS_PATH}/createDAScoverPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -72,15 +72,15 @@ then
     fi
 elif [[ ${currentPhase} -eq 1 ]]
 then	 
-	if [[ ! -f ${RAW_DB%db}.db ]]
+	if [[ ! -f ${RAW_DB%.db}.db ]]
 	then 
-		if [[ ! -f ${DB_PATH}/${RAW_DB%db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%db}.db ]]
+		if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ]]
 		then 
-			(>&2 echo "Cannot find initial databases ${RAW_DB%db}.db and ${RAW_DAZZ_DB%db}.db in directory ${DB_PATH}")
+			(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db and ${RAW_DAZZ_DB%.db}.db in directory ${DB_PATH}")
 	        exit 1	
 		fi		
-		ln -s -r ${DB_PATH}/${RAW_DB%db}.db ${DB_PATH}/.${RAW_DB%db}.idx ${DB_PATH}/.${RAW_DB%db}.bps .
-		ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%db}.db ${DB_PATH}/.${RAW_DAZZ_DB%db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%db}.bps .
+		ln -s -r ${DB_PATH}/${RAW_DB%.db}.db ${DB_PATH}/.${RAW_DB%.db}.idx ${DB_PATH}/.${RAW_DB%.db}.bps .
+		ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ${DB_PATH}/.${RAW_DAZZ_DB%.db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%.db}.bps .
 	fi		
     ${SUBMIT_SCRIPTS_PATH}/createRepmaskPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -100,15 +100,15 @@ elif [[ ${currentPhase} -eq 3 ]]
 then 
 	if [[ ${currentStep} -eq 1 ]]
 	then
-		if [[ ! -f ${RAW_DB%db}.db ]]
+		if [[ ! -f ${RAW_DB%.db}.db ]]
 		then 
-			if [[ ! -f ${DB_PATH}/${RAW_DB%db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%db}.db ]]
+			if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ]]
 			then 
-				(>&2 echo "Cannot find initial databases ${RAW_DB%db}.db and ${RAW_DAZZ_DB%db}.db in directory ${DB_PATH}")
+				(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db and ${RAW_DAZZ_DB%.db}.db in directory ${DB_PATH}")
 		        exit 1	
 			fi		
-			ln -s -r ${DB_PATH}/${RAW_DB%db}.db ${DB_PATH}/.${RAW_DB%db}.idx ${DB_PATH}/.${RAW_DB%db}.bps .
-			ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%db}.db ${DB_PATH}/.${RAW_DAZZ_DB%db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%db}.bps .
+			ln -s -r ${DB_PATH}/${RAW_DB%.db}.db ${DB_PATH}/.${RAW_DB%.db}.idx ${DB_PATH}/.${RAW_DB%.db}.bps .
+			ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ${DB_PATH}/.${RAW_DAZZ_DB%.db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%.db}.bps .
 		fi
 		if [[ ! -d "${FIX_REPMASK_USELAFIX_PATH}" ]]	
 		then 
