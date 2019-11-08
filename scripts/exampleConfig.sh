@@ -88,7 +88,8 @@ CONT_DAZZ_DB=LAB1608_HYLES_VESPERTILIO_DAZZLER_CONTIG
  
 ################# define marvel phases and their steps that should be done 
 
-DB_PATH=/projects/dazzlerAssembly/LAB1608.HYLES_VESPERTILIO/data/pacbio
+PACBIO_PATH=/projects/dazzlerAssembly/LAB1608.HYLES_VESPERTILIO/data/pacbio
+PACBIO_TYPE="LoFi" ## LoFi or Hifi
 TENX_PATH=/projects/dazzlerAssembly/LAB1608.HYLES_VESPERTILIO/data/10x
 PATCHING_DIR="patching"
 ASSMEBLY_DIR="assembly"
@@ -110,9 +111,9 @@ RAW_REPAMSK_OUTDIR=repmask
 #type-2 [10x|HiC - kmer-Gsize estimate] 		[1-2]: 01_genomescope
 #type-3 [allData - MASH CONTAMINATION SCREEN] 	[1-5]: 01_mashPrepare, 02_mashSketch, 03_mashCombine, 04_mashPlot, 05_mashScreen
 #type-4 [10x - QV]   							[1-4]:  01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04QVqv
-RAW_QC_TYPE=0
-RAW_QC_SUBMIT_SCRIPTS_FROM=1
-RAW_QC_SUBMIT_SCRIPTS_TO=2
+INIT_TYPE=0
+INIT_SUBMIT_SCRIPTS_FROM=1
+INIT_SUBMIT_SCRIPTS_TO=2
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> phase -1 - mitochondrium assembly <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
@@ -1201,3 +1202,11 @@ fi
 THREADS_statistics=${BGZIP_THREADS}
 MEM_statistics=$((${BGZIP_THREADS}*4096))     
 TIME_statistics=24:00:00
+
+
+
+defaultSlurmPara=(${SLURM_PARTITION} 1 12288 "24:00:00" -1 -1)
+longrangerBasicSlurmPara=(gpu 1 12288 "240:00:00" -1 -1)
+bam2fastaSlurmPara=(${SLURM_PARTITION} 1 2048 "24:00:00" -1 -1)
+createDBSlurmPara=(${SLURM_PARTITION} 1 2048 "24:00:00" -1 -1)
+bgzipSlurmPara=(${SLURM_PARTITION} 6 4096 "24:00:00" -1 -1)

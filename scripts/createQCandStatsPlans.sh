@@ -2,7 +2,8 @@
 
 configFile=$1
 currentStep=$2
-slurmID=$3
+id=$3
+currentPhase="init"
 
 if [[ ! -f ${configFile} ]]
 then 
@@ -11,6 +12,9 @@ then
 fi
 
 source ${configFile}
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
+### todo: how handle more than slurm??? 
+source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
 gsize=${GSIZE}
 i=$((${#GSIZE}-1))
@@ -93,28 +97,32 @@ function setGenomeScopeOptions()
 	RAW_QC_GENOMESCOPE_KMERMAX=${RAW_QC_JELLYFISH_HIGHHIST}
 }
 
-#type-0 [10x - prepare] 						[1-3]: 01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck
-#type-1 [10x - de novo] 						[1-1]: 01_supernova
-#type-2 [10x|HiC - kmer-Gsize estimate] 		[1-2]: 01_genomescope
-#type-3 [allData - MASH CONTAMINATION SCREEN] 	[1-5]: 01_mashPrepare, 02_mashSketch, 03_mashCombine, 04_mashPlot, 05_mashScreen
-#type-4 [10x - QV]   							[1-6]: 01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04_QVfreebayes, 05_QVbcftools, 06_QVqv
+#type-0 [10x - init] 							[1-3]: longrangerBasic, longrangerToScaff10Xinput, bxcheck, createStats
+#type-1 [PacBio LoFi Init] 						[1-3]: createSubdir bam2fasta createDB createStats
+#type-2 [PacBio HiFi Init] 						[1-3]: createSubdir ccs samtoolsMerge bam2fasta createDB createStats
+#type-3 [HiC - init]							[1-1]: createStats 
+#type-4 [Bionano - init]						[1-1]: createStats???
+#type-5 [10x - de novo] 						[1-1]: 01_supernova
+#type-6 [10x|HiC - kmer-Gsize estimate] 		[1-2]: 01_genomescope
+#type-7 [allData - MASH CONTAMINATION SCREEN] 	[1-5]: 01_mashPrepare, 02_mashSketch, 03_mashCombine, 04_mashPlot, 05_mashScreen
+#type-8 [10x - QV]   							[1-6]: 01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04_QVfreebayes, 05_QVbcftools, 06_QVqv
 
-
-myTypes=("01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck"
-"01_supernova" "01_genomescope" 
-"01_mashPrepare, 02_mashSketch, 03_mashCombine, 04_mashPlot, 05_mashScreen", "01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04_QVfreebayes, 05_QVbcftools, 06_QVqv")
+sName=$(getStepName ${currentPhase} ${QC_TYPE} $((${currentStep}-1)))
+sID=$(prependZero ${currentStep})
 
 #type-0 [10x - prepare] [1-3]: 01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck
-if [[ ${RAW_QC_TYPE} -eq 0 ]]
+if [[ ${INIT_TYPE} -eq 0 ]]
 then
 	### 01_longrangerBasic
     if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_${sName}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
+        
+        mkdir -p ${QC_OUTDIR}
         
         ## check if 10x data is available
         if [[ -n ${TENX_PATH} && -d "${TENX_PATH}" ]]
@@ -132,7 +140,7 @@ then
 			
 			if [[ ${numR1Files} -eq 0 ]]
 	        then
-	        	(>&2 echo "ERROR - cannot read 10x R1 files with following pattern: ${TENX_PATH}/${PROJECT_ID}_S*_L[0-9][0-9][0-9]_R1_[0-9][0-9][0-9].fastq.gz")
+	        	(>&2 echo "[ERROR] createQCendStatsPlans: Cannot read 10x R1 files with following pattern: ${TENX_PATH}/${PROJECT_ID}_S*_L[0-9][0-9][0-9]_R1_[0-9][0-9][0-9].fastq.gz")
 	        	exit 1
 	   		fi
 	   		
@@ -147,35 +155,40 @@ then
 			
 			if [[ ${numR2Files} -eq 0 ]]
 	        then
-	        	(>&2 echo "ERROR - cannot read 10x R2 files with following pattern: ${TENX_PATH}/${PROJECT_ID}_S*_L[0-9][0-9][0-9]_R1_[0-9][0-9][0-9].fastq.gz")
+	        	(>&2 echo "[ERROR] createQCendStatsPlans: Cannot read 10x R2 files with following pattern: ${TENX_PATH}/${PROJECT_ID}_S*_L[0-9][0-9][0-9]_R1_[0-9][0-9][0-9].fastq.gz")
 	        	exit 1
 	   		fi
 	   		
 	   		if [[ ${numR1Files} -ne ${numR2Files} ]]
 	        then
-	        	(>&2 echo "ERROR - 10x R1 files ${numR1Files} does not match R2 files ${numR2Files}")
+	        	(>&2 echo "[ERROR] createQCendStatsPlans: 10x R1 files ${numR1Files} does not match R2 files ${numR2Files}")
 	        	exit 1
 	   		fi	   		
 	   		
-	   		if [[ -d 10x_${PROJECT_ID}_longrangerBasic ]]
+	   		if [[ -d ${QC_OUTDIR}/10x_${PROJECT_ID}_longrangerBasic ]]
 	   		then 
-	   			echo "mv 10x_${PROJECT_ID}_longrangerBasic 10x_${PROJECT_ID}_longrangerBasic_$(date '+%Y-%m-%d_%H-%M-%S')"
+	   			echo "mv ${QC_OUTDIR}/10x_${PROJECT_ID}_longrangerBasic ${QC_OUTDIR}/10x_${PROJECT_ID}_longrangerBasic_\$(stat --format='%Y' ${QC_OUTDIR}/10x_${PROJECT_ID}_longrangerBasic | date '+%Y-%m-%d_%H-%M-%S')"
 	   		fi
 	   		
-	   		echo "${LONGRANGER_PATH}/longranger basic --id=10x_${PROJECT_ID}_longrangerBasic --fastqs=${TENX_PATH} --sample=${PROJECT_ID}"	   					 
-		fi > qc_01_longrangerBasic_single_${RAW_DB%.db}.${slurmID}.plan
+	   		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   		getSlurmRunParameter ${sName}
+	   		
+	   		slurmOpt="--jobmode=slurm_${SLURM_PARTITION} --maxjobs=1000 --jobinterval=500 --disable-ui --nopreflight"
+			echo "cd ${QC_OUTDIR} && ${LONGRANGER_PATH}/longranger basic --id=10x_${PROJECT_ID}_longrangerBasic --fastqs=${TENX_PATH} --sample=${PROJECT_ID} ${slurmOpt} && cd ${myCWD}"	   					 
+		fi > ${currentPhase}_${sID}_${sName}.${id}.plan
         
-        echo "$(${LONGRANGER_PATH}/longranger basic --version | head -n1)" > qc_01_longrangerBasic_single_${RAW_DB%.db}.${slurmID}.version
+        echo "longranger basic $(${LONGRANGER_PATH}/longranger basic --version | head -n1)" > ${currentPhase}_${sID}_${sName}.${id}.version
+        setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara
     ## 02_longrangerToScaff10Xinput
     elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_02_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${currentPhase}_${sID}_${sName}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
         
-        longrangerOut="10x_${PROJECT_ID}_longrangerBasic/outs/barcoded.fastq.gz"
+        longrangerOut="${QC_OUTDIR}/10x_${PROJECT_ID}_longrangerBasic/outs/barcoded.fastq.gz"
         
         if [[ ! -f ${longrangerOut} ]] 
        	then 
@@ -185,26 +198,219 @@ then
        	
    		## convert longranger single file (fastq.gz) into two separated R1 R2 files (compressed?) and add 10x-barcode to header 
     	## ? get rid of unrecognized barcode entries ?
-       	echo "mkdir -p scaff10x" > qc_02_longrangerToScaff10Xinput_single_${RAW_DB%.db}.${slurmID}.plan
-       	echo "gunzip -c ${longrangerOut} | paste - - - - - - - - | awk '/ BX:Z:/{print \$1\"_\"substr(\$2,6,16)\" \"\$3\" \"\$4\" \"\$5\" \"\$6\"_\"substr(\$7,6,16)\" \"\$8\" \"\$9\" \"\$10}' | tee >(cut -f 1-4 -d \" \" | tr \" \" \"\\n\" > scaff10x/reads-1.fq) | cut -f 5-8 -d \" \" | tr \" \" \"\\n\" > scaff10x/reads-2.fq" >> qc_02_longrangerToScaff10Xinput_single_${RAW_DB%.db}.${slurmID}.plan
+       	echo "mkdir -p ${QC_OUTDIR}/scaff10x" > ${currentPhase}_${sID}_${sName}.plan
+       	echo "gunzip -c ${longrangerOut} | paste - - - - - - - - | awk '/ BX:Z:/{print \$1\"_\"substr(\$2,6,16)\" \"\$3\" \"\$4\" \"\$5\" \"\$6\"_\"substr(\$7,6,16)\" \"\$8\" \"\$9\" \"\$10}' | tee >(cut -f 1-4 -d \" \" | tr \" \" \"\\n\" > ${QC_OUTDIR}/scaff10x/reads-1.fq) | cut -f 5-8 -d \" \" | tr \" \" \"\\n\" > ${QC_OUTDIR}/scaff10x/reads-2.fq" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+       	echo "$(awk --version | head -n1)" > ${currentPhase}_${sID}_${sName}.${id}.version
+        setRunInfo ${SLURM_PARTITION} sequential 1 2048 $(getPartitionMaxTime ${SLURM_PARTITION}) -1 -1 > ${currentPhase}_${sID}_${sName}.${id}.slurmPara	
 	## 03_bxcheck   
 	elif [[ ${currentStep} -eq 2 ]]
     then
 	    (>&2 echo "03_bxcheck not implemented yet!")
         exit 1
-	else
-        (>&2 echo "step ${currentStep} in RAW_QC_TYPE ${RAW_QC_TYPE} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${RAW_QC_TYPE}]}")
-        exit 1            
     fi
+elif [[ ${INIT_TYPE} -eq 1 ]]
+then 
+	#type-1 [PacBio LoFi Init] 						[1-3]: bam2fasta createDB createStats
+	### create sub-directory and link input files
+    if [[ ${currentStep} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${currentPhase}_${sID}_${sName}.${id}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+
+        if [[ -d ${DB_OUTDIR} ]]; then mv ${DB_OUTDIR} ${DB_OUTDIR}_$(stat --format='%Y' ${DB_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi 
+        mkdir -p ${DB_OUTDIR}/fasta
+        
+        intype=""
+		fnum=0
+		# check for fasta files *fasta 
+		for x in ${PACBIO_PATH}/*fasta
+		do
+			if [[ -f ${x} ]]
+			then
+				intype="fasta"
+				fnum=$((fnum+1))	
+			fi
+		done
+		
+		if [[ "${intype}" == "fasta" ]]
+		then
+			mkdir -p ${DB_OUTDIR}/fasta
+			for x in ${PACBIO_PATH}/*fasta
+			do
+				if [[ -f ${x} ]]
+				then
+					echo "ln -s -f -r ${x} ${DB_OUTDIR}/fasta"
+				fi
+			done > ${currentPhase}_${sID}_${sName}.${id}.plan
+			setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${currentPhase}_${sID}_${sName}.${id}.slurmPara
+			echo "$(ln --version  | head -n1)" > ${currentPhase}_${sID}_${sName}.${id}.version
+		fi
+	
+		# check for zipped fasta files *fa.gz
+		if [[ -z ${intype} ]]
+		then
+			for x in ${PACBIO_PATH}/*fa.gz
+			do
+				if [[ -f ${x} ]]
+				then
+					intype="fa.gz"
+					fnum=$((fnum+1))
+				fi
+			done 
+			
+			if [[ "${intype}" == "fa.gz" ]]
+			then
+				if [[ -z ${bgzipSlurmPara} ]]
+				then
+					getSlurmRunParameter bgzipSlurmPara
+					echo "$(${CONDA_BASE_ENV} && bgzip --version  | head -n1 && conda deactivate)" > ${currentPhase}_${sID}_${sName}.${id}.version
+				else
+					getSlurmRunParameter defaultSlurmPara
+					echo "$(zcat --version  | head -n1)" > ${currentPhase}_${sID}_${sName}.${id}.version
+				fi 
+				
+				for x in ${PACBIO_PATH}/*fa.gz
+				do
+					if [[ -f ${x} ]]
+					then
+						if [[ -z ${bgzipSlurmPara} ]]
+						then 
+							echo "${CONDA_BASE_ENV} && bgzip -d -@${SLURM_RUN_PARA[1]} ${x} > ${DB_OUTDIR}/fasta/$(basename ${x%.fa.gz}).fasta && conda deactivate"
+							 
+						else 
+							echo "zcat ${x} > ${DB_OUTDIR}/fasta/$(basename ${x%.fa.gz}).fasta"
+						fi
+					fi
+				 done > ${currentPhase}_${sID}_${sName}.${id}.plan
+			fi
+			
+			## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara			
+		fi
+		
+		# check for subreads.bam files
+		if [[ -z ${intype} ]]
+		then
+			for x in ${PACBIO_PATH}/*subreads.bam
+			do
+				if [[ -f ${x} ]]
+				then
+					intype="subreads.bam"
+					fnum=$((fnum+1))
+				fi
+			done
+			
+			if [[ "${intype}" == "subreads.bam" ]]
+			then
+				if [[ ${PACBIO_TYPE} == "LoFi" ]]
+				then					
+					for x in ${PACBIO_PATH}/*subreads.bam
+					do
+						echo "${CONDA_BASE_ENV} && cd ${DB_OUTDIR}/fasta && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
+					done > ${currentPhase}_${sID}_${sName}.${id}.plan
+				fi						 
+			fi
+			echo "$(${CONDA_BASE_ENV} && bam2fasta --version && conda deactivate)" > ${currentPhase}_${sID}_${sName}.${id}.version
+			## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   		getSlurmRunParameter ${sName}
+			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara			
+		fi        
+	elif [[ ${currentStep} -eq 2 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${currentPhase}_${sID}_${sName}.${id}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+        if [[ -d ${DB_OUTDIR}/all ]]; then mv ${DB_OUTDIR}/all ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi 
+        mkdir ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/single 
+               
+        ## create database with all reads for coverage estimation
+		echo "cd ${DB_OUTDIR}/all && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta && cd ${myCWD}" > ${currentPhase}_${sID}_${sName}.${id}.plan
+		echo "cd ${DB_OUTDIR}/all && ${MARVEL_PATH}/bin/FA2db -x 0  ${PROJECT_ID}_M_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+		
+		## create database for each bam file: for initial qc
+		for x in ${DB_OUTDIR}/fasta/*fasta
+		do
+			echo "cd ${DB_OUTDIR}/single && ${DAZZLER_PATH}/bin/fasta2DB -v $(basename ${x%.fasta})_M ${x} && cd ${myCWD}"	
+		done >> ${currentPhase}_${sID}_${sName}.${id}.plan
+        
+    	## create actual db files for assembly 
+        echo -n "cd ${DB_OUTDIR}/all && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ${DB_OUTDIR}/fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+        echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+	
+		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" ${currentPhase}_${sID}_${sName}.${id}.version
+        echo "DAZZLER fasta2DB $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}.${id}.version
+		
+		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${sName}
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara
+	elif [[ ${currentStep} -eq 2 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${currentPhase}_${sID}_${sName}.${id}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        if [[ -d ${DB_OUTDIR}/stats ]]; then mv ${DB_OUTDIR}/stats ${DB_OUTDIR}/stats_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi 
+        mkdir ${DB_OUTDIR}/stats
+        
+        count=0
+        for x in ${DB_OUTDIR}/single/*db 
+        do 
+        	if [[ -f ${x} ]]
+        	then
+        		echo -n "echo ${count}"
+        		echo -n " \$(sed -n 2p ${x} | awk '{print \$1\" \"\$2}')"
+        		echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p)"
+    			echo -n " \$((\$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p | awk '{print \$2}')/${gsize}))"
+    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 2p | awk '{print \$2\" \"\$4\" \"\$6\" \"\$8\" \"\$2+\$8\" \"\$4+\$6})"
+    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 3p | awk '{print \$NF})"
+    			echo -e " > ${DB_OUTDIR}/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
+        		count=$((count+1))	
+        	fi 
+    	done > ${currentPhase}_${sID}_${sName}.${id}.plan
+    	
+    	x=${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL.db
+    	if [[ -f ${x} ]]
+        then
+        	### All reads
+        	echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x0 -a -f -s${DBSPLIT_SIZE} ${x})"
+        	echo -n " all"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 2p | awk '{print \$7}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
+        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}')"
+        	### Longest reads
+        	for y in 1000 2000 3000 4000 5000 6000
+        	do 
+        		echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x${y} -f -s${DBSPLIT_SIZE} ${x})"
+	        	echo -n " ${y}"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 2p | awk '{print \$7}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
+	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}')"		
+        	done
+        	echo -e "echo \$(${DAZZLER_PATH}/bin/DBsplit -x4000 -f -s${DBSPLIT_SIZE} ${x})"		
+    	fi>> ${currentPhase}_${sID}_${sName}.${id}.plan
+    fi        
 #type-1 [10x - de novo] [1-1]: 01_supernova	
-elif [[ ${RAW_QC_TYPE} -eq 1 ]]
+elif [[ ${INIT_TYPE} -eq 1 ]]
 then 
 	### 01_supernova
     if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -263,22 +469,22 @@ then
 	   		echo "${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_pseudohap --style=pseudohap --minsize=${MINSIZE}"
 	   		echo "${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_pseudohap2 --style=pseudohap2 --minsize=${MINSIZE}"
 	   			   					 
-		fi > qc_01_supernova_single_${RAW_DB%.db}.${slurmID}.plan
+		fi > qc_01_supernova_single_${RAW_DB%.db}.${id}.plan
         
-        echo "$(${SUPERNOVA_PATH}/supernova run --version | head -n1)" > qc_01_supernova_single_${RAW_DB%.db}.${slurmID}.version
+        echo "$(${SUPERNOVA_PATH}/supernova run --version | head -n1)" > qc_01_supernova_single_${RAW_DB%.db}.${id}.version
 	else
-        (>&2 echo "step ${currentStep} in RAW_QC_TYPE ${RAW_QC_TYPE} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${RAW_QC_TYPE}]}")
+        (>&2 echo "step ${currentStep} in INIT_TYPE ${INIT_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${INIT_TYPE}]}")
         exit 1            
     fi		
 #type-2 [10x|HiC - kmer-Gsize estimate] [1-1]: 01_genomescope
-elif [[ ${RAW_QC_TYPE} -eq 2 ]]
+elif [[ ${INIT_TYPE} -eq 2 ]]
 then  
 	### 01_genomescope
     if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -292,26 +498,26 @@ then
     	fi
         
     	setJellyfishOptions count
-    	echo "mkdir -p genomescope"  > qc_01_genomescope_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "${JELLYFISH_PATH}/jellyfish count ${JELLYFISH_OPT} <(gunzip -c ${longrangerOut}) -o genomescope/${PROJECT_ID}.jf" >> qc_01_genomescope_single_${RAW_DB%.db}.${slurmID}.plan
+    	echo "mkdir -p genomescope"  > qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
+        echo "${JELLYFISH_PATH}/jellyfish count ${JELLYFISH_OPT} <(gunzip -c ${longrangerOut}) -o genomescope/${PROJECT_ID}.jf" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
         setJellyfishOptions histo
-        echo "${JELLYFISH_PATH}/jellyfish histo ${JELLYFISH_OPT} genomescope/${PROJECT_ID}.jf > genomescope/${PROJECT_ID}.histo" >> qc_01_genomescope_single_${RAW_DB%.db}.${slurmID}.plan
+        echo "${JELLYFISH_PATH}/jellyfish histo ${JELLYFISH_OPT} genomescope/${PROJECT_ID}.jf > genomescope/${PROJECT_ID}.histo" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
         setGenomeScopeOptions
-        echo "Rscript ${GENOMESCOPE_PATH}/genomescope.R genomescope/${PROJECT_ID}.histo ${RAW_QC_GENOMESCOPE_KMER} 150 genomescope ${RAW_QC_GENOMESCOPE_KMERMAX}" >> qc_01_genomescope_single_${RAW_DB%.db}.${slurmID}.plan
+        echo "Rscript ${GENOMESCOPE_PATH}/genomescope.R genomescope/${PROJECT_ID}.histo ${RAW_QC_GENOMESCOPE_KMER} 150 genomescope ${RAW_QC_GENOMESCOPE_KMERMAX}" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
         
-        echo "jellyfish count $(${JELLYFISH_PATH}/jellyfish count --version | head -n1)" > qc_01_genomescope_single_${RAW_DB%.db}.${slurmID}.version
-        echo "jellyfish histo $(${JELLYFISH_PATH}/jellyfish histo --version | head -n1)" >> qc_01_genomescope_single_${RAW_DB%.db}.${slurmID}.version
+        echo "jellyfish count $(${JELLYFISH_PATH}/jellyfish count --version | head -n1)" > qc_01_genomescope_single_${RAW_DB%.db}.${id}.version
+        echo "jellyfish histo $(${JELLYFISH_PATH}/jellyfish histo --version | head -n1)" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.version
         #TODO add genomescope version         
 	fi
 
 ## mash contamination check
-elif [[ ${RAW_QC_TYPE} -eq 3 ]]
+elif [[ ${INIT_TYPE} -eq 3 ]]
 then 
     ### 01_mashPrepare
     if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -331,7 +537,7 @@ then
         			echo "PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/dextract -v -f -o $x | gzip > ${of}"
         		fi
         	done
-		fi > qc_01_mashPrepare_block_${RAW_DB%.db}.${slurmID}.plan
+		fi > qc_01_mashPrepare_block_${RAW_DB%.db}.${id}.plan
 		
 		if [[ -n ${TENX_PATH} && -d "${TENX_PATH}" ]]
         then
@@ -385,7 +591,7 @@ then
 				
 				echo "${FASTP_PATH}fastp -i ${id}/${f1} -I ${id}/${f2} -f 23 -G -Q -j 10x/${o}.json -h 10x/${o}.html -w ${RAW_MASH_FASTP_THREADS} -o 10x/${f1} -O 10x/${f2}"				 
 			done 
-    	fi >> qc_01_mashPrepare_block_${RAW_DB%.db}.${slurmID}.plan
+    	fi >> qc_01_mashPrepare_block_${RAW_DB%.db}.${id}.plan
     	
     	if [[ -n ${HIC_PATH} && -d "${HIC_PATH}" ]]
         then
@@ -430,7 +636,7 @@ then
 			do
 				echo "ln -s -r -f ${x} hic/"  
 			done 
-    	fi >> qc_01_mashPrepare_block_${RAW_DB%.db}.${slurmID}.plan
+    	fi >> qc_01_mashPrepare_block_${RAW_DB%.db}.${id}.plan
     	
     	if [[ ${doPacbio} -gt 0 ]]
     	then 
@@ -450,7 +656,7 @@ then
     elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_02_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_02_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -466,7 +672,7 @@ then
     				echo "${CONDA_BASE_ENV} && mash sketch -k 21 -s 10000 -r -m 1 -o ${x%.fasta.gz}.msh ${x} && conda deactivate"
     			fi	
     		done	
-		fi > qc_02_mashSketch_block_${RAW_DB%.db}.${slurmID}.plan
+		fi > qc_02_mashSketch_block_${RAW_DB%.db}.${id}.plan
     
         # 10x
         if [[ -n ${TENX_PATH} && -d "${TENX_PATH}" && -d 10x ]]
@@ -475,7 +681,7 @@ then
     		do
     			echo "${CONDA_BASE_ENV} && zcat ${x} $(echo ${x} | sed -e "s:_R1_:_R2_:") | mash sketch -k 21 -s 10000 -r -m 2 -o $(echo ${x%.fastq.gz}.msh | sed -e "s:_R1::") - && conda deactivate"
     		done
-    	fi >> qc_02_mashSketch_block_${RAW_DB%.db}.${slurmID}.plan
+    	fi >> qc_02_mashSketch_block_${RAW_DB%.db}.${id}.plan
     	
     	# hic
     	if [[ -n ${HIC_PATH} && -d "${HIC_PATH}" && -d hic ]]
@@ -484,14 +690,14 @@ then
 			do
 				echo "${CONDA_BASE_ENV} && zcat ${x} ${x%_R1.fastq.gz}_R2.fastq.gz | mash sketch -k 21 -s 10000 -r -m 2 -o ${x%_R1.fastq.gz}.msh - && conda deactivate"
 			done    		
-    	fi >> qc_02_mashSketch_block_${RAW_DB%.db}.${slurmID}.plan
+    	fi >> qc_02_mashSketch_block_${RAW_DB%.db}.${id}.plan
     	
-    	echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_02_mashSketch_block_${RAW_DB%.db}.${slurmID}.version
+    	echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_02_mashSketch_block_${RAW_DB%.db}.${id}.version
     ### 03_mashCombine
     elif [[ ${currentStep} -eq 3 ]]
     then
     	### clean up plans 
-        for x in $(ls qc_03_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_03_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -511,26 +717,26 @@ then
         	ls hic/*.msh >> ${PROJECT_ID}_mash.files
     	fi
     	        
-        echo "${CONDA_BASE_ENV} && mash paste -l ${PROJECT_ID}.msh ${PROJECT_ID}_mash.files && conda deactivate" > qc_03_mashCombine_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "${CONDA_BASE_ENV} && mash dist -t ${PROJECT_ID}.msh ${PROJECT_ID}.msh > ${PROJECT_ID}.tbl && conda deactivate" >> qc_03_mashCombine_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_03_mashCombine_single_${RAW_DB%.db}.${slurmID}.version
+        echo "${CONDA_BASE_ENV} && mash paste -l ${PROJECT_ID}.msh ${PROJECT_ID}_mash.files && conda deactivate" > qc_03_mashCombine_single_${RAW_DB%.db}.${id}.plan
+        echo "${CONDA_BASE_ENV} && mash dist -t ${PROJECT_ID}.msh ${PROJECT_ID}.msh > ${PROJECT_ID}.tbl && conda deactivate" >> qc_03_mashCombine_single_${RAW_DB%.db}.${id}.plan
+        echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_03_mashCombine_single_${RAW_DB%.db}.${id}.version
 	### 04_mashPlot
     elif [[ ${currentStep} -eq 4 ]]
     then
     	### clean up plans 
-        for x in $(ls qc_04_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_04_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
     
-    	echo "head -n 1 ${PROJECT_ID}.tbl |awk '{for (i=2; i <=NF; i++) print \$i}' |awk -F "/" '{print \$NF}' |sed s/.subreads.fast[aq].gz//g |sed s/.fast[aq].gz//g |sed s/.fast[aq]//g > ${PROJECT_ID}.key" > qc_04_mashPlot_single_${RAW_DB%.db}.${slurmID}.plan
-    	echo "Rscript ${MARVEL_PATH}/scripts/mashPlot.R ${PROJECT_ID}" >> qc_04_mashPlot_single_${RAW_DB%.db}.${slurmID}.plan
-    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > qc_04_mashPlot_single_${RAW_DB%.db}.${slurmID}.version
+    	echo "head -n 1 ${PROJECT_ID}.tbl |awk '{for (i=2; i <=NF; i++) print \$i}' |awk -F "/" '{print \$NF}' |sed s/.subreads.fast[aq].gz//g |sed s/.fast[aq].gz//g |sed s/.fast[aq]//g > ${PROJECT_ID}.key" > qc_04_mashPlot_single_${RAW_DB%.db}.${id}.plan
+    	echo "Rscript ${MARVEL_PATH}/scripts/mashPlot.R ${PROJECT_ID}" >> qc_04_mashPlot_single_${RAW_DB%.db}.${id}.plan
+    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > qc_04_mashPlot_single_${RAW_DB%.db}.${id}.version
     ### 05_mashScreen
     elif [[ ${currentStep} -eq 5 ]]
     then
     	### clean up plans 
-        for x in $(ls qc_05_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_05_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -559,20 +765,20 @@ then
         		out=screen/$(basename ${x%.fast[aq].gz}).conta
         		echo "${CONDA_BASE_ENV} && mash screen -p ${threads} -w ${MASH_REF_GENOMES} ${x} > ${out} && conda deactivate"
         	fi
-		done > qc_05_mashScreen_block_${RAW_DB%.db}.${slurmID}.plan   
-		echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_05_mashScreen_block_${RAW_DB%.db}.${slurmID}.version     
+		done > qc_05_mashScreen_block_${RAW_DB%.db}.${id}.plan   
+		echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_05_mashScreen_block_${RAW_DB%.db}.${id}.version     
     else
-        (>&2 echo "step ${currentStep} in RAW_QC_TYPE ${RAW_QC_TYPE} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${RAW_QC_TYPE}]}")
+        (>&2 echo "step ${currentStep} in INIT_TYPE ${INIT_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${INIT_TYPE}]}")
         exit 1            
     fi  
-elif [[ ${RAW_QC_TYPE} -eq 4 ]]
+elif [[ ${INIT_TYPE} -eq 4 ]]
 then 
 	### 01_QVprepareInput
 	if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -582,17 +788,17 @@ then
         	exit 1
    		fi
    		
-   		echo "if [[ -d ${QV_OUTDIR}_${QV_RUNID} ]]; then mv ${QV_OUTDIR}_${QV_RUNID} ${QV_RUNID}/qv_${QV_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p \"${QV_OUTDIR}_${QV_RUNID}\"" > qc_01_QVprepareInput_single_${RAW_DB}.${slurmID}.plan
-		echo "mkdir -p ${QV_OUTDIR}_${QV_RUNID}/bams" >> qc_01_QVprepareInput_single_${RAW_DB}.${slurmID}.plan
-		echo "mkdir -p ${QV_OUTDIR}_${QV_RUNID}/ref" >> qc_01_QVprepareInput_single_${RAW_DB}.${slurmID}.plan
-		echo "mkdir -p ${QV_OUTDIR}_${QV_RUNID}/freebayes" >> qc_01_QVprepareInput_single_${RAW_DB}.${slurmID}.plan		
+   		echo "if [[ -d ${QV_OUTDIR}_${QV_RUNID} ]]; then mv ${QV_OUTDIR}_${QV_RUNID} ${QV_RUNID}/qv_${QV_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p \"${QV_OUTDIR}_${QV_RUNID}\"" > qc_01_QVprepareInput_single_${RAW_DB}.${id}.plan
+		echo "mkdir -p ${QV_OUTDIR}_${QV_RUNID}/bams" >> qc_01_QVprepareInput_single_${RAW_DB}.${id}.plan
+		echo "mkdir -p ${QV_OUTDIR}_${QV_RUNID}/ref" >> qc_01_QVprepareInput_single_${RAW_DB}.${id}.plan
+		echo "mkdir -p ${QV_OUTDIR}_${QV_RUNID}/freebayes" >> qc_01_QVprepareInput_single_${RAW_DB}.${id}.plan		
 		# get rid of any colon's, as those will cause a crash of longranger		
-		echo "sed -e \"s/:/-/g\" ${QV_REFFASTA} > ${QV_OUTDIR}_${QV_RUNID}/ref/$(basename ${QV_REFFASTA})" >> qc_01_QVprepareInput_single_${RAW_DB}.${slurmID}.plan		                
+		echo "sed -e \"s/:/-/g\" ${QV_REFFASTA} > ${QV_OUTDIR}_${QV_RUNID}/ref/$(basename ${QV_REFFASTA})" >> qc_01_QVprepareInput_single_${RAW_DB}.${id}.plan		                
     ### 02_QVlongrangerAlign
     elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_02_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_02_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -632,15 +838,15 @@ then
     	else 
     		(>&2 echo "[WARNING] Using previously created reference file ${QV_OUTDIR}_${QV_RUNID}/ref/refdata-${REFNAME}. Please remove that folder to rerun longranger mkref" )
     		echo "cd ${QV_OUTDIR}_${QV_RUNID}/bams && ${LONGRANGER_PATH}/longranger align --id=10x_${PROJECT_ID}_longrangerAlign --fastqs=${TENX_PATH} --sample=${PROJECT_ID} --reference=../ref/refdata-${REFNAME%.fasta} ${slurmOpt} && cd ../../"
-    	fi > qc_02_QVlongrangerAlign_single_${RAW_DB}.${slurmID}.plan                
+    	fi > qc_02_QVlongrangerAlign_single_${RAW_DB}.${id}.plan                
         
-        echo "$(${LONGRANGER_PATH}/longranger mkref --version)" > qc_02_QVlongrangerAlign_single_${RAW_DB}.${slurmID}.version
-        echo "$(${LONGRANGER_PATH}/longranger align --version)" >> qc_02_QVlongrangerAlign_single_${RAW_DB}.${slurmID}.version
+        echo "$(${LONGRANGER_PATH}/longranger mkref --version)" > qc_02_QVlongrangerAlign_single_${RAW_DB}.${id}.version
+        echo "$(${LONGRANGER_PATH}/longranger align --version)" >> qc_02_QVlongrangerAlign_single_${RAW_DB}.${id}.version
     ### 03_QVcoverage
     elif [[ ${currentStep} -eq 3 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_03_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_03_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -682,13 +888,13 @@ then
         	exit 1
    		fi 
    		
-   		echo "samtools view -F 0x100 -u $bam | bedtools genomecov -ibam - -split > ${QV_OUTDIR}_${QV_RUNID}/aligned.genomecov" > qc_03_QVcoverage_single_${RAW_DB}.${slurmID}.plan
-		echo "$(samtools --version | head -n2 | tr "\n" "-" && echo)" > qc_03_QVcoverage_single_${RAW_DB}.${slurmID}.version        
+   		echo "samtools view -F 0x100 -u $bam | bedtools genomecov -ibam - -split > ${QV_OUTDIR}_${QV_RUNID}/aligned.genomecov" > qc_03_QVcoverage_single_${RAW_DB}.${id}.plan
+		echo "$(samtools --version | head -n2 | tr "\n" "-" && echo)" > qc_03_QVcoverage_single_${RAW_DB}.${id}.version        
     ### 04_QVfreebayes 
     elif [[ ${currentStep} -eq 4 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_04_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_04_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -730,15 +936,15 @@ then
         	exit 1
    		fi 
    		
-   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} -v condaIN="${CONDA_BASE_ENV}" '{print condaIN" && freebayes --bam "bam" --region "$1":1-"$2" -f "ref" | bcftools view --no-version -Ou -o "out$1":1-"$2".bcf && conda deactivate"}' ${ref}.fai)" > qc_04_QVfreebayes_block_${RAW_DB}.${slurmID}.plan
+   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} -v condaIN="${CONDA_BASE_ENV}" '{print condaIN" && freebayes --bam "bam" --region "$1":1-"$2" -f "ref" | bcftools view --no-version -Ou -o "out$1":1-"$2".bcf && conda deactivate"}' ${ref}.fai)" > qc_04_QVfreebayes_block_${RAW_DB}.${id}.plan
 
-		echo "freebayes $(${CONDA_BASE_ENV} && freebayes --version && conda deactivate)" > qc_04_QVfreebayes_block_${RAW_DB}.${slurmID}.version
-		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> qc_04_QVfreebayes_block_${RAW_DB}.${slurmID}.version
+		echo "freebayes $(${CONDA_BASE_ENV} && freebayes --version && conda deactivate)" > qc_04_QVfreebayes_block_${RAW_DB}.${id}.version
+		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> qc_04_QVfreebayes_block_${RAW_DB}.${id}.version
     ### 05_QVbcftools 
     elif [[ ${currentStep} -eq 5 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_05_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_05_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -763,20 +969,20 @@ then
    		outdir="${QV_OUTDIR}_${QV_RUNID}/"
         
     	# create list of bcf files, same order as in ref.fai
-        echo "awk -v d=\"${QV_OUTDIR}_${QV_RUNID}/freebayes/\" '{print d\$1\":1-\"\$2\".bcf\"}' ${ref}.fai > ${outdir}/${PROJECT_ID}_10x_concatList.txt" > qc_05_QVbcftools_single_${RAW_DB}.${slurmID}.plan
-        echo "${CONDA_BASE_ENV} && bcftools concat -Ou -f ${outdir}/${PROJECT_ID}_10x_concatList.txt | bcftools view -Ou -e'type=\"ref\"' | bcftools norm -Ob -f $ref -o ${outdir}/${PROJECT_ID}_10x.bcf && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${slurmID}.plan
-        echo "${CONDA_BASE_ENV} && bcftools index ${outdir}/${PROJECT_ID}_10x.bcf && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${slurmID}.plan
+        echo "awk -v d=\"${QV_OUTDIR}_${QV_RUNID}/freebayes/\" '{print d\$1\":1-\"\$2\".bcf\"}' ${ref}.fai > ${outdir}/${PROJECT_ID}_10x_concatList.txt" > qc_05_QVbcftools_single_${RAW_DB}.${id}.plan
+        echo "${CONDA_BASE_ENV} && bcftools concat -Ou -f ${outdir}/${PROJECT_ID}_10x_concatList.txt | bcftools view -Ou -e'type=\"ref\"' | bcftools norm -Ob -f $ref -o ${outdir}/${PROJECT_ID}_10x.bcf && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${id}.plan
+        echo "${CONDA_BASE_ENV} && bcftools index ${outdir}/${PROJECT_ID}_10x.bcf && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${id}.plan
       
-		echo "echo \"Num. bases affected \$(${CONDA_BASE_ENV} && bcftools view -H -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Ov ${outdir}/${PROJECT_ID}_10x.bcf | awk -F \"\\t\" '{print \$4\"\\t\"\$5}' | awk '{lenA=length(\$1); lenB=length(\$2); if (lenA < lenB ) {sum+=lenB-lenA} else if ( lenA > lenB ) { sum+=lenA-lenB } else {sum+=lenA}} END {print sum}')\" > ${outdir}/${PROJECT_ID}_10x.numvar && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${slurmID}.plan
-		echo "${CONDA_BASE_ENV} && bcftools view -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Oz  ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.changes.vcf.gz && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${slurmID}.plan
+		echo "echo \"Num. bases affected \$(${CONDA_BASE_ENV} && bcftools view -H -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Ov ${outdir}/${PROJECT_ID}_10x.bcf | awk -F \"\\t\" '{print \$4\"\\t\"\$5}' | awk '{lenA=length(\$1); lenB=length(\$2); if (lenA < lenB ) {sum+=lenB-lenA} else if ( lenA > lenB ) { sum+=lenA-lenB } else {sum+=lenA}} END {print sum}')\" > ${outdir}/${PROJECT_ID}_10x.numvar && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${id}.plan
+		echo "${CONDA_BASE_ENV} && bcftools view -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Oz  ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.changes.vcf.gz && conda deactivate" >> qc_05_QVbcftools_single_${RAW_DB}.${id}.plan
             
-      	echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_05_QVbcftools_single_${RAW_DB}.${slurmID}.version
+      	echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_05_QVbcftools_single_${RAW_DB}.${id}.version
         
     ### 06_QVqv
     elif [[ ${currentStep} -eq 6 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_06_*_*_${RAW_DB}.${slurmID}.* 2> /dev/null)
+        for x in $(ls qc_06_*_*_${RAW_DB}.${id}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -831,28 +1037,28 @@ then
         	exit 1
    		fi
         
-        echo "mean_cov=\$(tail -n1 ${summary} | awk -F \",\" '{printf \"%.0f\n\", \$17}')	# parse out the mean_cov from summary.csv" > qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "h_filter=\$((mean_cov*12))	# exclude any sites >12x" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "l_filter=3			# exclude any sites <3x" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "echo \"Get numbp between \$l_filter ~ \$h_filter x\" > ${QV_OUTDIR}_${QV_RUNID}/qv_${PROJECT_ID}.log" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
+        echo "mean_cov=\$(tail -n1 ${summary} | awk -F \",\" '{printf \"%.0f\n\", \$17}')	# parse out the mean_cov from summary.csv" > qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "h_filter=\$((mean_cov*12))	# exclude any sites >12x" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "l_filter=3			# exclude any sites <3x" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "echo \"Get numbp between \$l_filter ~ \$h_filter x\" > ${QV_OUTDIR}_${QV_RUNID}/qv_${PROJECT_ID}.log" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
 		
-		echo "awk -v l=\$l_filter -v h=\$h_filter '{if (\$1==\"genome\" && \$2>l && \$2<h) {numbp += \$3}} END {print numbp}' ${outdir}/aligned.genomecov > ${outdir}/${PROJECT_ID}.numbp" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "NUM_BP=\$(cat ${outdir}/${PROJECT_ID}.numbp)" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "${CONDA_BASE_ENV} && bcftools view -H -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\") && INFO/DP>5 && (FORMAT/AD[:1]) / (FORMAT/AD[:1]+FORMAT/AD[:0]) > 0.5' -Ov ${outdir}/${PROJECT_ID}_10x.changes.vcf.gz | awk -F \"\\t\" '{print \$4\"\\t\"\$5}' | awk '{lenA=length(\$1); lenB=length(\$2); if (lenA < lenB ) {sum+=lenB-lenA} else if ( lenA > lenB ) { sum+=lenA-lenB } else {sum+=lenA}} END {print sum}' > ${outdir}/${PROJECT_ID}.numvar && conda deactivate" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "NUM_VAR=\$(cat ${outdir}/${PROJECT_ID}.numvar)" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "echo \"Total num. bases subject to change: \$NUM_VAR\" >> ${outdir}/qv_${PROJECT_ID}.log" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "QV=\$(echo "\$NUM_VAR \$NUM_BP" | awk '{print (-10*log(\$1/\$2)/log(10))}')"  >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "echo \$QV > ${outdir}/${PROJECT_ID}.qv" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
-		echo "echo \"QV of this genome ${PROJECT_ID}: \$QV\"" >> qc_06_QVqv_single_${RAW_DB}.${slurmID}.plan
+		echo "awk -v l=\$l_filter -v h=\$h_filter '{if (\$1==\"genome\" && \$2>l && \$2<h) {numbp += \$3}} END {print numbp}' ${outdir}/aligned.genomecov > ${outdir}/${PROJECT_ID}.numbp" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "NUM_BP=\$(cat ${outdir}/${PROJECT_ID}.numbp)" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "${CONDA_BASE_ENV} && bcftools view -H -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\") && INFO/DP>5 && (FORMAT/AD[:1]) / (FORMAT/AD[:1]+FORMAT/AD[:0]) > 0.5' -Ov ${outdir}/${PROJECT_ID}_10x.changes.vcf.gz | awk -F \"\\t\" '{print \$4\"\\t\"\$5}' | awk '{lenA=length(\$1); lenB=length(\$2); if (lenA < lenB ) {sum+=lenB-lenA} else if ( lenA > lenB ) { sum+=lenA-lenB } else {sum+=lenA}} END {print sum}' > ${outdir}/${PROJECT_ID}.numvar && conda deactivate" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "NUM_VAR=\$(cat ${outdir}/${PROJECT_ID}.numvar)" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "echo \"Total num. bases subject to change: \$NUM_VAR\" >> ${outdir}/qv_${PROJECT_ID}.log" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "QV=\$(echo "\$NUM_VAR \$NUM_BP" | awk '{print (-10*log(\$1/\$2)/log(10))}')"  >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "echo \$QV > ${outdir}/${PROJECT_ID}.qv" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
+		echo "echo \"QV of this genome ${PROJECT_ID}: \$QV\"" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
 		
-		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_06_QVqv_single_${RAW_DB}.${slurmID}.version
+		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_06_QVqv_single_${RAW_DB}.${id}.version
     else
-        (>&2 echo "step ${currentStep} in RAW_QC_TYPE ${RAW_QC_TYPE} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${RAW_QC_TYPE}]}")
+        (>&2 echo "step ${currentStep} in INIT_TYPE ${INIT_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${INIT_TYPE}]}")
         exit 1            
     fi
 else
-    (>&2 echo "unknown RAW_QC_TYPE ${RAW_QC_TYPE}")
+    (>&2 echo "unknown INIT_TYPE ${INIT_TYPE}")
     (>&2 echo "supported types")
     x=0; while [ $x -lt ${#myTypes[*]} ]; do (>&2 echo "${myTypes[${x}]}"); done 
     exit 1
