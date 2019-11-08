@@ -6,8 +6,8 @@ currentStep=$3
 slurmID=$4
 
 cwd=$(pwd)
-echo "createCommandPlan.sh config: ${configFile} phase: ${currentPhase} step: ${currentStep} ID: ${slurmID}"
-echo "createCommandPlan.sh cwd ${cwd}" 
+echo "[INFO] createCommandPlan.sh: config: ${configFile} phase: ${currentPhase} step: ${currentStep} ID: ${slurmID}"
+echo "[INFO] createCommandPlan.sh: cwd ${cwd}" 
 
 if [[ ! -f ${configFile} ]]
 then 
@@ -20,15 +20,15 @@ source ${configFile}
 ## todo sanity checks 
 ## phases 0-DAScover, 1-repmask, 2-patching, 3-repmask, 4-scrubbing, 5-filtering, 6-touring, 7-correction, 8-contigAnalysis, 9-arrow 
 
-if [[ ${currentPhase} -eq -2 ]]
+if [[ ${currentPhase} -eq 0 ]]
 then	 
 	${SUBMIT_SCRIPTS_PATH}/createQCandStatsPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
     then 
-        (>&2 echo "createQCandStatsPlans.sh failed some how. Stop here.")
+        (>&2 echo "[ERROR] createQCandStatsPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq -1 ]]
+elif [[ ${currentPhase} -eq 1 ]]
 then	 
 	if [[ ! -f ${RAW_DB%.db}.db ]]
 	then 
@@ -53,7 +53,7 @@ then
         (>&2 echo "createMitoAssemblyPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 0 ]]
+elif [[ ${currentPhase} -eq 2 ]]
 then	 
 	if [[ ! -f ${RAW_DAZZ_DB%.db}.db ]]
 	then 
@@ -70,7 +70,7 @@ then
         (>&2 echo "createDAScoverPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 1 ]]
+elif [[ ${currentPhase} -eq 3 ]]
 then	 
 	if [[ ! -f ${RAW_DB%.db}.db ]]
 	then 
@@ -88,7 +88,7 @@ then
         (>&2 echo "createRepmaskPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 2 ]]
+elif [[ ${currentPhase} -eq 4 ]]
 then 
 	${SUBMIT_SCRIPTS_PATH}/createReadPatchingPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -96,7 +96,7 @@ then
         (>&2 echo "createReadPatchingPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 3 ]]    
+elif [[ ${currentPhase} -eq 5 ]]    
 then 
 	if [[ ${currentStep} -eq 1 ]]
 	then
@@ -127,7 +127,7 @@ then
         (>&2 echo "createRepmaskPlans2.sh failed some how. Stop here.")
         exit 1      
     fi   
-elif [[ ${currentPhase} -eq 4 ]]    
+elif [[ ${currentPhase} -eq 6 ]]    
 then 
 	${SUBMIT_SCRIPTS_PATH}/createScrubbingPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -135,7 +135,7 @@ then
         (>&2 echo "createScrubbingPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 5 ]]
+elif [[ ${currentPhase} -eq 7 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createFilteringPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -143,7 +143,7 @@ then
         (>&2 echo "createFilteringPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 6 ]]
+elif [[ ${currentPhase} -eq 8 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createTouringPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -151,7 +151,7 @@ then
         (>&2 echo "createTouringPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 7 ]]
+elif [[ ${currentPhase} -eq 9 ]]
 then 
 	${SUBMIT_SCRIPTS_PATH}/createCorrectionPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -159,7 +159,7 @@ then
         (>&2 echo "createCorrectionPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 8 ]]
+elif [[ ${currentPhase} -eq 10 ]]
 then 
 	${SUBMIT_SCRIPTS_PATH}/createContigAnalyzePlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -167,7 +167,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createContigAnalyzePlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 9 ]]
+elif [[ ${currentPhase} -eq 11 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createPacBioArrowPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -175,7 +175,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createPacBioArrowPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 10 ]]
+elif [[ ${currentPhase} -eq 12 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createPurgeHaplotigPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -183,7 +183,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createPurgeHaplotigPlans.sh failed some how. Stop here.")
         exit 1      
     fi      
-elif [[ ${currentPhase} -eq 11 ]]
+elif [[ ${currentPhase} -eq 13 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createFreeBayesPolishingPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -191,7 +191,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createFreeBayesPolishingPlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 12 ]]
+elif [[ ${currentPhase} -eq 14 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createPhasePlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -199,7 +199,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createPhasePlans.sh failed some how. Stop here.")
         exit 1      
     fi
-elif [[ ${currentPhase} -eq 13 ]]
+elif [[ ${currentPhase} -eq 15 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/create10XPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -207,7 +207,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createScaff10XPlans.sh failed some how. Stop here.")
         exit 1      
     fi      
-elif [[ ${currentPhase} -eq 14 ]]
+elif [[ ${currentPhase} -eq 16 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createBionanoPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
@@ -215,7 +215,7 @@ then
         (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createBionanoPlans.sh failed some how. Stop here.")
         exit 1      
     fi      
-elif [[ ${currentPhase} -eq 15 ]]
+elif [[ ${currentPhase} -eq 17 ]]
 then 
     ${SUBMIT_SCRIPTS_PATH}/createHiCPlans.sh ${configFile} ${currentStep} ${slurmID}
     if [ $? -ne 0 ]
