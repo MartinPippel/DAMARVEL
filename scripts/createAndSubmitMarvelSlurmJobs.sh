@@ -17,8 +17,8 @@ source ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-echo "createAndSubmitMarvelSlurmJobs.sh cfg: ${configFile} cPhase: ${currentPhase} cStep: ${currentStep} ID: ${id}"
-echo "createAndSubmitMarvelSlurmJobs.sh cwd: ${myCWD}"
+echo "[INFO] createAndSubmitMarvelSlurmJobs.sh: cfg: ${configFile} cPhase: ${currentPhase} cStep: ${currentStep} ID: ${id}"
+echo "[INFO] createAndSubmitMarvelSlurmJobs.sh: cwd: ${myCWD}"
 
 
 if [[ ${resumeIdx} -eq 0 ]]
@@ -35,6 +35,7 @@ fi
 prefix=$(getPhaseFilePrefix)
 sID=$(prependZero ${currentStep})
 TMP="${prefix^^}_TYPE"
+echo "[DEBUG] createAndSubmitMarvelSlurmJobs.sh: getStepName ${prefix} ${!TMP} $((${currentStep}-1))"
 sName=$(getStepName ${prefix} ${!TMP} $((${currentStep}-1)))
 
 if ! ls ${prefix}_${sID}_${sName}.${id}.plan 1> /dev/null 2>&1;
