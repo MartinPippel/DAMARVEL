@@ -64,7 +64,7 @@ fi
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### setup runtime conditions, time, memory, etc 
-	MEM=$(getSlurmParaMode ${prefix}_${sID}_${sName}.${id}.slurmPara)
+	MEM=$(getSlurmParaMem ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	TIME=$(getSlurmParaTime ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	CORES=$(getSlurmParaCores ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	NTASKS_PER_NODE=$(getSlurmParaTasks ${prefix}_${sID}_${sName}.${id}.slurmPara)
