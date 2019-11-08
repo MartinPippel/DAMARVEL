@@ -69,9 +69,9 @@ then
 	CORES=$(getSlurmParaCores ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	NTASKS_PER_NODE=$(getSlurmParaTasks ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	STEPSIZE=$(getSlurmParaStep ${prefix}_${sID}_${sName}.${id}.slurmPara)
-	PARITION=$(getSlurmParaPartition ${prefix}_${sID}_${sName}.${id}.slurmPara)
+	PARTITION=$(getSlurmParaPartition ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	
-	JOBS=$(wc -l ${prefix}_${sID}_${sName}_${sType}.${id}.plan | awk '{print $1}')
+	JOBS=$(wc -l ${prefix}_${sID}_${sName}.${id}.plan | awk '{print $1}')
 	log_folder=log_${prefix}_${sName}
 	mkdir -p ${log_folder}
 	first=1
@@ -296,7 +296,7 @@ fi
 
 if [[ ${resumeIdx} -gt 0 ]]
 then 
-	if [[ -f ${prefix}_${sID}_${sName}_${sType}.${id}.$((${resumeIdx}+1)).slurm ]]
+	if [[ -f ${prefix}_${sID}_${sName}.${id}.$((${resumeIdx}+1)).slurm ]]
 	then 
 		sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep+1} -o ${prefix}_step${currentStep}_${id}.out -e ${prefix}_step${currentStep}_${id}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=6g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $id $((${resumeIdx}+1))"
 		foundNext=1
