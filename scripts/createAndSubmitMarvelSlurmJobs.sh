@@ -304,7 +304,7 @@ fi
 
 if [[ ${currentPhase} -eq -2 ]]
 then
-	if [[ $((${currentStep}+1)) -le ${RAW_QC_SUBMIT_SCRIPTS_TO} ]]
+	if [[ $((${currentStep}+1)) -le ${INIT_SUBMIT_TO} ]]
     then
     	sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${id}.out -e ${prefix}_step$((${currentStep}+1))_${id}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=6g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $id"
         foundNext=1

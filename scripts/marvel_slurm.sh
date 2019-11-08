@@ -25,10 +25,10 @@ then
 fi
 
 ## find entry point to create first plan and submit that stuff 
-if [[ ${RAW_QC_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
+if [[ ${INIT_SUBMIT_FROM} -gt 0 ]] 
 then 
     currentPhase=0
-    currentStep=${RAW_QC_SUBMIT_SCRIPTS_FROM}
+    currentStep=${INIT_SUBMIT_FROM}
 elif [[ ${RAW_MITO_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
 then 
     currentPhase=1

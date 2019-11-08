@@ -112,8 +112,8 @@ RAW_REPAMSK_OUTDIR=repmask
 #type-3 [allData - MASH CONTAMINATION SCREEN] 	[1-5]: 01_mashPrepare, 02_mashSketch, 03_mashCombine, 04_mashPlot, 05_mashScreen
 #type-4 [10x - QV]   							[1-4]:  01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04QVqv
 INIT_TYPE=0
-INIT_SUBMIT_SCRIPTS_FROM=1
-INIT_SUBMIT_SCRIPTS_TO=2
+INIT_SUBMIT_FROM=1
+INIT_SUBMIT_TO=2
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> phase -1 - mitochondrium assembly <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
