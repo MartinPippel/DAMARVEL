@@ -107,7 +107,7 @@ function setGenomeScopeOptions()
 #type-7 [allData - MASH CONTAMINATION SCREEN] 	[1-5]: 01_mashPrepare, 02_mashSketch, 03_mashCombine, 04_mashPlot, 05_mashScreen
 #type-8 [10x - QV]   							[1-6]: 01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04_QVfreebayes, 05_QVbcftools, 06_QVqv
 
-sName=$(getStepName ${currentPhase} ${QC_TYPE} $((${currentStep}-1)))
+sName=$(getStepName ${currentPhase} ${INIT_TYPE} $((${currentStep}-1)))
 sID=$(prependZero ${currentStep})
 
 #type-0 [10x - prepare] [1-3]: 01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck
