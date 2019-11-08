@@ -70,7 +70,7 @@ then
 	NTASKS_PER_NODE=$(getSlurmParaTasks ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	STEPSIZE=$(getSlurmParaStep ${prefix}_${sID}_${sName}.${id}.slurmPara)
 	PARTITION=$(getSlurmParaPartition ${prefix}_${sID}_${sName}.${id}.slurmPara)
-	
+	MEM_PER_CORE=$((${MEM}/${CORES}))
 	JOBS=$(wc -l ${prefix}_${sID}_${sName}.${id}.plan | awk '{print $1}')
 	log_folder=log_${prefix}_${sName}
 	mkdir -p ${log_folder}
@@ -95,7 +95,7 @@ then
 #SBATCH -o ${log_folder}/${prefix}_${sID}_${d}_%A_%a.out # Standard output 
 #SBATCH -e ${log_folder}/${prefix}_${sID}_${d}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
-#SBATCH --mem-per-cpu=$((${MEM}/${CORES}))
+#SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
 #SBATCH --mail-type=FAIL" > ${file}.slurm
             if [[ -n ${NTASKS_PER_NODE} ]]
@@ -161,7 +161,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 #SBATCH -o ${log_folder}/${prefix}_${sID}_%A_%a.out # Standard output
 #SBATCH -e ${log_folder}/${prefix}_${sID}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
-#SBATCH --mem-per-cpu=$((${MEM}/${CORES}))
+#SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
 #SBATCH --mail-type=FAIL" > ${file}.slurm
 	        if [[ -n ${NTASKS_PER_NODE} ]]
@@ -212,7 +212,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 #SBATCH -o ${log_folder}/${prefix}_${sID}_%A.out # Standard output
 #SBATCH -e ${log_folder}/${prefix}_${sID}_%A.err # Standard error
 #SBATCH --time=${TIME}
-#SBATCH --mem-per-cpu=$((${MEM}/${CORES}))
+#SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
 #SBATCH --mail-type=FAIL" > ${file}.slurm
 
