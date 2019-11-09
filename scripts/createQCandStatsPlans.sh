@@ -327,7 +327,7 @@ then
         done 
         
         if [[ -d ${DB_OUTDIR}/all ]]; then mv ${DB_OUTDIR}/all ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi 
-        mkdir ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/single 
+        mkdir -p ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/run 
                
         ## create database with all reads for coverage estimation
 		echo "cd ${DB_OUTDIR}/all && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta && cd ${myCWD}" > ${currentPhase}_${sID}_${sName}.${id}.plan
@@ -340,7 +340,7 @@ then
 		done >> ${currentPhase}_${sID}_${sName}.${id}.plan
         
     	## create actual db files for assembly 
-        echo -n "cd ${DB_OUTDIR}/all && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ${DB_OUTDIR}/fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+        echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ${DB_OUTDIR}/fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
         echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
 	
 		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" ${currentPhase}_${sID}_${sName}.${id}.version
@@ -399,8 +399,7 @@ then
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
 	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}')"		
-        	done
-        	echo -e "echo \$(${DAZZLER_PATH}/bin/DBsplit -x4000 -f -s${DBSPLIT_SIZE} ${x})"		
+        	done        			
     	fi>> ${currentPhase}_${sID}_${sName}.${id}.plan
     fi        
 #type-1 [10x - de novo] [1-1]: 01_supernova	
