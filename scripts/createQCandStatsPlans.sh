@@ -326,7 +326,9 @@ then
             rm $x
         done 
         
-        if [[ -d ${DB_OUTDIR}/all ]]; then mv ${DB_OUTDIR}/all ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi 
+        if [[ -d ${DB_OUTDIR}/all ]]; then mv ${DB_OUTDIR}/all ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi
+        if [[ -d ${DB_OUTDIR}/single ]]; then mv ${DB_OUTDIR}/single ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/single | date '+%Y-%m-%d_%H-%M-%S'); fi
+        if [[ -d ${DB_OUTDIR}/run ]]; then mv ${DB_OUTDIR}/run ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/run | date '+%Y-%m-%d_%H-%M-%S'); fi 
         mkdir -p ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/run 
                
         ## create database with all reads for coverage estimation
@@ -349,7 +351,7 @@ then
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${sName}
 		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara
-	elif [[ ${currentStep} -eq 2 ]]
+	elif [[ ${currentStep} -eq 3 ]]
     then
         ### clean up plans 
         for x in $(ls ${currentPhase}_${sID}_${sName}.${id}.* 2> /dev/null)
