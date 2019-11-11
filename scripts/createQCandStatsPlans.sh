@@ -330,18 +330,18 @@ then
         mkdir -p ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/run 
                
         ## create database with all reads for coverage estimation
-		echo "cd ${DB_OUTDIR}/all && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta && cd ${myCWD}" > ${currentPhase}_${sID}_${sName}.${id}.plan
-		echo "cd ${DB_OUTDIR}/all && ${MARVEL_PATH}/bin/FA2db -x 0  ${PROJECT_ID}_M_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" > ${currentPhase}_${sID}_${sName}.${id}.plan
+		echo "${MARVEL_PATH}/bin/FA2db -x 0  ${DB_OUTDIR}/all/${PROJECT_ID}_M_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" >> ${currentPhase}_${sID}_${sName}.${id}.plan
 		
 		## create database for each bam file: for initial qc
 		for x in ${DB_OUTDIR}/fasta/*fasta
 		do
-			echo "cd ${DB_OUTDIR}/single && ${DAZZLER_PATH}/bin/fasta2DB -v $(basename ${x%.fasta})_M ${x} && cd ${myCWD}"	
+			echo "${DAZZLER_PATH}/bin/fasta2DB -v ${DB_OUTDIR}/single/$(basename ${x%.fasta})_M ${x}"	
 		done >> ${currentPhase}_${sID}_${sName}.${id}.plan
         
     	## create actual db files for assembly 
-        echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ${DB_OUTDIR}/fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
-        echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+        echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
+        echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}.${id}.plan
 	
 		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" ${currentPhase}_${sID}_${sName}.${id}.version
         echo "DAZZLER fasta2DB $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}.${id}.version
