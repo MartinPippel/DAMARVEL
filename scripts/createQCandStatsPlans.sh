@@ -311,8 +311,15 @@ then
 					do
 						echo "${CONDA_BASE_ENV} && cd ${DB_OUTDIR}/fasta && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
 					done > ${currentPhase}_${sID}_${sName}.${id}.plan
+				else
+					(>&2 echo "[ERROR] createQCandStatsPlans.sh: PACBIO_TYPE is not set to LoFi!")
+					exit 1
 				fi						 
+			else
+				(>&2 echo "[ERROR] createQCandStatsPlans.sh: Could not find any subreads.bam file in directory: ${PACBIO_PATH}!")
+				exit 1
 			fi
+			
 			echo "$(${CONDA_BASE_ENV} && bam2fasta --version && conda deactivate)" > ${currentPhase}_${sID}_${sName}.${id}.version
 			## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   		getSlurmRunParameter ${sName}
