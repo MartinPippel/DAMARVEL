@@ -371,9 +371,14 @@ then
         		echo -n " \$(sed -n 2p ${x} | awk '{print \$1\" \"\$2}')"
         		echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p)"
     			echo -n " \$((\$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p | awk '{print \$2}')/${gsize}))"
-    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 2p | awk '{print \$2\" \"\$4\" \"\$6\" \"\$8\" \"\$2+\$8\" \"\$4+\$6})"
-    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 3p | awk '{print \$NF})"
-    			echo -e " > ${DB_OUTDIR}/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
+    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 2p | awk '{print \$2\" \"\$4\" \"\$6\" \"\$8\" \"\$2+\$8\" \"\$4+\$6}')"
+    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 3p | awk '{print \$NF}')"
+    			if [[ ${count} -eq 0 ]]
+    			then
+    				echo -e " > ${DB_OUTDIR}/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
+    			else
+    				echo -e " >> ${DB_OUTDIR}/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
+    			fi
         		count=$((count+1))	
         	fi 
     	done > ${currentPhase}_${sID}_${sName}.${id}.plan
@@ -389,7 +394,7 @@ then
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
-        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}')"
+        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') > ${DB_OUTDIR}/stats/${PROJECT_ID}_allPacBioLoFi.stats"
         	### Longest reads
         	for y in 1000 2000 3000 4000 5000 6000
         	do 
@@ -400,7 +405,7 @@ then
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
-	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}')"		
+	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') >> ${DB_OUTDIR}/stats/${PROJECT_ID}_allPacBioLoFi.stats"		
         	done        			
     	fi>> ${currentPhase}_${sID}_${sName}.${id}.plan
     	
