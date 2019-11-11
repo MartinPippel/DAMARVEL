@@ -98,7 +98,7 @@ function setGenomeScopeOptions()
 }
 
 #type-0 [10x - init] 							[1-3]: longrangerBasic, longrangerToScaff10Xinput, bxcheck, createStats
-#type-1 [PacBio LoFi Init] 						[1-3]: createSubdir bam2fasta createDB createStats
+#type-1 [PacBio LoFi Init] 						[1-3]: bam2fasta createDB createStats
 #type-2 [PacBio HiFi Init] 						[1-3]: createSubdir ccs samtoolsMerge bam2fasta createDB createStats
 #type-3 [HiC - init]							[1-1]: createStats 
 #type-4 [Bionano - init]						[1-1]: createStats???
@@ -338,7 +338,7 @@ then
 		## create database for each bam file: for initial qc
 		for x in ${DB_OUTDIR}/fasta/*fasta
 		do
-			echo "${DAZZLER_PATH}/bin/fasta2DB -v ${DB_OUTDIR}/single/$(basename ${x%.fasta})_M ${x}"	
+			echo "${MARVEL_PATH}/bin/FA2db -v ${DB_OUTDIR}/single/$(basename ${x%.fasta})_M ${x}"	
 		done >> ${currentPhase}_${sID}_${sName}.${id}.plan
         
     	## create actual db files for assembly 
