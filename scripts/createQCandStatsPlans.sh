@@ -285,10 +285,9 @@ then
 						fi
 					fi
 				 done > ${currentPhase}_${sID}_${sName}.${id}.plan
-			fi
-			
-			## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara			
+				 ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${currentPhase}_${sID}_${sName}.${id}.slurmPara							 
+			fi			
 		fi
 		
 		# check for subreads.bam files
