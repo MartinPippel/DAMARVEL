@@ -379,7 +379,7 @@ then
         	if [[ -f ${x} ]]
         	then
         		echo -n "echo ${count}"
-        		echo -n " \$(sed -n 2p ${x} | awk '{print \$1\" \"\$2}')"
+        		echo -n " \$(sed -n 2p ${x} | awk '{print \$2\" \"\$3}')"
         		echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p)"
     			echo -n " \$((\$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p | awk '{print \$2}')/${gsize}))"
     			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 2p | awk '{print \$2\" \"\$4\" \"\$6\" \"\$8\" \"\$2+\$8\" \"\$4+\$6}')"
@@ -400,7 +400,7 @@ then
         	### All reads
         	echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x0 -a -f -s${DBSPLIT_SIZE} ${x})"
         	echo -n " all"
-        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 2p | awk '{print \$7}' | tr -d ,)"
+        	echo -n " all"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
