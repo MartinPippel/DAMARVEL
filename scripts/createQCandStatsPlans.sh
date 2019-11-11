@@ -345,7 +345,7 @@ then
         echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${currentPhase}_${sID}_${sName}.${id}.plan
         echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}.${id}.plan
 	
-		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" ${currentPhase}_${sID}_${sName}.${id}.version
+		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}.${id}.version
         echo "DAZZLER fasta2DB $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}.${id}.version
 		
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
@@ -404,7 +404,7 @@ then
         	done        			
     	fi>> ${currentPhase}_${sID}_${sName}.${id}.plan
     	
-    	echo "MARVEL DBstats $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" ${currentPhase}_${sID}_${sName}.${id}.version        
+    	echo "MARVEL DBstats $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}.${id}.version        
 		
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${sName}
