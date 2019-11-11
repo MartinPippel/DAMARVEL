@@ -309,7 +309,12 @@ then
 				then					
 					for x in ${PACBIO_PATH}/*subreads.bam
 					do
-						echo "${CONDA_BASE_ENV} && cd ${DB_OUTDIR}/fasta && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
+						echo -n "${CONDA_BASE_ENV} && cd ${DB_OUTDIR}/fasta"
+						if [[ ! -f ${x}.pbi ]]
+						then
+							echo -n " && pbindex ${x}"	
+						fi
+						echo -e " && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
 					done > ${currentPhase}_${sID}_${sName}.${id}.plan
 				else
 					(>&2 echo "[ERROR] createQCandStatsPlans.sh: PACBIO_TYPE is not set to LoFi!")
