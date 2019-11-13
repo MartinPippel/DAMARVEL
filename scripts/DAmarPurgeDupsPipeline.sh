@@ -12,21 +12,6 @@ fi
 
 source ${configFile}
 
-gsize=${GSIZE}
-i=$((${#GSIZE}-1))
-if [[ "${GSIZE: -1}" =~ [gG] ]]
-then
- gsize=$((${GSIZE:0:$i}*1000*1000*1000))
-fi
-if [[ "${GSIZE: -1}" =~ [mM] ]]
-then
- gsize=$((${GSIZE:0:$i}*1000*1000))
-fi
-if [[ "${GSIZE: -1}" =~ [kK] ]]
-then
- gsize=$((${GSIZE:0:$i}*1000))
-fi
-
 myTypes=("1-prepInFasta, 2-createMinimap2RefIndex, 3-minimap2, 4-bamMerge, 5-readCovHist, 6-contigCovHist, 7-purgeHaplotigs, 8-statistics")
 if [[ ${CT_PURGEHAPLOTIGS_TYPE} -eq 0 ]]
 then 

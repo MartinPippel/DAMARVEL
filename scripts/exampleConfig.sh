@@ -104,7 +104,10 @@ RAW_DACCORD_INDIR="dalign"
 
 RAW_REPAMSK_OUTDIR=repmask
 
-# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> phase -2 - data QC and statistics and format conversion <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+RUN_DAMAR=(init 1 0 2 1) #type-1 [PacBio LoFi Init] 						[0-2]: bam2fasta createDB createStats
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> phase 0 - data QC and statistics and format conversion <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
 #type-0 [10x - prepare] 						[1-3]: 01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck
 #type-1 [10x - de novo] 						[1-1]: 01_supernova

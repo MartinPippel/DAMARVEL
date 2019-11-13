@@ -1,229 +1,88 @@
 #!/bin/bash 
 
-configFile=$1
-currentPhase=$2
-currentStep=$3
-slurmID=$4
+# call should be: createCommandPlan.sh ${configFile} ${pipelineIdx} ${pipelineStep} ${pipelineID}
 
-cwd=$(pwd)
-echo "[INFO] createCommandPlan.sh: config: ${configFile} phase: ${currentPhase} step: ${currentStep} ID: ${slurmID}"
+configFile=$1
+pipelineIdx=$2
+pipelineStep=$3
+pipelineID=$4
+
+echo "[INFO] createCommandPlan.sh: config: ${configFile} phase: ${pipelineIdx} step: ${pipelineStep} ID: ${pipelineID}"
 echo "[INFO] createCommandPlan.sh: cwd ${cwd}" 
 
 if [[ ! -f ${configFile} ]]
 then 
-    (>&2 echo "cannot access config file ${configFile}")
+    (>&2 echo "[ERROR] createCommandPlan.sh: Cannot access config file ${configFile}")
     exit 1
 fi
 
 source ${configFile}
 
-## todo sanity checks 
-## phases 0-DAScover, 1-repmask, 2-patching, 3-repmask, 4-scrubbing, 5-filtering, 6-touring, 7-correction, 8-contigAnalysis, 9-arrow 
+local cmd=""
 
-if [[ ${currentPhase} -eq 0 ]]
+if [[ ${pipelineIdx} -eq 0 ]]
 then	 
-	${SUBMIT_SCRIPTS_PATH}/createQCandStatsPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "[ERROR] createQCandStatsPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 1 ]]
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarInitPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"	
+elif [[ ${pipelineIdx} -eq 1 ]]
 then	 
-	if [[ ! -f ${RAW_DB%.db}.db ]]
-	then 
-		if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db ]]
-		then 
-			(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db in directory ${DB_PATH}")
-	        exit 1	
-		fi		
-		cp ${DB_PATH}/${RAW_DB%.db}.db ${DB_PATH}/.${RAW_DB%.db}.idx ${DB_PATH}/.${RAW_DB%.db}.bps .
-		if [[ -f ${DB_PATH}/.${RAW_DB%.db}.pacbio.anno && -f ${DB_PATH}/.${RAW_DB%.db}.pacbio.data ]]
-		then 
-			cp 	${DB_PATH}/.${RAW_DB%.db}.pacbio.anno ${DB_PATH}/.${RAW_DB%.db}.pacbio.data .
-		fi
-		if [[ -f ${DB_PATH}/.${RAW_DB%.db}.seqID.anno && -f ${DB_PATH}/.${RAW_DB%.db}.seqID.data ]]
-		then 
-			cp 	${DB_PATH}/.${RAW_DB%.db}.seqID.anno ${DB_PATH}/.${RAW_DB%.db}.seqID.data .
-		fi
-	fi		
-    ${SUBMIT_SCRIPTS_PATH}/createMitoAssemblyPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createMitoAssemblyPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 2 ]]
-then	 
-	if [[ ! -f ${RAW_DAZZ_DB%.db}.db ]]
-	then 
-		if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ]]
-		then 
-			(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db and ${RAW_DAZZ_DB%.db}.db in directory ${DB_PATH}")
-	        exit 1	
-		fi		
-		ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ${DB_PATH}/.${RAW_DAZZ_DB%.db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%.db}.bps .
-	fi		
-    ${SUBMIT_SCRIPTS_PATH}/createDAScoverPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createDAScoverPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 3 ]]
-then	 
-	if [[ ! -f ${RAW_DB%.db}.db ]]
-	then 
-		if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ]]
-		then 
-			(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db and ${RAW_DAZZ_DB%.db}.db in directory ${DB_PATH}")
-	        exit 1	
-		fi		
-		ln -s -r ${DB_PATH}/${RAW_DB%.db}.db ${DB_PATH}/.${RAW_DB%.db}.idx ${DB_PATH}/.${RAW_DB%.db}.bps .
-		ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ${DB_PATH}/.${RAW_DAZZ_DB%.db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%.db}.bps .
-	fi		
-    ${SUBMIT_SCRIPTS_PATH}/createRepmaskPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createRepmaskPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 4 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarMitoPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"   
+elif [[ ${pipelineIdx} -eq 2 ]]
+then
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarCoveragePipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 3 ]]
+then
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarRawMaskPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 4 ]]
 then 
-	${SUBMIT_SCRIPTS_PATH}/createReadPatchingPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createReadPatchingPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 5 ]]    
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarReadPatchingPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 5 ]]    
 then 
-	if [[ ${currentStep} -eq 1 ]]
-	then
-		if [[ ! -f ${RAW_DB%.db}.db ]]
-		then 
-			if [[ ! -f ${DB_PATH}/${RAW_DB%.db}.db || ! -f ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ]]
-			then 
-				(>&2 echo "Cannot find initial databases ${RAW_DB%.db}.db and ${RAW_DAZZ_DB%.db}.db in directory ${DB_PATH}")
-		        exit 1	
-			fi		
-			ln -s -r ${DB_PATH}/${RAW_DB%.db}.db ${DB_PATH}/.${RAW_DB%.db}.idx ${DB_PATH}/.${RAW_DB%.db}.bps .
-			ln -s -r ${DB_PATH}/${RAW_DAZZ_DB%.db}.db ${DB_PATH}/.${RAW_DAZZ_DB%.db}.idx ${DB_PATH}/.${RAW_DAZZ_DB%.db}.bps .
-		fi
-		if [[ ! -d "${FIX_REPMASK_USELAFIX_PATH}" ]]	
-		then 
-			if [[ ! -d "../${PATCHING_DIR}/${FIX_REPMASK_USELAFIX_PATH}" ]]
-			then
-				(>&2 echo "Cannot find patched reads in directory ../${PATCHING_DIR}/${FIX_REPMASK_USELAFIX_PATH}")
-				(>&2 echo "cwd $(pwd)")
-		        exit 1
-			fi	
-			ln -s -r ../${PATCHING_DIR}/${FIX_REPMASK_USELAFIX_PATH} ${FIX_REPMASK_USELAFIX_PATH}
-		fi
-	fi
-    ${SUBMIT_SCRIPTS_PATH}/createRepmaskPlans2.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createRepmaskPlans2.sh failed some how. Stop here.")
-        exit 1      
-    fi   
-elif [[ ${currentPhase} -eq 6 ]]    
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarFixMaskPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 6 ]]    
 then 
-	${SUBMIT_SCRIPTS_PATH}/createScrubbingPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createScrubbingPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 7 ]]
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarScrubbingPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"    
+elif [[ ${pipelineIdx} -eq 7 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createFilteringPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createFilteringPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 8 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarFilteringPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 8 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createTouringPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createTouringPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 9 ]]
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarTouringPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 9 ]]
 then 
-	${SUBMIT_SCRIPTS_PATH}/createCorrectionPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "createCorrectionPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 10 ]]
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarCorrectionPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 10 ]]
 then 
-	${SUBMIT_SCRIPTS_PATH}/createContigAnalyzePlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createContigAnalyzePlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 11 ]]
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarContigAnalyzePipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 11 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createPacBioArrowPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createPacBioArrowPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 12 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarPacBioPolishingPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 12 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createPurgeHaplotigPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createPurgeHaplotigPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi      
-elif [[ ${currentPhase} -eq 13 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarPurgeDupsPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 13 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createFreeBayesPolishingPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createFreeBayesPolishingPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 14 ]]
+	cmd="${SUBMIT_SCRIPTS_PATH}/DAmarIlluminaPolishingPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"    
+elif [[ ${pipelineIdx} -eq 14 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createPhasePlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createPhasePlans.sh failed some how. Stop here.")
-        exit 1      
-    fi
-elif [[ ${currentPhase} -eq 15 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarPhasingPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 15 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/create10XPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createScaff10XPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi      
-elif [[ ${currentPhase} -eq 16 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmar10XScaffPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 16 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createBionanoPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createBionanoPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi      
-elif [[ ${currentPhase} -eq 17 ]]
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarBionanoScaffPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
+elif [[ ${pipelineIdx} -eq 17 ]]
 then 
-    ${SUBMIT_SCRIPTS_PATH}/createHiCPlans.sh ${configFile} ${currentStep} ${slurmID}
-    if [ $? -ne 0 ]
-    then 
-        (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createHiCPlans.sh failed some how. Stop here.")
-        exit 1      
-    fi          
+    cmd="${SUBMIT_SCRIPTS_PATH}/DAmarHicScaffPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}"
 else
-    (>&2 echo "unknown assembly phase: ${currentPhase}")
+    (>&2 echo "[ERROR] createCommandPlan.sh: unknown DAmar pipeline: ${pipelineIdx}")
     exit 1
 fi 
+
+echo "[INFO] createCommandPlan.sh: cmd ${cmd}"
+eval ${cmd}
+if [ $? -ne 0 ]
+then 
+    (>&2 echo "${SUBMIT_SCRIPTS_PATH}/createHiCPlans.sh failed some how. Stop here.")
+    exit 1      
+fi          

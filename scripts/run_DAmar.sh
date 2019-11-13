@@ -1,15 +1,15 @@
 #!/bin/bash 
 
 configFile=$1
-Id=$2
-if [[ -z "$Id" ]]
+ID="-1" ## by default run all IDs
+if [[ "x$2" != "x" && $(isNumber $2) ]]
 then
-  Id=1
+  ID=$2
 fi
 
 if [[ ! -f ${configFile} ]]
 then 
-    (>&2 echo "[ERROR] DAmar_slurm: cannot access config file ${configFile}")
+    (>&2 echo "[ERROR] DAmar_run.sh: cannot access config file ${configFile}")
     exit 1
 fi
 
@@ -20,185 +20,68 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 	
 if [[ -z "${PROJECT_ID}" ]]
 then 
-    (>&2 echo "[ERROR] DAmar_slurm: You have to specify a project id. Set variable PROJECT_ID")
+    (>&2 echo "[ERROR] run_DAmar.sh: You have to specify a project id. Set variable PROJECT_ID")
     exit 1
 fi
 
-## find entry point to create first plan and submit that stuff 
-if [[ ${INIT_SUBMIT_FROM} -gt 0 ]] 
+if [[ -z "${RUN_DAMAR}" ]]
 then 
-    currentPhase=0
-    currentStep=${INIT_SUBMIT_FROM}
-elif [[ ${RAW_MITO_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=1
-    currentStep=${RAW_MITO_SUBMIT_SCRIPTS_FROM}    
-elif [[ ${RAW_DASCOVER_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=2
-    currentStep=${RAW_DASCOVER_SUBMIT_SCRIPTS_FROM}    
-elif [[ ${RAW_REPMASK_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=3
-    currentStep=${RAW_REPMASK_SUBMIT_SCRIPTS_FROM}    
-elif [[ ${RAW_PATCH_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=4
-    currentStep=${RAW_PATCH_SUBMIT_SCRIPTS_FROM} 
-elif [[ ${FIX_REPMASK_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=5
-    currentStep=${FIX_REPMASK_SUBMIT_SCRIPTS_FROM}    
-    
-elif [[ ${FIX_SCRUB_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=6
-    currentStep=${FIX_SCRUB_SUBMIT_SCRIPTS_FROM}        
-elif [[ ${FIX_FILT_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=7
-    currentStep=${FIX_FILT_SUBMIT_SCRIPTS_FROM}        
-elif [[ ${FIX_TOUR_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=8
-    currentStep=${FIX_TOUR_SUBMIT_SCRIPTS_FROM}        
-elif [[ ${FIX_CORR_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=9
-    currentStep=${FIX_CORR_SUBMIT_SCRIPTS_FROM}        
-elif [[ ${COR_CONTIG_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=10
-    currentStep=${COR_CONTIG_SUBMIT_SCRIPTS_FROM}        
-elif [[ ${PB_ARROW_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=11
-    currentStep=${PB_ARROW_SUBMIT_SCRIPTS_FROM}
-elif [[ ${CT_PURGEHAPLOTIGS_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=12
-    currentStep=${CT_PURGEHAPLOTIGS_SUBMIT_SCRIPTS_FROM}
-elif [[ ${CT_FREEBAYES_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=13
-    currentStep=${CT_FREEBAYES_SUBMIT_SCRIPTS_FROM}                                           
-elif [[ ${CT_PHASE_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=14
-    currentStep=${CT_PHASE_SUBMIT_SCRIPTS_FROM}
-elif [[ ${SC_10X_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=15
-    currentStep=${SC_10X_SUBMIT_SCRIPTS_FROM}
-elif [[ ${SC_BIONANO_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=16
-    currentStep=${SC_BIONANO_SUBMIT_SCRIPTS_FROM}
-elif [[ ${SC_HIC_SUBMIT_SCRIPTS_FROM} -gt 0 ]] 
-then 
-    currentPhase=17
-    currentStep=${SC_HIC_SUBMIT_SCRIPTS_FROM}        
-else 
-    echo "nothing to do"
-    exit 0
+    (>&2 echo "[ERROR] run_DAmar.sh: You have to specify a job pipeline! Set variable RUN_DAMAR")
+    exit 1
 fi
 
-realPathConfigFile=$(realpath "${configFile}")
-
-if [[ ${currentPhase} -eq 0 ]]
-then
-	if [[ -z "${INIT_DIR}" ]]
-	then 
-    	(>&2 echo "[ERROR] DAmar_slurm: You have to set INIT_DIR")
-    	exit 1
+## find entry point
+## check if pipelines are correct 
+if [[ $((${#RUN_DAMAR[@]} % 5)) -ne 0 || ${#RUN_DAMAR[@]} -eq 0 ]] 
+then 
+	(>&2 echo "[ERROR] run_DAmar.sh: RUN_DAMAR job pipeline is corrupt! Must hav following form: pipelineName, pipelineType, fromStep, toStep, ID.")
+	(>&2 echo "                      pipelineName, pipelineType, and Steps can be found in ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg")
+	(>&2 echo "                      ID can be an arbitrary number. Pipelines with the same IDs run sequentially (blocking mode), and different IDs run in parallel")
+    exit 1
+fi
+## check individual pipeline for correctness
+## TODO: check if all required programs and Variables are available and set properly
+for x in $(seq 0 5 ${#RUN_DAMAR[@]})
+do
+	## check pipelineName
+	pipelineIdx=$(pipelineNameToIndex ${RUN_DAMAR[${x}]})
+	## check is pipeline type and steps are proper
+	if ! $(isNumber) ${RUN_DAMAR[$((x+2))]}
+	then
+		(>&2 echo "[ERROR] run_DAmar.sh: pipeline from_step \"${RUN_DAMAR[$((x+2))]}\" must be a positive number!!")
+		exit 1
+	elif ! $(isNumber) ${RUN_DAMAR[$((x+3))]}
+	then
+		(>&2 echo "[ERROR] run_DAmar.sh: pipeline to_step \"${RUN_DAMAR[$((x+3))]}\" must be a positive number!!")
+		exit 1	
+	elif [[ ${RUN_DAMAR[$((x+3))]} -lt ${RUN_DAMAR[$((x+2))]} ]]
+	then
+		(>&2 echo "[ERROR] run_DAmar.sh: pipeline from_step \"${RUN_DAMAR[$((x+2))]}\" smaller or equal to pipelien to_step \"${RUN_DAMAR[$((x+3))]}\"!!")
+		exit 1
 	fi 
-	
-	mkdir -p ${INIT_DIR}
-	cd ${INIT_DIR}
-	${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${realPathConfigFile} ${currentPhase} ${currentStep} ${Id}
-	cd ${myCWD}
-elif [[ ${currentPhase} -eq 1 ]]
-then 
-	if [[ -z "${MITO_DIR}" ]]
-	then 
-    	(>&2 echo "[ERROR] DAmar_slurm: You have to set MITO_DIR.")
-    	exit 1
+	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]}) > /dev/null ## check from 
+	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+3))]}) > /dev/null ## check to	
+	## check ID: must be a positive number 
+	if ! $(isNumber ${RUN_DAMAR[$((x+4))]} 
+	then
+		(>&2 echo "[ERROR] run_DAmar.sh: pipeline ID \"${RUN_DAMAR[$((x+4))]}\" must be a positive number!! ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]} ${RUN_DAMAR[$((x+3))]} ${RUN_DAMAR[$((x+4))]}.")
+		exit 1
 	fi
-	
-	mkdir -p ${MITO_DIR}
-	cd ${MITO_DIR}
-	${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${realPathConfigFile} ${currentPhase} ${currentStep} ${Id}
-	cd ${myCWD}
-elif [[ ${currentPhase} -eq 2 ]]
-then 
-	if [[ -z "${COVERAGE_DIR}" ]]
-	then 
-    	(>&2 echo "[ERROR] DAmar_slurm: You have to set COVERAGE_DIR.")
-    	exit 1
-	fi
+done
 
-	if [[ -z "${DB_PATH}" ]]
-	then 
-    	(>&2 echo "[ERROR] DAmar_slurm: You have to set DB_PATH. Location of the initial databases MARVEL and DAZZLER.")
-    	exit 1
-	fi
-	mkdir -p ${COVERAGE_DIR}
-	cd ${COVERAGE_DIR}
-	${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${realPathConfigFile} ${currentPhase} ${currentStep} ${Id}
-	cd ${myCWD}
-elif [[ ${currentPhase} -lt 5 ]]
-then 
+runIDs=()
+local realPathConfigFile=$(realpath "${configFile}")
 
-	if [[ -z "${PATCHING_DIR}" ]]
-	then 
-	    (>&2 echo "[ERROR] DAmar_slurm: You have to set PATCHING_DIR.")
-	    exit 1
-	fi
-
-	if [[ -z "${DB_PATH}" ]]
-	then 
-    	(>&2 echo "[ERROR] DAmar_slurm: You have to set DB_PATH. Location of the initial databases MARVEL and DAZZLER.")
-    	exit 1
-	fi
-	mkdir -p ${PATCHING_DIR}
-	cd ${PATCHING_DIR}
-	${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${realPathConfigFile} ${currentPhase} ${currentStep} ${Id}
-	cd ${myCWD}
-elif [[ ${currentPhase} -lt 18 ]]
-then
-
-	if [[ -z "${PATCHING_DIR}" ]]
-	then 
-    	(>&2 echo "[ERROR] DAmar_slurm: You have to set PATCHING_DIR.")
-    	exit 1
-	fi
-
-	if [[ -z "${ASSMEBLY_DIR}" ]]
-	then 
-	    (>&2 echo "[ERROR] DAmar_slurm: You have to set ASSMEBLY_DIR")
-	    exit 1
-	fi
-	
-	if [[ "${ASSMEBLY_DIR}" == "${PATCHING_DIR}" ]]
-	then 
-	    (>&2 echo "[ERROR] DAmar_slurm: PATCHING_DIR must be different from ASSMEBLY_DIR")
-	    exit 1
-	fi
-	
-	if [[ -z "${DB_PATH}" ]]
-	then 
-	    (>&2 echo "[ERROR] DAmar_slurm: You have to set DB_PATH. Location of the initial databases MARVEL and DAZZLER.")
-	    exit 1
-	fi
-	
-	if [[ -z "${FIX_REPMASK_USELAFIX_PATH}" ]]
-	then 
-		(>&2 echo "[WARNING] DAmar_slurm: Variable FIX_REPMASK_USELAFIX_PATH is not set.Try to use default path: patchedReads_dalign")
-		FIX_REPMASK_USELAFIX_PATH="patchedReads_dalign"
-	fi
+## run the pipeline(s)
+for x in $(seq 0 5 ${#RUN_DAMAR[@]})
+do
+	if [[ $ID -eq -1 || ${RUN_DAMAR[$((x+4))]} -eq ${ID} ]] && [[ " ${runIDs[@]} " =~ " ${RUN_DAMAR[$((x+4))]} " ]]
+	then
 		
-	mkdir -p ${ASSMEBLY_DIR}_${FIX_REPMASK_USELAFIX_PATH}
-	cd ${ASSMEBLY_DIR}_${FIX_REPMASK_USELAFIX_PATH}
-	${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${realPathConfigFile} ${currentPhase} ${currentStep} ${Id}
-	cd ${myCWD}
-fi
+		local currentPipelineIdx=$x
+		local currentPipelineStep=${RUN_DAMAR[$((x+2))]}
+		
+		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${currentPipelineIdx} ${currentPipelineStep} ${Id}
+		runIDs+=${RUN_DAMAR[$((x+4))]}
+	fi
+done
