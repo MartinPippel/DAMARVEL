@@ -59,8 +59,8 @@ do
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline from_step \"${RUN_DAMAR[$((x+2))]}\" smaller or equal to pipelien to_step \"${RUN_DAMAR[$((x+3))]}\"!!")
 		exit 1
 	fi 
-	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]}) > /dev/null ## check from 
-	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+3))]}) > /dev/null ## check to	
+	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]} > /dev/null ## check from 
+	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+3))]} > /dev/null ## check to	
 	## check ID: must be a positive number 
 	if ! $(isNumber ${RUN_DAMAR[$((x+4))]}) 
 	then
