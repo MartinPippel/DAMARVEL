@@ -72,7 +72,7 @@ do
 done
 
 runIDs=()
-local realPathConfigFile=$(realpath "${configFile}")
+realPathConfigFile=$(realpath "${configFile}")
 
 ## run the pipeline(s)
 for x in $(seq 0 5 ${#RUN_DAMAR[@]})
@@ -80,8 +80,8 @@ do
 	if [[ $ID -eq -1 || ${RUN_DAMAR[$((x+4))]} -eq ${ID} ]] && [[ " ${runIDs[@]} " =~ " ${RUN_DAMAR[$((x+4))]} " ]]
 	then
 		
-		local currentPipelineIdx=$x
-		local currentPipelineStep=${RUN_DAMAR[$((x+2))]}
+		currentPipelineIdx=$x
+		currentPipelineStep=${RUN_DAMAR[$((x+2))]}
 		
 		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${currentPipelineIdx} ${currentPipelineStep} ${Id}
 		runIDs+=${RUN_DAMAR[$((x+4))]}
