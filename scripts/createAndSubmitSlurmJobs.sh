@@ -22,7 +22,7 @@ else
 fi
 
 ## create (if neccessary) and enter pipeline directory
-local DAmarRootDir=$(pwd)
+DAmarRootDir=$(pwd)
 ensureAndEnterPipelineDir ${currentPipelineIdx}
 
 echo "[INFO] createAndSubmitSlurmJobs.sh: assembly config file - ${configFile}"
