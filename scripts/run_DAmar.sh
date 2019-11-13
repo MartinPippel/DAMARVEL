@@ -14,7 +14,7 @@ then
 fi
 
 source ${configFile}
-source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}l
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 ## do some general sanity checks
 	
