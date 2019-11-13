@@ -14,7 +14,7 @@ then
 fi
 
 source ${configFile}
-source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}l
 
 ## do some general sanity checks
 	
@@ -46,11 +46,11 @@ do
 	## check pipelineName
 	pipelineIdx=$(pipelineNameToIndex ${RUN_DAMAR[${x}]})
 	## check is pipeline type and steps are proper
-	if ! $(isNumber) ${RUN_DAMAR[$((x+2))]}
+	if ! $(isNumber ${RUN_DAMAR[$((x+2))]})
 	then
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline from_step \"${RUN_DAMAR[$((x+2))]}\" must be a positive number!!")
 		exit 1
-	elif ! $(isNumber) ${RUN_DAMAR[$((x+3))]}
+	elif ! $(isNumber ${RUN_DAMAR[$((x+3))]})
 	then
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline to_step \"${RUN_DAMAR[$((x+3))]}\" must be a positive number!!")
 		exit 1	
@@ -62,7 +62,7 @@ do
 	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]}) > /dev/null ## check from 
 	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+3))]}) > /dev/null ## check to	
 	## check ID: must be a positive number 
-	if ! $(isNumber ${RUN_DAMAR[$((x+4))]} 
+	if ! $(isNumber ${RUN_DAMAR[$((x+4))]}) 
 	then
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline ID \"${RUN_DAMAR[$((x+4))]}\" must be a positive number!! ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]} ${RUN_DAMAR[$((x+3))]} ${RUN_DAMAR[$((x+4))]}.")
 		exit 1
