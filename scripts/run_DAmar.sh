@@ -41,7 +41,8 @@ then
 fi
 ## check individual pipeline for correctness
 ## TODO: check if all required programs and Variables are available and set properly
-for x in $(seq 0 5 ${#RUN_DAMAR[@]})
+x=0
+while [[ $x -lt ${#RUN_DAMAR[@]} ]]
 do
 	## check pipelineName
 	pipelineIdx=$(pipelineNameToIndex ${RUN_DAMAR[${x}]})
@@ -67,6 +68,7 @@ do
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline ID \"${RUN_DAMAR[$((x+4))]}\" must be a positive number!! ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]} ${RUN_DAMAR[$((x+3))]} ${RUN_DAMAR[$((x+4))]}.")
 		exit 1
 	fi
+	x=$((x+5))
 done
 
 runIDs=()
