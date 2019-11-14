@@ -9,7 +9,7 @@ pipelineStepIdx=$3
 pipelineRunID=$4
 
 echo "[INFO] createCommandPlan.sh: config: ${configFile} phase: ${pipelineTypeID} step: ${pipelineStepIdx} ID: ${pipelineRunID}"
-echo "[INFO] createCommandPlan.sh: cwd ${cwd}" 
+echo "[INFO] createCommandPlan.sh: cwd $(pwd)" 
 
 if [[ ! -f ${configFile} ]]
 then 

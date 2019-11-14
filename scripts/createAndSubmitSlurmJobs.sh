@@ -38,7 +38,7 @@ ensureAndEnterPipelineDir ${pipelineIdx}
 
 echo "[INFO] createAndSubmitSlurmJobs.sh: assembly config file - ${configFile}"
 echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineIdx ${pipelineIdx} step ${pipelineStepIdx} ID ${pipelineRunID}"
-echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - ${myCWD}"
+echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - $(pwd)"
 
 if [[ ${resumeIdx} -eq 0 ]]
 then
