@@ -12,7 +12,7 @@ fi
 
 configFile=$1
 pipelineTypeID=$2
-pipelineStepIdx=$(prependZero $3)
+pipelineStepIdx=$3
 pipelineRunID=$4
 
 if [[ ! -f ${configFile} ]]
