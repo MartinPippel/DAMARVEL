@@ -1063,6 +1063,7 @@ then
 		echo "echo \"QV of this genome ${PROJECT_ID}: \$QV\"" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
 		
 		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_06_QVqv_single_${RAW_DB}.${id}.version
+	fi
 fi
 
 exit 0
