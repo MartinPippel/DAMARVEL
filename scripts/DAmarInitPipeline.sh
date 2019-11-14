@@ -2,6 +2,8 @@
 
 #call: DAmarInitPipeline.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
 
+echo "[INFO] DAmarInitPipeline.sh - called with following $# args: $@"
+
 if [[ $# -ne 4 ]]
 then 
 	(>&2 echo "[ERROR] DAmarInitPipeline.sh: invalid number of arguments: $# Expected 4! ");
