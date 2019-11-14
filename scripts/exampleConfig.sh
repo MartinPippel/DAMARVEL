@@ -104,7 +104,12 @@ RAW_DACCORD_INDIR="dalign"
 
 RAW_REPAMSK_OUTDIR=repmask
 
-
+# FORMAT of RUN_DAMAR 5-tuple
+# 0 ... pipelineName
+# 1 ... pipelineTypeID 
+# 2 ... pipelinStepFrom
+# 3 ... pipelinStepTo
+# 4 ... pipelineRunID
 RUN_DAMAR=(init 1 0 2 1) #type-1 [PacBio LoFi Init] 						[0-2]: bam2fasta createDB createStats
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> phase 0 - data QC and statistics and format conversion <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
