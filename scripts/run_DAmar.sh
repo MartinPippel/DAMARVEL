@@ -75,7 +75,8 @@ runIDs=()
 realPathConfigFile=$(realpath "${configFile}")
 
 ## run the pipeline(s)
-for x in $(seq 0 5 ${#RUN_DAMAR[@]})
+x=0
+while [[ $x -lt ${#RUN_DAMAR[@]} ]]
 do
 	pipelineRunID=${RUN_DAMAR[$((x+4))]}
 	if [[ $ID -eq -1 || ${pipelineRunID} -eq ${ID} ]] && [[ " ${runIDs[@]} " =~ " ${pipelineRunID} " ]]
@@ -88,4 +89,5 @@ do
 		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${pipelineRunID}
 		runIDs+=${RUN_DAMAR[$((x+4))]}
 	fi
+	x=$((x+5))
 done
