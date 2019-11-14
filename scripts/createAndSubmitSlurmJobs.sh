@@ -1,5 +1,5 @@
 #!/bin/bash 
-# call ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${ID} [resumeIdx]
+# call ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${pipelineRunID} [resumeIdx]
 
 ## TODO: sanity checks of RUN_DAMAR pipeline: for now assume that createAndSubmitSlurmJobs is only called from itself and from run_DAmar.sh where all checks were done 
 
@@ -12,13 +12,16 @@ source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
 pipelineIdx=$2   ## pipeline index in RUN_DAMAR array
 pipelineName=${RUN_DAMAR[${pipelineIdx}]}
+echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineName: \"${pipelineName}\""
 pipelineType=${RUN_DAMAR[$((pipelineIdx+1))]}
+echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineType: \"${pipelineType}\""
 pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g. 01 - init, 02 - mito etc
+echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\""
 pipelineStepIdx=$(prependZero $3)
 TMP="${pipelineName^^}_TYPE"
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} $((${pipelineStepIdx}-1))"
 pipelineStepName=$(getStepName ${c} ${!TMP} $((${pipelineStepIdx}-1)))
-pipelineID=$4
+pipelineRunID=$4
 
 if [[ -n $5 ]]
 then 
@@ -32,7 +35,7 @@ DAmarRootDir=$(pwd)
 ensureAndEnterPipelineDir ${pipelineIdx}
 
 echo "[INFO] createAndSubmitSlurmJobs.sh: assembly config file - ${configFile}"
-echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineIDx ${pipelineIdx} step ${pipelineStepIdx} ID ${pipelineID}"
+echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineIdx ${pipelineIdx} step ${pipelineStepIdx} ID ${pipelineID}"
 echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - ${myCWD}"
 
 if [[ ${resumeIdx} -eq 0 ]]
@@ -46,20 +49,20 @@ then
 	fi 
 fi
 
-if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan 1> /dev/null 2>&1;
+if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 1> /dev/null 2>&1;
 then
-    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan")
+    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan")
     exit 1
 fi
 
-if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara 1> /dev/null 2>&1;
+if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara 1> /dev/null 2>&1;
 then
-    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara")
+    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara")
     exit 1
 fi
 
 ### get slurm running mode: parallel or sequential
-sType=$(getSlurmParaMode ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
+sType=$(getSlurmParaMode ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
 if [[ ${sType} != "sequential" && ${sType} != "parallel" ]]
 then
     (>&2 echo "[ERROR] createAndSubmitSlumJobs: unknown slurm type ${sType}. valid types: sequential, parallel")
@@ -71,14 +74,14 @@ fi
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### setup runtime conditions, time, memory, etc 
-	MEM=$(getSlurmParaMem ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
-	TIME=$(getSlurmParaTime ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
-	CORES=$(getSlurmParaCores ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
-	NTASKS_PER_NODE=$(getSlurmParaTasks ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
-	STEPSIZE=$(getSlurmParaStep ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
-	PARTITION=$(getSlurmParaPartition ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
+	MEM=$(getSlurmParaMem ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	TIME=$(getSlurmParaTime ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	CORES=$(getSlurmParaCores ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	NTASKS_PER_NODE=$(getSlurmParaTasks ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	STEPSIZE=$(getSlurmParaStep ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	PARTITION=$(getSlurmParaPartition ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
 	MEM_PER_CORE=$((${MEM}/${CORES}))
-	JOBS=$(wc -l ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan | awk '{print $1}')
+	JOBS=$(wc -l ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan | awk '{print $1}')
 	log_folder=log_${pipelineName}_${pipelineStepName}
 	mkdir -p ${log_folder}
 	first=1
@@ -89,8 +92,8 @@ then
 	    d=1
 	    while [[ $from -lt ${JOBS} ]]
 	    do
-	        file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.${d}
-	        sed -n ${from},${to}p ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan > ${file}.plan
+	        file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.${d}
+	        sed -n ${from},${to}p ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan > ${file}.plan
 	        jobs=$((${to}-${from}+1))
 	        ### create slurm submit file
 	        echo "#!/bin/bash
@@ -155,7 +158,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 	    done
 	else ## less then ${Slurm_MaxArrayCount} jobs 
 	    jobs=${JOBS}
-	    file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}
+	    file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}
 	    ### create slurm submit file
 	    if [[ ${sType} == "parallel" ]]
 	    then 
@@ -262,12 +265,12 @@ then
 	if [[ ${JOBS} -gt ${Slurm_MaxArrayCount} && ${sType} == "block" ]]
 	then
 		resumeIdx=1
-		file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.${resumeIdx}
+		file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
 	else
-		file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}
+		file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}
 	fi		
 else
-	file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.${resumeIdx}
+	file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
 fi
 
 retry=0
@@ -303,9 +306,9 @@ fi
 
 if [[ ${resumeIdx} -gt 0 ]]
 then 
-	if [[ -f ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.$((${resumeIdx}+1)).slurm ]]
+	if [[ -f ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.$((${resumeIdx}+1)).slurm ]]
 	then 
-	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${pipelineStepName}_${pipelineID} -o ${pipelineName}_${pipelineStepName}_${pipelineID}.out -e ${pipelineName}_${pipelineStepName}_${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${pipelineStepIdx} ${pipelineID} $((${resumeIdx}+1))"
+	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${pipelineStepName}_${pipelineRunID} -o ${pipelineName}_${pipelineStepName}_${pipelineRunID}.out -e ${pipelineName}_${pipelineStepName}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${pipelineStepIdx} ${pipelineRunID} $((${resumeIdx}+1))"
 		foundNext=1
 	fi	
 fi
@@ -318,15 +321,15 @@ cd ${DAmarRootDir}
 nextPipelineStep=$(getNextPipelineStep ${pipelineIdx} ${pipelineStepIdx})
 if $(isNumber nextPipelineStep)
 then
-	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineID} -o ${pipelineName}_${nextPipelineStep}_${pipelineID}.out -e ${pipelineName}_${nextPipelineStep}_${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineID}"
+	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${pipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${pipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineRunID}"
 	foundNext=1
 else
-	nextPipelineLineIdx=$(getNextPipelineIndex ${pipelineIdx} ${pipelineID})
+	nextPipelineLineIdx=$(getNextPipelineIndex ${pipelineIdx} ${pipelineRunID})
 	nextPipelineName=${RUN_DAMAR[${nextPipelineLineIdx}]}
 	nextPipelineStep=${RUN_DAMAR[$((nextPipelineLineIdx+2))]}
 	if $(isNumber nextPipelineLineIdx)
 	then
-		sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineID} -o ${nextPipelineName}_${nextPipelineStep}_${pipelineID}.out -e ${nextPipelineName}_${nextPipelineStep}_${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineID}"
+		sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineRunID}"
 		foundNext=1
 	fi
 fi 
@@ -334,5 +337,5 @@ fi
 if [[ ${foundNext} -eq 0 ]]
 then
 	# submit a dummy job that waits until the last real jobs sucessfully finished
-	sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${pipelineName}_final_step.${pipelineID}.out -e ${pipelineName}_final_step.${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineID ${configFile}\""     
+	sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${pipelineName}_final_step.${pipelineRunID}.out -e ${pipelineName}_final_step.${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineRunID ${configFile}\""     
 fi
