@@ -4,18 +4,22 @@
 ## TODO: sanity checks of RUN_DAMAR pipeline: for now assume that createAndSubmitSlurmJobs is only called from itself and from run_DAmar.sh where all checks were done 
 
 configFile=$1
-retrySubmit=3
+retrySubmit=${Slurm_NumSubmitRetry}
 
 source ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-pipelineIdx=$2
+pipelineIdx=$2   ## pipeline index in RUN_DAMAR array
 pipelineName=${RUN_DAMAR[${pipelineIdx}]}
 pipelineType=${RUN_DAMAR[$((pipelineIdx+1))]}
-pipelineIdx=$(pipelineNameToIndex ${pipelineName})
+pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g. 01 - init, 02 - mito etc
 pipelineStepIdx=$(prependZero $3)
+TMP="${pipelineName^^}_TYPE"
+echo "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} $((${pipelineStepIdx}-1))"
+pipelineStepName=$(getStepName ${c} ${!TMP} $((${pipelineStepIdx}-1)))
 pipelineID=$4
+
 if [[ -n $5 ]]
 then 
 	resumeIdx=$5
@@ -34,17 +38,13 @@ echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - ${myCWD}"
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### create current plan 
-	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineIdx} ${pipelineStepIdx} ${pipelineID}
+	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineID}
 	if [ $? -ne 0 ]
 	then 
     	(>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: createCommandPlan.sh failed some how. Stop here.")
     	exit 1      
 	fi 
 fi
-
-TMP="${pipelineName^^}_TYPE"
-echo "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} $((${pipelineStepIdx}-1))"
-pipelineStepName=$(getStepName ${c} ${!TMP} $((${pipelineStepIdx}-1)))
 
 if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan 1> /dev/null 2>&1;
 then
@@ -58,8 +58,7 @@ then
     exit 1
 fi
 
-### get job name 
-
+### get slurm running mode: parallel or sequential
 sType=$(getSlurmParaMode ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara)
 if [[ ${sType} != "sequential" && ${sType} != "parallel" ]]
 then
@@ -313,6 +312,8 @@ fi
 
 cd ${DAmarRootDir}
 
+### todo: verify next pipeline getters 
+
 # get next pipeline step, or get next pipeline, or nothing else to do !!!!  
 nextPipelineStep=$(getNextPipelineStep ${pipelineIdx} ${pipelineStepIdx})
 if $(isNumber nextPipelineStep)
@@ -320,12 +321,12 @@ then
 	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineID} -o ${pipelineName}_${nextPipelineStep}_${pipelineID}.out -e ${pipelineName}_${nextPipelineStep}_${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineID}"
 	foundNext=1
 else
-	nextPipelineIdx=$(getNextPipelineIndex ${pipelineIdx} ${pipelineID})
-	nextPipelineName=${RUN_DAMAR[${nextPipelineIdx}]}
-	nextPipelineStep=${RUN_DAMAR[$((nextPipelineIdx+2))]}
-	if $(isNumber nextPipelineIdx)
+	nextPipelineLineIdx=$(getNextPipelineIndex ${pipelineIdx} ${pipelineID})
+	nextPipelineName=${RUN_DAMAR[${nextPipelineLineIdx}]}
+	nextPipelineStep=${RUN_DAMAR[$((nextPipelineLineIdx+2))]}
+	if $(isNumber nextPipelineLineIdx)
 	then
-		sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineID} -o ${nextPipelineName}_${nextPipelineStep}_${pipelineID}.out -e ${nextPipelineName}_${nextPipelineStep}_${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineIdx} ${nextPipelineStep} ${pipelineID}"
+		sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineID} -o ${nextPipelineName}_${nextPipelineStep}_${pipelineID}.out -e ${nextPipelineName}_${nextPipelineStep}_${pipelineID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineID}"
 		foundNext=1
 	fi
 fi 

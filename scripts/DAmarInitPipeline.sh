@@ -1,10 +1,17 @@
 #!/bin/bash -e
 
-#call: DAmarInitPipeline.sh ${configFile} ${pipelineIdx} ${pipelineStep}
+#call: DAmarInitPipeline.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
+
+if [[ $# -ne 4 ]]
+then 
+	(>&2 echo "[ERROR] DAmarInitPipeline.sh: invalid number of arguments: $# Expected 4! ");
+   		exit 1
+fi
 
 configFile=$1
-pipelineIdx=$2
-pipelineStep=$(prependZero $3)
+pipelineTypeID=$2
+pipelineStepIdx=$(prependZero $3)
+pipelineRunID=$4
 
 if [[ ! -f ${configFile} ]]
 then 
@@ -17,10 +24,8 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 ### todo: how to handle more than slurm??? 
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-pipelineName=${RUN_DAMAR[${pipelineIdx}]}
-pipelineType=${RUN_DAMAR[$((pipelineIdx+1))]]}
-pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStep})
-pipelineID=${RUN_DAMAR[$((pipelineIdx+4))]}
+pipelineName=$(pipelineIDToName ${pipelineTypeID}]}
+pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
 
 function setFastpOptions()
 {
@@ -99,13 +104,13 @@ function setGenomeScopeOptions()
 #type-8 [10x - QV]   							[1-6]: 01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04_QVfreebayes, 05_QVbcftools, 06_QVqv
 
 #type-0 [10x - prepare] [1-3]: 01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck
-if [[ ${pipelineType} -eq 0 ]]
+if [[ ${pipelineTypeID} -eq 0 ]]
 then
 	### 01_longrangerBasic
-    if [[ ${pipelineStep} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -163,15 +168,15 @@ then
 	   		
 	   		slurmOpt="--jobmode=slurm_${SLURM_PARTITION} --maxjobs=1000 --jobinterval=500 --disable-ui --nopreflight"
 			echo "cd ${QC_OUTDIR} && ${LONGRANGER_PATH}/longranger basic --id=10x_${PROJECT_ID}_longrangerBasic --fastqs=${TENX_PATH} --sample=${PROJECT_ID} ${slurmOpt} && cd ${myCWD}"	   					 
-		fi > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+		fi > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
         
-        echo "longranger basic $(${LONGRANGER_PATH}/longranger basic --version | head -n1)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
-        setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara
+        echo "longranger basic $(${LONGRANGER_PATH}/longranger basic --version | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
+        setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara
     ## 02_longrangerToScaff10Xinput
-    elif [[ ${pipelineStep} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -187,23 +192,23 @@ then
    		## convert longranger single file (fastq.gz) into two separated R1 R2 files (compressed?) and add 10x-barcode to header 
     	## ? get rid of unrecognized barcode entries ?
        	echo "mkdir -p ${QC_OUTDIR}/scaff10x" > ${currentPhase}_${sID}_${sName}.plan
-       	echo "gunzip -c ${longrangerOut} | paste - - - - - - - - | awk '/ BX:Z:/{print \$1\"_\"substr(\$2,6,16)\" \"\$3\" \"\$4\" \"\$5\" \"\$6\"_\"substr(\$7,6,16)\" \"\$8\" \"\$9\" \"\$10}' | tee >(cut -f 1-4 -d \" \" | tr \" \" \"\\n\" > ${QC_OUTDIR}/scaff10x/reads-1.fq) | cut -f 5-8 -d \" \" | tr \" \" \"\\n\" > ${QC_OUTDIR}/scaff10x/reads-2.fq" >> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
-       	echo "$(awk --version | head -n1)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
-        setRunInfo ${SLURM_PARTITION} sequential 1 2048 $(getPartitionMaxTime ${SLURM_PARTITION}) -1 -1 > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara	
+       	echo "gunzip -c ${longrangerOut} | paste - - - - - - - - | awk '/ BX:Z:/{print \$1\"_\"substr(\$2,6,16)\" \"\$3\" \"\$4\" \"\$5\" \"\$6\"_\"substr(\$7,6,16)\" \"\$8\" \"\$9\" \"\$10}' | tee >(cut -f 1-4 -d \" \" | tr \" \" \"\\n\" > ${QC_OUTDIR}/scaff10x/reads-1.fq) | cut -f 5-8 -d \" \" | tr \" \" \"\\n\" > ${QC_OUTDIR}/scaff10x/reads-2.fq" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
+       	echo "$(awk --version | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
+        setRunInfo ${SLURM_PARTITION} sequential 1 2048 $(getPartitionMaxTime ${SLURM_PARTITION}) -1 -1 > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara	
 	## 03_bxcheck   
-	elif [[ ${pipelineStep} -eq 2 ]]
+	elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
 	    (>&2 echo "03_bxcheck not implemented yet!")
         exit 1
     fi
-elif [[ ${pipelineType} -eq 1 ]]
+elif [[ ${pipelineTypeID} -eq 1 ]]
 then 
 	#type-1 [PacBio LoFi Init] 						[1-3]: bam2fasta createDB createStats
 	### create sub-directory and link input files
-    if [[ ${pipelineStep} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -232,9 +237,9 @@ then
 				then
 					echo "ln -s -f -r ${x} ${DB_OUTDIR}/fasta"
 				fi
-			done > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
-			setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara
-			echo "$(ln --version  | head -n1)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
+			done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
+			setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara
+			echo "$(ln --version  | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
 		fi
 	
 		# check for zipped fasta files *fa.gz
@@ -254,10 +259,10 @@ then
 				if [[ -z ${bgzipSlurmPara} ]]
 				then
 					getSlurmRunParameter bgzipSlurmPara
-					echo "$(${CONDA_BASE_ENV} && bgzip --version  | head -n1 && conda deactivate)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
+					echo "$(${CONDA_BASE_ENV} && bgzip --version  | head -n1 && conda deactivate)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
 				else
 					getSlurmRunParameter defaultSlurmPara
-					echo "$(zcat --version  | head -n1)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
+					echo "$(zcat --version  | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
 				fi 
 				
 				for x in ${PACBIO_PATH}/*fa.gz
@@ -272,9 +277,9 @@ then
 							echo "zcat ${x} > ${DB_OUTDIR}/fasta/$(basename ${x%.fa.gz}).fasta"
 						fi
 					fi
-				 done > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+				 done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
 				 ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara							 
+	   			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara							 
 			fi			
 		fi
 		
@@ -302,7 +307,7 @@ then
 							echo -n " && pbindex ${x}"	
 						fi
 						echo -e " && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
-					done > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+					done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
 				else
 					(>&2 echo "[ERROR] createQCandStatsPlans.sh: PACBIO_TYPE is not set to LoFi!")
 					exit 1
@@ -312,15 +317,15 @@ then
 				exit 1
 			fi
 			
-			echo "$(${CONDA_BASE_ENV} && bam2fasta --version && conda deactivate)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
+			echo "$(${CONDA_BASE_ENV} && bam2fasta --version && conda deactivate)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
 			## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   		getSlurmRunParameter ${sName}
-			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara			
+			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara			
 		fi        
-	elif [[ ${pipelineStep} -eq 2 ]]
+	elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -331,29 +336,29 @@ then
         mkdir -p ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/run 
                
         ## create database with all reads for coverage estimation
-		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
-		echo "${MARVEL_PATH}/bin/FA2db -x 0  ${DB_OUTDIR}/all/${PROJECT_ID}_M_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" >> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
+		echo "${MARVEL_PATH}/bin/FA2db -x 0  ${DB_OUTDIR}/all/${PROJECT_ID}_M_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
 		
 		## create database for each bam file: for initial qc
 		for x in ${DB_OUTDIR}/fasta/*fasta
 		do
 			echo "${MARVEL_PATH}/bin/FA2db -v ${DB_OUTDIR}/single/$(basename ${x%.fasta})_M ${x}"	
-		done >> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+		done >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
         
     	## create actual db files for assembly 
-        echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
-        echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi && cd ${myCWD}" >> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+        echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
+        echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
 	
-		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
-        echo "DAZZLER fasta2DB $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version
+		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
+        echo "DAZZLER fasta2DB $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version
 		
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${sName}
-		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara
-	elif [[ ${pipelineStep} -eq 3 ]]
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara
+	elif [[ ${pipelineStepIdx} -eq 3 ]]
     then
         ### clean up plans 
-        for x in $(ls ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -380,7 +385,7 @@ then
     			fi
         		count=$((count+1))	
         	fi 
-    	done > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
     	
     	x=${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL.db
     	if [[ -f ${x} ]]
@@ -406,20 +411,20 @@ then
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
 	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') >> ${DB_OUTDIR}/stats/${PROJECT_ID}_allPacBioLoFi.stats"		
         	done        			
-    	fi>> ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.plan
+    	fi>> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.plan
     	
-    	echo "MARVEL DBstats $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.version        
+    	echo "MARVEL DBstats $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.version        
 		
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${sName}
-		setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStep}_${pipelineStepName}.${pipelineID}.slurmPara
+		setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara
     	
     fi        
 #type-1 [10x - de novo] [1-1]: 01_supernova	
-elif [[ ${pipelineType} -eq 1 ]]
+elif [[ ${pipelineTypeID} -eq 1 ]]
 then 
 	### 01_supernova
-    if [[ ${pipelineStep} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
         for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -484,16 +489,12 @@ then
 		fi > qc_01_supernova_single_${RAW_DB%.db}.${id}.plan
         
         echo "$(${SUPERNOVA_PATH}/supernova run --version | head -n1)" > qc_01_supernova_single_${RAW_DB%.db}.${id}.version
-	else
-        (>&2 echo "step ${pipelineStep} in pipelineType ${pipelineType} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${pipelineType}]}")
-        exit 1            
     fi		
 #type-2 [10x|HiC - kmer-Gsize estimate] [1-1]: 01_genomescope
-elif [[ ${pipelineType} -eq 2 ]]
+elif [[ ${pipelineTypeID} -eq 2 ]]
 then  
 	### 01_genomescope
-    if [[ ${pipelineStep} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
         for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -523,10 +524,10 @@ then
 	fi
 
 ## mash contamination check
-elif [[ ${pipelineType} -eq 3 ]]
+elif [[ ${pipelineTypeID} -eq 3 ]]
 then 
     ### 01_mashPrepare
-    if [[ ${pipelineStep} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
         for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -665,7 +666,7 @@ then
     		mkdir -p hic	
     	fi 
     ### 02_mashSketch
-    elif [[ ${pipelineStep} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
         for x in $(ls qc_02_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -706,7 +707,7 @@ then
     	
     	echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_02_mashSketch_block_${RAW_DB%.db}.${id}.version
     ### 03_mashCombine
-    elif [[ ${pipelineStep} -eq 3 ]]
+    elif [[ ${pipelineStepIdx} -eq 3 ]]
     then
     	### clean up plans 
         for x in $(ls qc_03_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -733,7 +734,7 @@ then
         echo "${CONDA_BASE_ENV} && mash dist -t ${PROJECT_ID}.msh ${PROJECT_ID}.msh > ${PROJECT_ID}.tbl && conda deactivate" >> qc_03_mashCombine_single_${RAW_DB%.db}.${id}.plan
         echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_03_mashCombine_single_${RAW_DB%.db}.${id}.version
 	### 04_mashPlot
-    elif [[ ${pipelineStep} -eq 4 ]]
+    elif [[ ${pipelineStepIdx} -eq 4 ]]
     then
     	### clean up plans 
         for x in $(ls qc_04_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -745,7 +746,7 @@ then
     	echo "Rscript ${MARVEL_PATH}/scripts/mashPlot.R ${PROJECT_ID}" >> qc_04_mashPlot_single_${RAW_DB%.db}.${id}.plan
     	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > qc_04_mashPlot_single_${RAW_DB%.db}.${id}.version
     ### 05_mashScreen
-    elif [[ ${pipelineStep} -eq 5 ]]
+    elif [[ ${pipelineStepIdx} -eq 5 ]]
     then
     	### clean up plans 
         for x in $(ls qc_05_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -779,15 +780,11 @@ then
         	fi
 		done > qc_05_mashScreen_block_${RAW_DB%.db}.${id}.plan   
 		echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_05_mashScreen_block_${RAW_DB%.db}.${id}.version     
-    else
-        (>&2 echo "step ${pipelineStep} in pipelineType ${pipelineType} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${pipelineType}]}")
-        exit 1            
     fi  
-elif [[ ${pipelineType} -eq 4 ]]
+elif [[ ${pipelineTypeID} -eq 4 ]]
 then 
 	### 01_QVprepareInput
-	if [[ ${pipelineStep} -eq 1 ]]
+	if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
         for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -807,7 +804,7 @@ then
 		# get rid of any colon's, as those will cause a crash of longranger		
 		echo "sed -e \"s/:/-/g\" ${QV_REFFASTA} > ${QV_OUTDIR}_${QV_RUNID}/ref/$(basename ${QV_REFFASTA})" >> qc_01_QVprepareInput_single_${RAW_DB}.${id}.plan		                
     ### 02_QVlongrangerAlign
-    elif [[ ${pipelineStep} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
         for x in $(ls qc_02_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -855,7 +852,7 @@ then
         echo "$(${LONGRANGER_PATH}/longranger mkref --version)" > qc_02_QVlongrangerAlign_single_${RAW_DB}.${id}.version
         echo "$(${LONGRANGER_PATH}/longranger align --version)" >> qc_02_QVlongrangerAlign_single_${RAW_DB}.${id}.version
     ### 03_QVcoverage
-    elif [[ ${pipelineStep} -eq 3 ]]
+    elif [[ ${pipelineStepIdx} -eq 3 ]]
     then
         ### clean up plans 
         for x in $(ls qc_03_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -903,7 +900,7 @@ then
    		echo "samtools view -F 0x100 -u $bam | bedtools genomecov -ibam - -split > ${QV_OUTDIR}_${QV_RUNID}/aligned.genomecov" > qc_03_QVcoverage_single_${RAW_DB}.${id}.plan
 		echo "$(samtools --version | head -n2 | tr "\n" "-" && echo)" > qc_03_QVcoverage_single_${RAW_DB}.${id}.version        
     ### 04_QVfreebayes 
-    elif [[ ${pipelineStep} -eq 4 ]]
+    elif [[ ${pipelineStepIdx} -eq 4 ]]
     then
         ### clean up plans 
         for x in $(ls qc_04_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -953,7 +950,7 @@ then
 		echo "freebayes $(${CONDA_BASE_ENV} && freebayes --version && conda deactivate)" > qc_04_QVfreebayes_block_${RAW_DB}.${id}.version
 		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> qc_04_QVfreebayes_block_${RAW_DB}.${id}.version
     ### 05_QVbcftools 
-    elif [[ ${pipelineStep} -eq 5 ]]
+    elif [[ ${pipelineStepIdx} -eq 5 ]]
     then
         ### clean up plans 
         for x in $(ls qc_05_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -991,7 +988,7 @@ then
       	echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_05_QVbcftools_single_${RAW_DB}.${id}.version
         
     ### 06_QVqv
-    elif [[ ${pipelineStep} -eq 6 ]]
+    elif [[ ${pipelineStepIdx} -eq 6 ]]
     then
         ### clean up plans 
         for x in $(ls qc_06_*_*_${RAW_DB}.${id}.* 2> /dev/null)
@@ -1064,16 +1061,6 @@ then
 		echo "echo \"QV of this genome ${PROJECT_ID}: \$QV\"" >> qc_06_QVqv_single_${RAW_DB}.${id}.plan
 		
 		echo "bcftools $(${CONDA_BASE_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > qc_06_QVqv_single_${RAW_DB}.${id}.version
-    else
-        (>&2 echo "step ${pipelineStep} in pipelineType ${pipelineType} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${pipelineType}]}")
-        exit 1            
-    fi
-else
-    (>&2 echo "unknown pipelineType ${pipelineType}")
-    (>&2 echo "supported types")
-    x=0; while [ $x -lt ${#myTypes[*]} ]; do (>&2 echo "${myTypes[${x}]}"); done 
-    exit 1
 fi
 
 exit 0

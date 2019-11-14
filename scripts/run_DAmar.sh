@@ -45,7 +45,7 @@ x=0
 while [[ $x -lt ${#RUN_DAMAR[@]} ]]
 do
 	## check pipelineName
-	pipelineIdx=$(pipelineNameToIndex ${RUN_DAMAR[${x}]})
+	pipelineIdx=$(pipelineNameToID ${RUN_DAMAR[${x}]})
 	## check is pipeline type and steps are proper
 	if ! $(isNumber ${RUN_DAMAR[$((x+2))]})
 	then
@@ -80,10 +80,10 @@ do
 	if [[ $ID -eq -1 || ${RUN_DAMAR[$((x+4))]} -eq ${ID} ]] && [[ " ${runIDs[@]} " =~ " ${RUN_DAMAR[$((x+4))]} " ]]
 	then
 		
-		currentPipelineIdx=$x
-		currentPipelineStep=${RUN_DAMAR[$((x+2))]}
+		pipelineIdx=$x
+		pipelineStep=${RUN_DAMAR[$((x+2))]}
 		
-		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${currentPipelineIdx} ${currentPipelineStep} ${Id}
+		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${ID}
 		runIDs+=${RUN_DAMAR[$((x+4))]}
 	fi
 done
