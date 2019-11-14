@@ -26,7 +26,7 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 ### todo: how to handle more than slurm??? 
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-pipelineName=$(pipelineIDToName ${pipelineTypeID}]}
+pipelineName=$(pipelineIDToName ${pipelineTypeID})
 pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
 
 function setFastpOptions()
