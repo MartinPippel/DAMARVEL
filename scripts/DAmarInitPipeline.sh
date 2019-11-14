@@ -11,6 +11,7 @@ then
 fi
 
 configFile=$1
+pipelineName="init"
 pipelineTypeID=$2
 pipelineStepIdx=$3
 pipelineRunID=$4
@@ -26,11 +27,9 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 ### todo: how to handle more than slurm??? 
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-pipelineName=$(pipelineIDToName ${pipelineTypeID})
-echo "[DEBUG] DAmarInitPipeline: pipelineName ${pipelineName}"
 echo -n "[DEBUG] DAmarInitPipeline: getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx}"
 pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx})
-echo -n "  --> ${pipelineStepName}"
+echo -e "  --> ${pipelineStepName}"
 
 function setFastpOptions()
 {
