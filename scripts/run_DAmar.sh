@@ -1,6 +1,10 @@
 #!/bin/bash 
 
 configFile=$1
+
+source ${configFile}
+source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
+
 ID="-1" ## by default run all IDs
 if [[ "x$2" != "x" && $(isNumber $2) ]]
 then
@@ -12,9 +16,6 @@ then
     (>&2 echo "[ERROR] DAmar_run.sh: cannot access config file ${configFile}")
     exit 1
 fi
-
-source ${configFile}
-source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 
 ## do some general sanity checks
 	
