@@ -83,6 +83,7 @@ do
 		pipelineIdx=$x
 		pipelineStep=${RUN_DAMAR[$((x+2))]}
 		
+		echo "[DEBUG] run_DAmar.sh: call ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${ID}"
 		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${ID}
 		runIDs+=${RUN_DAMAR[$((x+4))]}
 	fi
