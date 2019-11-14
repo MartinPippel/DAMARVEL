@@ -17,8 +17,8 @@ pipelineName=${RUN_DAMAR[${pipelineIdx}]}
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineName: \"${pipelineName}\""
 pipelineType=${RUN_DAMAR[$((pipelineIdx+1))]}
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineType: \"${pipelineType}\""
-pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g. 01 - init, 02 - mito etc
-echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\""
+#pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g. 01 - init, 02 - mito etc
+#echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\""
 pipelineStepIdx=$(prependZero $3)
 TMP="${pipelineName^^}_TYPE"
 echo -n "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} ${pipelineStepIdx}"
@@ -38,14 +38,14 @@ DAmarRootDir=$(pwd)
 ensureAndEnterPipelineDir ${pipelineIdx}
 
 echo "[INFO] createAndSubmitSlurmJobs.sh: assembly config file - ${configFile}"
-echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineIdx ${pipelineIdx} step ${pipelineStepIdx} ID ${pipelineRunID}"
+echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineType ${pipelineType} step ${pipelineStepIdx} ID ${pipelineRunID}"
 echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - $(pwd)"
 
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### create current plan 
-	echo "[DEBUG] call ${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
-	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}
+	echo "[DEBUG] call ${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineType} ${pipelineStepIdx} ${pipelineRunID}"
+	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineType} ${pipelineStepIdx} ${pipelineRunID}
 	if [ $? -ne 0 ]
 	then 
     	(>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: createCommandPlan.sh failed some how. Stop here.")
