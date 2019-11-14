@@ -27,7 +27,7 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
 pipelineName=$(pipelineIDToName ${pipelineTypeID})
-pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
+pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx})
 
 function setFastpOptions()
 {
