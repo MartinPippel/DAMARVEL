@@ -2,6 +2,7 @@
 
 # call should be: createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdxIdx} ${pipelineRunID}
 
+echo "[DEBUG] createCommandPlan.sh - called with following args: $#"
 configFile=$1
 pipelineTypeID=$2
 pipelineStepIdx=$3

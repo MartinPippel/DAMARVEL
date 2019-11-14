@@ -37,13 +37,13 @@ DAmarRootDir=$(pwd)
 ensureAndEnterPipelineDir ${pipelineIdx}
 
 echo "[INFO] createAndSubmitSlurmJobs.sh: assembly config file - ${configFile}"
-echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineIdx ${pipelineIdx} step ${pipelineStepIdx} ID ${pipelineID}"
+echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineIdx ${pipelineIdx} step ${pipelineStepIdx} ID ${pipelineRunID}"
 echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - ${myCWD}"
 
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### create current plan 
-	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineID}
+	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}
 	if [ $? -ne 0 ]
 	then 
     	(>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: createCommandPlan.sh failed some how. Stop here.")
