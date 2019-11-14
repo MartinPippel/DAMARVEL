@@ -3,6 +3,8 @@
 
 ## TODO: sanity checks of RUN_DAMAR pipeline: for now assume that createAndSubmitSlurmJobs is only called from itself and from run_DAmar.sh where all checks were done 
 
+echo "[DEBUG] createAndSubmitSlurmJobs.sh: call arguments $@"
+
 configFile=$1
 retrySubmit=${Slurm_NumSubmitRetry}
 
