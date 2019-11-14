@@ -17,6 +17,8 @@ then
     exit 1
 fi
 
+echo "[INFO] run_DAmar.sh - config: $1 ID: $2"
+
 ## do some general sanity checks
 	
 if [[ -z "${PROJECT_ID}" ]]
