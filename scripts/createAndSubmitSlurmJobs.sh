@@ -21,8 +21,9 @@ pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\""
 pipelineStepIdx=$(prependZero $3)
 TMP="${pipelineName^^}_TYPE"
-echo "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} ${pipelineStepIdx}"
+echo -n "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} ${pipelineStepIdx}"
 pipelineStepName=$(getStepName ${pipelineName} ${!TMP} ${pipelineStepIdx})
+echo -e " -> ${pipelineStepName}"
 pipelineRunID=$4
 
 if [[ -n $5 ]]
@@ -43,6 +44,7 @@ echo "[INFO] createAndSubmitSlurmJobs.sh: working dir - $(pwd)"
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### create current plan 
+	echo "[DEBUG] call ${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
 	${SUBMIT_SCRIPTS_PATH}/createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}
 	if [ $? -ne 0 ]
 	then 
