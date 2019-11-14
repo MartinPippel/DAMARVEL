@@ -22,7 +22,7 @@ echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\"
 pipelineStepIdx=$(prependZero $3)
 TMP="${pipelineName^^}_TYPE"
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName ${pipelineName} ${!TMP} $((${pipelineStepIdx}-1))"
-pipelineStepName=$(getStepName ${c} ${!TMP} $((${pipelineStepIdx}-1)))
+pipelineStepName=$(getStepName ${pipelineName} ${!TMP} $((${pipelineStepIdx}-1)))
 pipelineRunID=$4
 
 if [[ -n $5 ]]
