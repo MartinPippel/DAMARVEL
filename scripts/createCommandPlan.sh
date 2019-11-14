@@ -18,7 +18,7 @@ fi
 
 source ${configFile}
 
-local cmd=""
+cmd=""
 
 if [[ ${pipelineTypeID} -eq 0 ]]
 then	 
