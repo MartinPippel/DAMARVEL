@@ -82,7 +82,7 @@ x=0
 while [[ $x -lt ${#RUN_DAMAR[@]} ]]
 do
 	pipelineRunID=${RUN_DAMAR[$((x+4))]}
-	if [[ $ID -eq -1 || ${pipelineRunID} -eq ${ID} ]] && [[ " ${runIDs[@]} " =~ " ${pipelineRunID} " ]]
+	if [[ $ID -eq -1 || ${pipelineRunID} -eq ${ID} ]] && ! [[ " ${runIDs[@]} " =~ " ${pipelineRunID} " ]]
 	then
 		
 		pipelineIdx=$x
@@ -90,7 +90,7 @@ do
 		
 		echo "[DEBUG] run_DAmar.sh: call ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${ID}"
 		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${pipelineRunID}
-		runIDs+=${RUN_DAMAR[$((x+4))]}
+		runIDs+=${pipelineRunID}
 	fi
 	x=$((x+5))
 done
