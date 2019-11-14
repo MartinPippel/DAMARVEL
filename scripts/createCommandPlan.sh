@@ -3,13 +3,14 @@
 # call should be: createCommandPlan.sh ${configFile} ${pipelineTypeID} ${pipelineType} ${pipelineStepIdxIdx} ${pipelineRunID}
 
 echo "[DEBUG] createCommandPlan.sh - called with following $# args: $@"
+
 configFile=$1
 pipelineTypeID=$2
 pipelineType=$3
 pipelineStepIdx=$4
 pipelineRunID=$5
 
-echo "[INFO] createCommandPlan.sh: config: ${configFile} pipelineType: ${pipelineType} pipelineTypeID: ${pipelineTypeID} step: ${pipelineStepIdx} ID: ${pipelineRunID}"
+echo "[INFO] createCommandPlan.sh: config: ${configFile} pipelineTypeID: ${pipelineTypeID} pipelineType: ${pipelineType} step: ${pipelineStepIdx} ID: ${pipelineRunID}"
 echo "[INFO] createCommandPlan.sh: cwd $(pwd)" 
 
 if [[ ! -f ${configFile} ]]
