@@ -6,11 +6,12 @@
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: call arguments $@"
 
 configFile=$1
-retrySubmit=${Slurm_NumSubmitRetry}
 
 source ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
+
+retrySubmit=${Slurm_NumSubmitRetry}
 
 pipelineIdx=$2   ## pipeline index in RUN_DAMAR array
 pipelineName=${RUN_DAMAR[${pipelineIdx}]}
