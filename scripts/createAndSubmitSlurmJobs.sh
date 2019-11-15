@@ -354,6 +354,7 @@ fi
 
 if [[ ${foundNext} -eq 0 ]]
 then
+	echo "[DEBUG] createAndSubmitSlurmJobs.sh - sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${pipelineName}_final_step.${pipelineRunID}.out -e ${pipelineName}_final_step.${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineRunID ${configFile}\"""
 	# submit a dummy job that waits until the last real jobs sucessfully finished
 	sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${pipelineName}_final_step.${pipelineRunID}.out -e ${pipelineName}_final_step.${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineRunID ${configFile}\""     
 fi
