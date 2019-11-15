@@ -208,7 +208,7 @@ elif [[ ${pipelineTypeID} -eq 1 ]]
 then 
 	#type-1 [PacBio LoFi Init] 						[1-3]: bam2fasta createDB createStats
 	### create sub-directory and link input files
-    if [[ ${pipelineStepIdx} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 0 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
@@ -325,7 +325,7 @@ then
 	   		getSlurmRunParameter ${sName}
 			setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara			
 		fi        
-	elif [[ ${pipelineStepIdx} -eq 2 ]]
+	elif [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
@@ -358,7 +358,7 @@ then
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${sName}
 		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.slurmPara
-	elif [[ ${pipelineStepIdx} -eq 3 ]]
+	elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineID}.* 2> /dev/null)
