@@ -287,7 +287,14 @@ do
 		echo "[INFO] createAndSubmitSlurmJobs: try to restart job ${file}.slurm ${retry}/${retrySubmit} - wait $((${retry}*${wait})) seconds"
 		sleep $((${retry}*${wait}))
 	fi
-	TMPRET=$(sbatch ${file}.slurm) && isNumber ${TMPRET##* } || TMPRET=-1            		
+	echo "[INFO] createAndSubmitSlurmJobs: run: sbatch ${file}.slurm"
+	TMPRET=$(sbatch ${file}.slurm) 
+	echo "[INFO] createAndSubmitSlurmJobs: ${TMPRET}"
+	if ! $(isNumber ${TMPRET##* })
+	then
+		echo "[WARNING] createAndSubmitSlurmJobs: job submission failed" 
+		TMPRET=-1
+	fi	
 	retry=$((${retry}+1))
 done
 
@@ -313,7 +320,7 @@ if [[ ${resumeIdx} -gt 0 ]]
 then 
 	if [[ -f ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.$((${resumeIdx}+1)).slurm ]]
 	then 
-	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${pipelineStepName}_${pipelineRunID} -o ${pipelineName}_${pipelineStepName}_${pipelineRunID}.out -e ${pipelineName}_${pipelineStepName}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${pipelineStepIdx} ${pipelineRunID} $((${resumeIdx}+1))"
+		sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${pipelineStepName}_${pipelineRunID} -o ${pipelineName}_${pipelineStepName}_${pipelineRunID}.out -e ${pipelineName}_${pipelineStepName}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${pipelineStepIdx} ${pipelineRunID} $((${resumeIdx}+1))"
 		foundNext=1
 	fi	
 fi
