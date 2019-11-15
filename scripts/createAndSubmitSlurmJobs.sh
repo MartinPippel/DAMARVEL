@@ -106,8 +106,8 @@ then
 #SBATCH -a 1-${jobs}${STEPSIZE}
 #SBATCH -c ${CORES} # Number of cores 
 #SBATCH -n 1 # number of nodes
-#SBATCH -o ${log_folder}/${pipelineName}_${pipelineStepIdx}_${d}_%A_%a.out # Standard output 
-#SBATCH -e ${log_folder}/${pipelineName}_${pipelineStepIdx}_${d}_%A_%a.err # Standard error
+#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_${d}_%A_%a.out # Standard output 
+#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_${d}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
@@ -172,8 +172,8 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 #SBATCH -a 1-${jobs}${STEPSIZE}
 #SBATCH -c ${CORES} # Number of cores 
 #SBATCH -n 1 # number of nodes
-#SBATCH -o ${log_folder}/${pipelineName}_${pipelineStepIdx}_%A_%a.out # Standard output
-#SBATCH -e ${log_folder}/${pipelineName}_${pipelineStepIdx}_%A_%a.err # Standard error
+#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A_%a.out # Standard output
+#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
@@ -223,8 +223,8 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 #SBATCH -p ${PARTITION}
 #SBATCH -c ${CORES} # Number of cores
 #SBATCH -n 1 # number of nodes
-#SBATCH -o ${log_folder}/${pipelineName}_${pipelineStepIdx}_%A.out # Standard output
-#SBATCH -e ${log_folder}/${pipelineName}_${pipelineStepIdx}_%A.err # Standard error
+#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A.out # Standard output
+#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
@@ -284,7 +284,7 @@ while [[ "${TMPRET}" == "-1" && ${retry} -lt ${retrySubmit} ]]
 do
 	if [[ ${retry} -gt 0 ]]
 	then
-		echo "try to restart job ${file}.slurm ${retry}/${retrySubmit} - wait $((${retry}*${wait})) seconds"
+		echo "[INFO] createAndSubmitSlurmJobs: try to restart job ${file}.slurm ${retry}/${retrySubmit} - wait $((${retry}*${wait})) seconds"
 		sleep $((${retry}*${wait}))
 	fi
 	TMPRET=$(sbatch ${file}.slurm) && isNumber ${TMPRET##* } || TMPRET=-1            		
@@ -293,13 +293,14 @@ done
 
 if [[ "${TMPRET}" == "-1" ]]
 then
-	(>&2 echo "Unable to submit job ${file}.slurm. Stop here.")
+	(>&2 echo "[ERROR] createAndSubmitSlurmJobs - Unable to submit job ${file}.slurm. Stop here.")
+	(>&2 echo "[DEBUG] createAndSubmitSlurmJobs - DAmarRootDir: ${DAmarRootDir}")
+	(>&2 echo "[DEBUG] createAndSubmitSlurmJobs - cwd: $(pwd)")
 	exit 1
 fi
-echo "submit ${file}.slurm ${TMPRET##* }"
+echo "[INFO] createAndSubmitSlurmJobs submit ${file}.slurm ${TMPRET##* }"
 RET="${TMPRET##* }"
 
- 
 foundNext=0 
 ### add if account is necessary
 appAccount=""
