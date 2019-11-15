@@ -333,7 +333,7 @@ echo -n "[DEBUG] createAndSubmitSlurmJobs.sh - find next Pipeline step getNextPi
 # get next pipeline step, or get next pipeline, or nothing else to do !!!!  
 nextPipelineStep=$(getNextPipelineStep ${pipelineIdx} ${pipelineStepIdx})
 echo -e " -> ${nextPipelineStep}"
-if $(isNumber nextPipelineStep)
+if $(isNumber ${nextPipelineStep})
 then
 	echo "sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${pipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${pipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineRunID}""
 	sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${pipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${pipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineRunID}"
@@ -344,7 +344,7 @@ else
 	echo -e " -> ${nextPipelineLineIdx}"
 	nextPipelineName=${RUN_DAMAR[${nextPipelineLineIdx}]}
 	nextPipelineStep=${RUN_DAMAR[$((nextPipelineLineIdx+2))]}
-	if $(isNumber nextPipelineLineIdx)
+	if $(isNumber ${nextPipelineLineIdx})
 	then
 		echo "[DEBUG] createAndSubmitSlurmJobs.sh - sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineRunID}""
 		sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineRunID}"
