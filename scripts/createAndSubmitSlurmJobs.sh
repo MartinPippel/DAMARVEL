@@ -21,8 +21,8 @@ echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineType: \"${pipelineType}\""
 pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g. 01 - init, 02 - mito etc
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\""
 pipelineStepIdx=$(prependZero $3)
-pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
-echo -e "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName \"${pipelineName}\" \"${pipelineStepIdx}\"  -> ${pipelineStepName}"
+pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx})
+echo -e "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName \"${pipelineName}\" \"${pipelineType}\" \"${pipelineStepIdx}\"  -> ${pipelineStepName}"
 pipelineRunID=$4
 
 if [[ -n $5 ]]

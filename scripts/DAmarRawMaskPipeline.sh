@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-#call: DAmarRawMaskPipeline.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
+#call: DAmarRawMaskPipeline.sh ${configFile} ${pipelineType} ${pipelineStepIdx} ${pipelineRunID}"
 
 echo "[INFO] DAmarRawMaskPipeline.sh - called with following $# args: $@"
 
@@ -12,7 +12,7 @@ fi
 
 configFile=$1
 pipelineName="rmask"
-pipelineTypeID=$2
+pipelineType=$2
 pipelineStepIdx=$3
 pipelineRunID=$4
 
@@ -27,8 +27,8 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 ### todo: how to handle more than slurm??? 
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
-echo -e "[DEBUG] DAmarRawMaskPipeline: getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx} --> ${pipelineStepName}"
+pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx})
+echo -e "[DEBUG] DAmarRawMaskPipeline: getStepName \"${pipelineName}\" \"${pipelineType}\" \"${pipelineStepIdx}\" --> ${pipelineStepName}"
 
 function setDBdustOptions()
 {
@@ -251,7 +251,7 @@ else
 fi
 
 # type_0 - stepsp[1-14}: 01_createSubdir, 02_DBdust, 03_Catrack, 04_datander, 05_TANmask, 06_Catrack, 07_daligner, 08_LAmerge, 09_LArepeat, 10_TKmerge, 11-daligner, 12-LAmerge, 13-LArepeat, 14-TKmerge
-if [[ ${pipelineTypeID} -eq 0 ]]
+if [[ ${pipelineType} -eq 0 ]]
 then
 	if [[ ${pipelineStepIdx} -eq 0 ]]
     then

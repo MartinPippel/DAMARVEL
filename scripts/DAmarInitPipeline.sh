@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-#call: DAmarInitPipeline.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
+#call: DAmarInitPipeline.sh ${configFile} ${pipelineType} ${pipelineStepIdx} ${pipelineRunID}"
 
 echo "[INFO] DAmarInitPipeline.sh - called with following $# args: $@"
 
@@ -12,7 +12,7 @@ fi
 
 configFile=$1
 pipelineName="init"
-pipelineTypeID=$2
+pipelineType=$2
 pipelineStepIdx=$3
 pipelineRunID=$4
 
@@ -27,8 +27,8 @@ source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
 ### todo: how to handle more than slurm??? 
 source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
-echo -e "[DEBUG] DAmarInitPipeline: getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx} --> ${pipelineStepName}"
+pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx})
+echo -e "[DEBUG] DAmarInitPipeline: getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx} --> ${pipelineStepName}"
 
 function setFastpOptions()
 {
@@ -143,7 +143,7 @@ function setCCSOptions()
 #type-8 [10x - QV]   							[1-6]: 01_QVprepareInput, 02_QVlongrangerAlign, 03_QVcoverage, 04_QVfreebayes, 05_QVbcftools, 06_QVqv
 
 #type-0 [10x - prepare] [1-3]: 01_longrangerBasic, 02_longrangerToScaff10Xinput, 03_bxcheck
-if [[ ${pipelineTypeID} -eq 0 ]]
+if [[ ${pipelineType} -eq 0 ]]
 then
 	### 01_longrangerBasic
     if [[ ${pipelineStepIdx} -eq 1 ]]
@@ -240,7 +240,7 @@ then
 	    (>&2 echo "03_bxcheck not implemented yet!")
         exit 1
     fi
-elif [[ ${pipelineTypeID} -eq 1 ]]
+elif [[ ${pipelineType} -eq 1 ]]
 then 
 	#type-1 [PacBio LoFi Init] 						[1-3]: bam2fasta createDB createStats
 	### create sub-directory and link input files
@@ -464,7 +464,7 @@ then
 	   	getSlurmRunParameter ${pipelineStepName}
 		setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara    	
     fi    
-elif [[ ${pipelineTypeID} -eq 2 ]] #type-2 [PacBio HiFI Init] 						[1-5]: ccs samtoolsMerge bam2fasta createDB createStats
+elif [[ ${pipelineType} -eq 2 ]] #type-2 [PacBio HiFI Init] 						[1-5]: ccs samtoolsMerge bam2fasta createDB createStats
 then 
 	### create sub-directory and link input files
     if [[ ${pipelineStepIdx} -eq 0 ]]
@@ -528,7 +528,7 @@ then
 			do
 				if [[ ! -f pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam ]]
 				then 
-					(>&2 echo "[ERROR] createQCandStatsPlans.sh: pipelineTypeID: ${pipelineTypeID} pipelineStepIdx: ${pipelineStepIdx} Could not find ccs bam file: pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam!")
+					(>&2 echo "[ERROR] createQCandStatsPlans.sh: pipelineType: ${pipelineType} pipelineStepIdx: ${pipelineStepIdx} Could not find ccs bam file: pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam!")
 					exit 1
 				fi
 				echo -n " pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam"	
@@ -682,7 +682,7 @@ then
 	   	getSlurmRunParameter ${pipelineStepName}
 		setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara    	
     fi    
-elif [[ ${pipelineTypeID} -eq 3 ]] #type-3 [HiC - init]							[1-1]: createStats
+elif [[ ${pipelineType} -eq 3 ]] #type-3 [HiC - init]							[1-1]: createStats
 then 
 	if [[ ${pipelineStepIdx} -eq 1 ]]
     then
@@ -693,7 +693,7 @@ then
         done
 	fi
 
-elif [[ ${pipelineTypeID} -eq 4 ]] #type-4 [Bionano - init]						[1-1]: createStats???
+elif [[ ${pipelineType} -eq 4 ]] #type-4 [Bionano - init]						[1-1]: createStats???
 then	
 	if [[ ${pipelineStepIdx} -eq 1 ]]
     then
@@ -703,7 +703,7 @@ then
             rm $x
         done
 	fi
-elif [[ ${pipelineTypeID} -eq 5 ]] #type-5 [10x - de novo] 						[1-1]: 01_supernova
+elif [[ ${pipelineType} -eq 5 ]] #type-5 [10x - de novo] 						[1-1]: 01_supernova
 then 
 	### 01_supernova
     if [[ ${pipelineStepIdx} -eq 1 ]]
@@ -791,7 +791,7 @@ then
         echo "$(${SUPERNOVA_PATH}/supernova run --version | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
     fi		
 #type-6 [10x|HiC - kmer-Gsize estimate] [1-1]: 01_genomescope
-elif [[ ${pipelineTypeID} -eq 2 ]]
+elif [[ ${pipelineType} -eq 2 ]]
 then  
 	### 01_genomescope
     if [[ ${pipelineStepIdx} -eq 1 ]]
@@ -830,7 +830,7 @@ then
 	fi
 
 ## mash contamination check
-elif [[ ${pipelineTypeID} -eq 3 ]]
+elif [[ ${pipelineType} -eq 3 ]]
 then 
     ### 01_mashPrepare
     if [[ ${pipelineStepIdx} -eq 1 ]]
@@ -1087,7 +1087,7 @@ then
 		done > qc_05_mashScreen_block_${RAW_DB%.db}.${id}.plan   
 		echo "mash $(${CONDA_BASE_ENV} && mash --version && conda deactivate)" > qc_05_mashScreen_block_${RAW_DB%.db}.${id}.version     
     fi  
-elif [[ ${pipelineTypeID} -eq 4 ]]
+elif [[ ${pipelineType} -eq 4 ]]
 then 
 	### 01_QVprepareInput
 	if [[ ${pipelineStepIdx} -eq 1 ]]
