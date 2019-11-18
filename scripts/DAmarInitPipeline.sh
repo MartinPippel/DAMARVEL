@@ -522,7 +522,7 @@ then
 		for x in ${PACBIO_HIFI_PATH}/*subreads.bam 
 		do
 			bn=$(basename ${x})
-			echo -n "$(${CONDA_BASE_ENV} && samtools merge -@${SLURM_RUN_PARA[1]} pacbio/hifi/bam/${bn%.subreads.bam}.ccs.bam"
+			echo -n "${CONDA_BASE_ENV} && samtools merge -@${SLURM_RUN_PARA[1]} pacbio/hifi/bam/${bn%.subreads.bam}.ccs.bam"
 			
 			for y in $(seq 1 ${CCS_NCHUNKS})
 			do
