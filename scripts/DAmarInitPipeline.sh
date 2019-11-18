@@ -96,6 +96,42 @@ function setGenomeScopeOptions()
 	RAW_QC_GENOMESCOPE_KMERMAX=${RAW_QC_JELLYFISH_HIGHHIST}
 }
 
+function setCCSOptions()
+{
+	CCS_OPT=""
+	
+	if [[ -z ${CCS_NCHUNKS} ]] 
+	then 
+		CCS_NCHUNKS=10	
+	fi	
+	
+	if [[ -n ${CCS_MIN_PASSES} ]]
+	then 
+		CCS_OPT=" ${CCS_OPT} --min-passes ${CCS_MIN_PASSES}"	
+	fi
+	
+	if [[ -n ${CCS_MIN_SNR} ]]
+	then 
+		CCS_OPT=" ${CCS_OPT} --min-snr ${CCS_MIN_SNR}"	
+	fi
+	
+	if [[ -n ${CCS_MIN_LEN} ]]
+	then 
+		CCS_OPT=" ${CCS_OPT} --min-length ${CCS_MIN_LEN}"	
+	fi
+	
+	if [[ -n ${CCS_MAX_LEN} ]]
+	then 
+		CCS_OPT=" ${CCS_OPT} --max-length ${CCS_MAX_LEN}"	
+	fi
+	
+	if [[ -n ${CCS_MIN_RQ} ]]
+	then 
+		CCS_OPT=" ${CCS_OPT} --min-rq ${CCS_MIN_RQ}"	
+	fi
+}
+
+
 #type-0 [10x - init] 							[1-3]: longrangerBasic, longrangerToScaff10Xinput, bxcheck, createStats
 #type-1 [PacBio LoFi Init] 						[1-3]: bam2fasta createDB createStats
 #type-2 [PacBio HiFi Init] 						[1-3]: createSubdir ccs samtoolsMerge bam2fasta createDB createStats
@@ -216,13 +252,12 @@ then
             rm $x
         done 
 
-        if [[ -d ${DB_OUTDIR} ]]; then mv ${DB_OUTDIR} ${DB_OUTDIR}_$(stat --format='%Y' ${DB_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi 
-        mkdir -p ${DB_OUTDIR}/fasta
+    	mkdir -p pacbio/lofi/fasta
         
         intype=""
 		fnum=0
 		# check for fasta files *fasta 
-		for x in ${PACBIO_PATH}/*fasta
+		for x in ${PACBIO_LOFI_PATH}/*fasta
 		do
 			if [[ -f ${x} ]]
 			then
@@ -233,12 +268,11 @@ then
 		
 		if [[ "${intype}" == "fasta" ]]
 		then
-			mkdir -p ${DB_OUTDIR}/fasta
-			for x in ${PACBIO_PATH}/*fasta
+			for x in ${PACBIO_LOFI_PATH}/*fasta
 			do
 				if [[ -f ${x} ]]
 				then
-					echo "ln -s -f -r ${x} ${DB_OUTDIR}/fasta"
+					echo "ln -s -f -r ${x} pacbio/lofi/fasta"
 				fi
 			done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
 			setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
@@ -248,7 +282,7 @@ then
 		# check for zipped fasta files *fa.gz
 		if [[ -z ${intype} ]]
 		then
-			for x in ${PACBIO_PATH}/*fa.gz
+			for x in ${PACBIO_LOFI_PATH}/*fa.gz
 			do
 				if [[ -f ${x} ]]
 				then
@@ -268,16 +302,16 @@ then
 					echo "$(zcat --version  | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
 				fi 
 				
-				for x in ${PACBIO_PATH}/*fa.gz
+				for x in ${PACBIO_LOFI_PATH}/*fa.gz
 				do
 					if [[ -f ${x} ]]
 					then
 						if [[ -z ${bgzipSlurmPara} ]]
 						then 
-							echo "${CONDA_BASE_ENV} && bgzip -d -@${SLURM_RUN_PARA[1]} ${x} > ${DB_OUTDIR}/fasta/$(basename ${x%.fa.gz}).fasta && conda deactivate"
+							echo "${CONDA_BASE_ENV} && bgzip -d -@${SLURM_RUN_PARA[1]} ${x} > pacbio/lofi/fasta/$(basename ${x%.fa.gz}).fasta && conda deactivate"
 							 
 						else 
-							echo "zcat ${x} > ${DB_OUTDIR}/fasta/$(basename ${x%.fa.gz}).fasta"
+						echo "zcat ${x} > pacbio/lofi/fasta/$(basename ${x%.fa.gz}).fasta"
 						fi
 					fi
 				 done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
@@ -289,7 +323,7 @@ then
 		# check for subreads.bam files
 		if [[ -z ${intype} ]]
 		then
-			for x in ${PACBIO_PATH}/*subreads.bam
+			for x in ${PACBIO_LOFI_PATH}/*subreads.bam
 			do
 				if [[ -f ${x} ]]
 				then
@@ -300,23 +334,17 @@ then
 			
 			if [[ "${intype}" == "subreads.bam" ]]
 			then
-				if [[ ${PACBIO_TYPE} == "LoFi" ]]
-				then					
-					for x in ${PACBIO_PATH}/*subreads.bam
-					do
-						echo -n "${CONDA_BASE_ENV} && cd ${DB_OUTDIR}/fasta"
-						if [[ ! -f ${x}.pbi ]]
-						then
-							echo -n " && pbindex ${x}"	
-						fi
-						echo -e " && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
-					done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-				else
-					(>&2 echo "[ERROR] createQCandStatsPlans.sh: PACBIO_TYPE is not set to LoFi!")
-					exit 1
-				fi						 
+				for x in ${PACBIO_LOFI_PATH}/*subreads.bam
+				do
+					echo -n "${CONDA_BASE_ENV} && cd pacbio/lofi/fasta"
+					if [[ ! -f ${x}.pbi ]]
+					then
+						echo -n " && pbindex ${x}"	
+					fi
+					echo -e " && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate" 
+				done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
 			else
-				(>&2 echo "[ERROR] createQCandStatsPlans.sh: Could not find any subreads.bam file in directory: ${PACBIO_PATH}!")
+				(>&2 echo "[ERROR] createQCandStatsPlans.sh: Could not find any subreads.bam file in directory: ${PACBIO_LOFI_PATH}!")
 				exit 1
 			fi
 			
@@ -333,23 +361,38 @@ then
             rm $x
         done 
         
-        if [[ -d ${DB_OUTDIR}/all ]]; then mv ${DB_OUTDIR}/all ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi
-        if [[ -d ${DB_OUTDIR}/single ]]; then mv ${DB_OUTDIR}/single ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/single | date '+%Y-%m-%d_%H-%M-%S'); fi
-        if [[ -d ${DB_OUTDIR}/run ]]; then mv ${DB_OUTDIR}/run ${DB_OUTDIR}/all_$(stat --format='%Y' ${DB_OUTDIR}/run | date '+%Y-%m-%d_%H-%M-%S'); fi 
-        mkdir -p ${DB_OUTDIR}/all ${DB_OUTDIR}/single ${DB_OUTDIR}/run 
+        if [[ -f pacbio/lofi/db/all/${PROJECT_ID}_Z_LoFi_ALL.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/lofi/db/all/${PROJECT_ID}_Z_LoFi_ALL.db already available. Must be manually removed! Stop!")
+			exit 1 
+		elif [[ -f pacbio/lofi/db/all/${PROJECT_ID}_M_LoFi_ALL.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/lofi/db/all/${PROJECT_ID}_M_LoFi_ALL.db already available. Must be manually removed! Stop!")
+			exit 1
+		elif [[ -f pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db already available. Must be manually removed! Stop!")
+			exit 1
+		elif [[ -f pacbio/lofi/db/run/${PROJECT_ID}_Z_LoFi.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/lofi/db/run/${PROJECT_ID}_Z_LoFi.db already available. Must be manually removed! Stop!")
+			exit 1		
+    	fi 
+        
+        mkdir -p pacbio/lofi/db/all pacbio/lofi/db/single pacbio/lofi/db/run 
                
         ## create database with all reads for coverage estimation
-		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-		echo "${MARVEL_PATH}/bin/FA2db -x 0  ${DB_OUTDIR}/all/${PROJECT_ID}_M_LoFi_ALL ${DB_OUTDIR}/fasta/*fasta" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+		echo "${DAZZLER_PATH}/bin/fasta2DB -v pacbio/lofi/db/all/${PROJECT_ID}_Z_LoFi_ALL pacbio/lofi/fasta/*fasta" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+		echo "${MARVEL_PATH}/bin/FA2db -x 0  pacbio/lofi/db/all/${PROJECT_ID}_M_LoFi_ALL pacbio/lofi/fasta/*fasta" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
 		
 		## create database for each bam file: for initial qc
-		for x in ${DB_OUTDIR}/fasta/*fasta
+		for x in pacbio/lofi/fasta/*fasta
 		do
-			echo "${MARVEL_PATH}/bin/FA2db -v ${DB_OUTDIR}/single/$(basename ${x%.fasta})_M ${x}"	
+			echo "${MARVEL_PATH}/bin/FA2db -v pacbio/lofi/db/single/$(basename ${x%.fasta})_M ${x}"	
 		done >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
         
     	## create actual db files for assembly 
-        echo -n "cd ${DB_OUTDIR}/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n "cd pacbio/lofi/db/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_LoFi ../../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_LoFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_LoFi" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
         echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_LoFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_LoFi && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
 	
 		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
@@ -366,11 +409,10 @@ then
             rm $x
         done
         
-        if [[ -d ${DB_OUTDIR}/stats ]]; then mv ${DB_OUTDIR}/stats ${DB_OUTDIR}/stats_$(stat --format='%Y' ${DB_OUTDIR}/all | date '+%Y-%m-%d_%H-%M-%S'); fi 
-        mkdir ${DB_OUTDIR}/stats
+		mkdir pacbio/lofi/stats
         
         count=0
-        for x in ${DB_OUTDIR}/single/*db 
+        for x in pacbio/lofi/db/single/*db 
         do 
         	if [[ -f ${x} ]]
         	then
@@ -382,37 +424,37 @@ then
     			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 3p | awk '{print \$NF}')"
     			if [[ ${count} -eq 0 ]]
     			then
-    				echo -e " > ${DB_OUTDIR}/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
+    				echo -e " > pacbio/lofi/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
     			else
-    				echo -e " >> ${DB_OUTDIR}/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
+    				echo -e " >> pacbio/lofi/stats/${PROJECT_ID}_singlePacBioLoFi.stats"
     			fi
         		count=$((count+1))	
         	fi 
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	
-    	x=${DB_OUTDIR}/all/${PROJECT_ID}_Z_LoFi_ALL.db
+    	x=pacbio/lofi/db/all/${PROJECT_ID}_Z_LoFi_ALL.db
     	if [[ -f ${x} ]]
         then
         	### All reads
         	echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x0 -a -f -s${DBSPLIT_SIZE} ${x})"
         	echo -n " all"
-        	echo -n " all"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 5p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
         	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
-        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') > ${DB_OUTDIR}/stats/${PROJECT_ID}_allPacBioLoFi.stats"
+        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') > pacbio/lofi/stats/${PROJECT_ID}_allPacBioLoFi.stats"
         	### Longest reads
         	for y in 1000 2000 3000 4000 5000 6000
         	do 
         		echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x${y} -f -s${DBSPLIT_SIZE} ${x})"
 	        	echo -n " ${y}"
-	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 2p | awk '{print \$7}' | tr -d ,)"
-	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$7}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 5p | awk '{print \$1}' | tr -d ,)"
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
 	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
-	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') >> ${DB_OUTDIR}/stats/${PROJECT_ID}_allPacBioLoFi.stats"		
+	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') >> pacbio/lofi/stats/${PROJECT_ID}_allPacBioLoFi.stats"		
         	done        			
     	fi>> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	
@@ -421,15 +463,253 @@ then
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
 		setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara    	
-    fi        
-#type-1 [10x - de novo] [1-1]: 01_supernova	
-elif [[ ${pipelineTypeID} -eq 1 ]]
+    fi    
+elif [[ ${pipelineTypeID} -eq 2 ]] #type-2 [PacBio HiFI Init] 						[1-5]: ccs samtoolsMerge bam2fasta createDB createStats
+then 
+	### create sub-directory and link input files
+    if [[ ${pipelineStepIdx} -eq 0 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+
+		mkdir -p pacbio/hifi/fasta
+    	fnum=0	
+		# check for subreads.bam files
+		setCCSOptions	
+		getSlurmRunParameter ${pipelineStepName}
+		for x in ${PACBIO_HIFI_PATH}/*subreads.bam
+		do
+			if [[ -f ${x} ]]
+			then 
+				for y in $(seq 1 ${CCS_NCHUNKS})
+				do
+					echo -n "${CONDA_BASE_ENV} && cd pacbio/hifi/bam"
+					if [[ ! -f ${x}.pbi ]]
+					then
+						echo "$(${CONDA_BASE_ENV} && pbindex --version && conda deactivate)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+						echo -n " && pbindex ${x}"	
+					fi
+					echo -e " && ccs${CCS_OPT} --chunk ${y}/${CCS_NCHUNKS} --num-threads ${SLURM_RUN_PARA[1]} --log-level=INFO --log-file $(basename ${x%.subreads.bam}).ccs.${y}.log.txt --report-file $(basename ${x%.subreads.bam}).ccs.${y}.report.txt ${x} $(basename ${x%.subreads.bam}).ccs.${y}.bam && cd ${myCWD} && conda deactivate"
+				done
+				fnum=$((fnum+1))
+			fi 
+		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+	
+		if [[ ${fnum} -eq 0 ]]
+		then
+			(>&2 echo "[ERROR] createQCandStatsPlans.sh: Could not find any subreads.bam file in directory: ${PACBIO_HIFI_PATH}!")
+			exit 1	
+		fi
+			
+		echo "$(${CONDA_BASE_ENV} && ccs --version && conda deactivate)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+   		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara					
+	elif [[ ${pipelineStepIdx} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+		
+		getSlurmRunParameter ${pipelineStepName}
+		
+		n=0
+		setCCSOptions
+		for x in ${PACBIO_HIFI_PATH}/*subreads.bam 
+		do
+			bn=$(basename ${x})
+			echo -n "$(${CONDA_BASE_ENV} && samtools merge -@${SLURM_RUN_PARA[1]} pacbio/hifi/bam/${bn%.subreads.bam}.ccs.bam"
+			
+			for y in $(seq 1 ${CCS_NCHUNKS})
+			do
+				if [[ ! -f pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam ]]
+				then 
+					(>&2 echo "[ERROR] createQCandStatsPlans.sh: pipelineTypeID: ${pipelineTypeID} pipelineStepIdx: ${pipelineStepIdx} Could not find ccs bam file: pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam!")
+					exit 1
+				fi
+				echo -n " pacbio/hifi/bam/${bn%.subreads.bam}.ccs.${y}.bam"	
+			done
+			echo -e " && pbindex ${f}.ccs.bam && rm pacbio/hifi/bam/${bn%.subreads.bam}.ccs.[0-9]*.bam && cd ${myCWD} && conda deactivate"			
+		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 
+		echo "$(${CONDA_BASE_ENV} && samtools --version | head -n 2 && conda deactivate)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara			
+	elif [[ ${pipelineStepIdx} -eq 2 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+		
+		mkdir pacbio/hifi/fasta
+		getSlurmRunParameter ${pipelineStepName}
+		fnum=0
+		for x in pacbio/hifi/bam/*.ccs.bam
+		do
+			if [[ -f ${x} ]]
+			then
+				echo -n "${CONDA_BASE_ENV} && cd pacbio/hifi/fasta"
+				if [[ ! -f ${x}.pbi ]]
+				then
+					echo -n " && pbindex ${x}"	
+				fi
+				echo -e " && bam2fasta -u -o $(basename ${x%.subreads.bam}) ${x} && cd ${myCWD} && conda deactivate"
+				fnum=$((fnum+1))
+			fi 
+		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+		
+		if [[ ${fnum} -eq 0 ]]
+		then
+			(>&2 echo "[ERROR] createQCandStatsPlans.sh: Could not find any subreads.bam file in directory: pacbio/hifi/bam/!")
+			exit 1	
+		fi
+		echo "$(${CONDA_BASE_ENV} && samtools --version && conda deactivate)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+	elif [[ ${pipelineStepIdx} -eq 3 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+        if [[ -f pacbio/hifi/db/all/${PROJECT_ID}_Z_HiFi_ALL.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/hifi/db/all/${PROJECT_ID}_Z_HiFi_ALL.db already available. Must be manually removed! Stop!")
+			exit 1 
+		elif [[ -f pacbio/hifi/db/all/${PROJECT_ID}_M_HiFi_ALL.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/hifi/db/all/${PROJECT_ID}_M_HiFi_ALL.db already available. Must be manually removed! Stop!")
+			exit 1
+		elif [[ -f pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db already available. Must be manually removed! Stop!")
+			exit 1
+		elif [[ -f pacbio/hifi/db/run/${PROJECT_ID}_Z_HiFi.db ]]
+        then 
+        	(>&2 echo "[ERROR] createQCandStatsPlans.sh: DB pacbio/hifi/db/run/${PROJECT_ID}_Z_HiFi.db already available. Must be manually removed! Stop!")
+			exit 1		
+    	fi 
+        
+        mkdir -p pacbio/hifi/db/all pacbio/hifi/db/single pacbio/hifi/db/run
+        
+        ## create database with all reads for coverage estimation
+		echo "${DAZZLER_PATH}/bin/fasta2DB -v pacbio/hifi/db/all/${PROJECT_ID}_Z_HiFi_ALL pacbio/hifi/fasta/*fasta" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+		echo "${MARVEL_PATH}/bin/FA2db -x 0 pacbio/hifi/db/all/${PROJECT_ID}_M_HiFi_ALL pacbio/hifi/fasta/*fasta" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+		
+		## create database for each bam file: for initial qc
+		for x in pacbio/hifi/fasta/*fasta
+		do
+			echo "${MARVEL_PATH}/bin/FA2db -v pacbio/hifi/db/single/$(basename ${x%.fasta})_M ${x}"	
+		done >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        
+    	## create actual db files for assembly 
+    	echo -n "cd pacbio/hifi/db/run && ${MARVEL_PATH}/bin/FA2db -x ${MIN_PACBIO_RLEN} -b -v ${PROJECT_ID}_M_HiFi ../../fasta/*fasta && ${MARVEL_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_M_HiFi && ${MARVEL_PATH}/bin/DB2fa -v ${PROJECT_ID}_M_HiFi" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo -e " && ${DAZZLER_PATH}/bin/fasta2DB -v ${PROJECT_ID}_Z_HiFi *.fasta && ${DAZZLER_PATH}/bin/DBsplit -s${DBSPLIT_SIZE} ${PROJECT_ID}_Z_HiFi && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+	
+		echo "MARVEL FA2db $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER fasta2DB $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+		
+		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+	elif [[ ${pipelineStepIdx} -eq 4 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        mkdir pacbio/hifi/stats
+        
+        count=0
+        for x in pacbio/hifi/db/single/*db 
+        do 
+        	if [[ -f ${x} ]]
+        	then
+        		echo -n "echo ${count}"
+        		echo -n " \$(sed -n 2p ${x} | awk '{print \$2\" \"\$3}')"
+        		echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p)"
+    			echo -n " \$((\$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 1p | awk '{print \$2}')/${gsize}))"
+    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 2p | awk '{print \$2\" \"\$4\" \"\$6\" \"\$8\" \"\$2+\$8\" \"\$4+\$6}')"
+    			echo -n " \$(${MARVEL_PATH}/bin/DBstats -r ${x} | sed -n 3p | awk '{print \$NF}')"
+    			if [[ ${count} -eq 0 ]]
+    			then
+    				echo -e " > pacbio/hifi/stats/${PROJECT_ID}_singlePacBioHiFi.stats"
+    			else
+    				echo -e " >> pacbio/hifi/stats/${PROJECT_ID}_singlePacBioHiFi.stats"
+    			fi
+        		count=$((count+1))	
+        	fi 
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	
+    	x=pacbio/hifi/all/${PROJECT_ID}_Z_HiFi_ALL.db
+    	if [[ -f ${x} ]]
+        then
+        	### All reads
+        	echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x0 -a -f -s${DBSPLIT_SIZE} ${x})"
+        	echo -n " all"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 5p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
+        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
+        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') > pacbio/hifi/stats/${PROJECT_ID}_allPacBioHiFi.stats"
+        	### Longest reads
+        	for y in 1000 2000 3000 4000 5000 6000
+        	do 
+        		echo -n "echo \$(${DAZZLER_PATH}/bin/DBsplit -x${y} -f -s${DBSPLIT_SIZE} ${x})"
+	        	echo -n " ${y}"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 4p | awk '{print \$7}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 5p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 7p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 8p | awk '{print \$1}' | tr -d ,)"
+	        	echo -n " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 10p | awk '{print \$3\" \"\$4\" \"\$5\" \"\$6}' | tr -d ')(ACGT')"
+	        	echo -e " \$(${DAZZLER_PATH}/bin/DBstats ${x} | sed -n 15p | awk '{print \$NF}') >> pacbio/hifi/stats/${PROJECT_ID}_allPacBioHiFi.stats"		
+        	done        			
+    	fi>> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	
+    	echo "MARVEL DBstats $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version        
+		
+		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+		setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara    	
+    fi    
+elif [[ ${pipelineTypeID} -eq 3 ]] #type-3 [HiC - init]							[1-1]: createStats
+then 
+	if [[ ${pipelineStepIdx} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+	fi
+
+elif [[ ${pipelineTypeID} -eq 4 ]] #type-4 [Bionano - init]						[1-1]: createStats???
+then	
+	if [[ ${pipelineStepIdx} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+	fi
+elif [[ ${pipelineTypeID} -eq 5 ]] #type-5 [10x - de novo] 						[1-1]: 01_supernova
 then 
 	### 01_supernova
     if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -475,36 +755,54 @@ then
 	        	exit 1
 	   		fi	   		
 	   		
-	   		if [[ -d 10x_${PROJECT_ID}_supernova ]]
+	   		if [[ -d 10x/10x_${PROJECT_ID}_supernova ]]
 	   		then 
-	   			echo "mv 10x_${PROJECT_ID}_supernova 10x_${PROJECT_ID}_supernova_$(date '+%Y-%m-%d_%H-%M-%S')"	   			
+	   			echo "mv 10x/supernova 10x/supernova_$(stat --format='%Y' 10x/supernova | date '+%Y-%m-%d_%H-%M-%S')"	   			
 	   		fi
 	   		
 	   		# set default minimum fasta record size
 	   		MINSIZE=500
 	   		
-	   		echo "${SUPERNOVA_PATH}/supernova run --id=10x_${PROJECT_ID}_supernova --sample ${PROJECT_ID} --fastqs=${TENX_PATH} --maxreads='all'"
-	   		echo "${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_megabubbles --style=megabubbles --minsize=${MINSIZE}"
-	   		echo "${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_pseudohap --style=pseudohap --minsize=${MINSIZE}"
-	   		echo "${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_pseudohap2 --style=pseudohap2 --minsize=${MINSIZE}"
+	   		getSlurmRunParameter ${pipelineStepName}
+	   		
+	   		slurmOpt=""
+	    	if [[ ${SLURM_RUN_PARA[0]} == "gpu" ]]
+	    	then
+	    		slurmOpt="--jobmode=slurmGPU --localcores=38 --localmem=128 --maxjobs=1000 --jobinterval=5000 --disable-ui --nopreflight"
+	    	elif [[ ${SLURM_RUN_PARA[0]} == "long" ||  ${SLURM_RUN_PARA[0]} == "batch" ]]
+	    	then
+	    		slurmOpt="--jobmode=slurmBATCH --localcores=24 --localmem=128 --maxjobs=1000 --jobinterval=5000 --disable-ui --nopreflight"
+	    	elif [[ ${SLURM_RUN_PARA[0]} == "bigmem" ]]
+	    	then
+	    		slurmOpt="--jobmode=slurmBIGMEM --localcores=48 --localmem=128 --maxjobs=1000 --jobinterval=5000 --disable-ui --nopreflight"
+	    	else
+	    		(>&2 echo "ERROR - SLUM PARTITION: ${SLURM_RUN_PARA[0]} not supported!")
+	        	exit 1
+	    	fi
+	    	
+	   		echo "cd 10x && ${SUPERNOVA_PATH}/supernova run --id=supernova --sample ${PROJECT_ID} --fastqs=${TENX_PATH} --maxreads='all' ${slurmOpt} && cd ${myCWD}"
+	   		echo "cd 10x && ${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_megabubbles --style=megabubbles --minsize=${MINSIZE} && cd ${myCWD}"
+	   		echo "cd 10x && ${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_pseudohap --style=pseudohap --minsize=${MINSIZE} && cd ${myCWD}"
+	   		echo "cd 10x && ${SUPERNOVA_PATH}/supernova mkoutput --asmdir=10x_${PROJECT_ID}_supernova/outs/assembly --outprefix=10x_${PROJECT_ID}_supernova_pseudohap2 --style=pseudohap2 --minsize=${MINSIZE} && cd ${myCWD}"
 	   			   					 
-		fi > qc_01_supernova_single_${RAW_DB%.db}.${id}.plan
-        
-        echo "$(${SUPERNOVA_PATH}/supernova run --version | head -n1)" > qc_01_supernova_single_${RAW_DB%.db}.${id}.version
+		fi > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "$(${SUPERNOVA_PATH}/supernova run --version | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
     fi		
-#type-2 [10x|HiC - kmer-Gsize estimate] [1-1]: 01_genomescope
+#type-6 [10x|HiC - kmer-Gsize estimate] [1-1]: 01_genomescope
 elif [[ ${pipelineTypeID} -eq 2 ]]
 then  
 	### 01_genomescope
     if [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls qc_01_*_*_${RAW_DB}.${id}.* 2> /dev/null)
+		for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done
-        
-    	longrangerOut="10x_${PROJECT_ID}_longrangerBasic/outs/barcoded.fastq.gz"
+                
+    	longrangerOut="10x/longrangerBasic/outs/barcoded.fastq.gz"
         
         if [[ ! -f ${longrangerOut} ]]
         then 
@@ -512,17 +810,23 @@ then
 	        exit 1
     	fi
         
-    	setJellyfishOptions count
-    	echo "mkdir -p genomescope"  > qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
-        echo "${JELLYFISH_PATH}/jellyfish count ${JELLYFISH_OPT} <(gunzip -c ${longrangerOut}) -o genomescope/${PROJECT_ID}.jf" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
-        setJellyfishOptions histo
-        echo "${JELLYFISH_PATH}/jellyfish histo ${JELLYFISH_OPT} genomescope/${PROJECT_ID}.jf > genomescope/${PROJECT_ID}.histo" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
-        setGenomeScopeOptions
-        echo "Rscript ${GENOMESCOPE_PATH}/genomescope.R genomescope/${PROJECT_ID}.histo ${RAW_QC_GENOMESCOPE_KMER} 150 genomescope ${RAW_QC_GENOMESCOPE_KMERMAX}" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.plan
+        getSlurmRunParameter ${pipelineStepName}
         
-        echo "jellyfish count $(${JELLYFISH_PATH}/jellyfish count --version | head -n1)" > qc_01_genomescope_single_${RAW_DB%.db}.${id}.version
-        echo "jellyfish histo $(${JELLYFISH_PATH}/jellyfish histo --version | head -n1)" >> qc_01_genomescope_single_${RAW_DB%.db}.${id}.version
-        #TODO add genomescope version         
+    	setJellyfishOptions count
+    	echo "mkdir -p 10x/genomescope"  > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "${JELLYFISH_PATH}/jellyfish count ${JELLYFISH_OPT} <(gunzip -c ${longrangerOut}) -o 10x/genomescope/${PROJECT_ID}.jf" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        setJellyfishOptions histo
+        echo "${JELLYFISH_PATH}/jellyfish histo ${JELLYFISH_OPT} genomescope/${PROJECT_ID}.jf > 10x/genomescope/${PROJECT_ID}.histo" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        setGenomeScopeOptions
+        echo "cd 10x/longranger/ && Rscript ${GENOMESCOPE_PATH}/genomescope.R genomescope/${PROJECT_ID}.histo ${RAW_QC_GENOMESCOPE_KMER} 150 genomescope ${RAW_QC_GENOMESCOPE_KMERMAX} && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        
+        echo "jellyfish count $(${JELLYFISH_PATH}/jellyfish count --version | head -n1)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "jellyfish histo $(${JELLYFISH_PATH}/jellyfish histo --version | head -n1)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        
+        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        #TODO add genomescope version 
+        # TODO add genomescope based on HiC data        
 	fi
 
 ## mash contamination check

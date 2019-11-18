@@ -1,37 +1,34 @@
-#!/bin/bash 
+#!/bin/bash -e
+
+#call: DAmarRawMaskPipeline.sh ${configFile} ${pipelineTypeID} ${pipelineStepIdx} ${pipelineRunID}"
+
+echo "[INFO] DAmarRawMaskPipeline.sh - called with following $# args: $@"
+
+if [[ $# -ne 4 ]]
+then 
+	(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: invalid number of arguments: $# Expected 4! ");
+   	exit 1
+fi
 
 configFile=$1
-currentStep=$2
-slurmID=$3
-currentPhase="mask"
-
+pipelineName="rmask"
+pipelineTypeID=$2
+pipelineStepIdx=$3
+pipelineRunID=$4
 
 if [[ ! -f ${configFile} ]]
 then 
-    (>&2 echo "cannot access config file ${configFile}")
+    (>&2 echo "[ERROR] DAmarRawMaskPipeline: cannot access config file ${configFile}")
     exit 1
 fi
 
 source ${configFile}
 source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
+### todo: how to handle more than slurm??? 
+source ${SUBMIT_SCRIPTS_PATH}/slurm.cfg ${configFile}
 
-if [[ ! -n "${RAW_REPMASK_TYPE}" ]]
-then 
-    (>&2 echo "cannot create repmask jobs if varibale RAW_REPMASK_TYPE is not set.")
-    exit 1
-fi
-
-if [[ ! -n ${RAW_DB} ]]
-then 
-    (>&2 echo "raw database unknown - You have to set the variable RAW_DB")
-    exit 1
-fi
-
-if [[ ! -f ${RAW_DB%.db}.db ]]
-then 
-    (>&2 echo "raw database ${RAW_DB%.db}.db missing")
-    exit 1
-fi
+pipelineStepName=$(getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx})
+echo -e "[DEBUG] DAmarRawMaskPipeline: getStepName ${pipelineName} ${pipelineTypeID} ${pipelineStepIdx} --> ${pipelineStepName}"
 
 function setDBdustOptions()
 {
@@ -207,40 +204,88 @@ function setDatanderOptions()
     fi
 }
 
-## ensure some paths
-if [[ -z "${MARVEL_SOURCE_PATH}" ]]
-then 
-    (>&2 echo "ERROR - You have to set MARVEL_SOURCE_PATH. Used to report git version.")
-    exit 1
-fi
 
-if [[ -z "${DAZZLER_SOURCE_PATH}" ]]
-then 
-    (>&2 echo "ERROR - You have to set DAZZLER_SOURCE_PATH. Used to report git version.")
-    exit 1
-fi
 
-nblocks=$(getNumOfDbBlocks)
-sName=$(getStepName MaskR ${RAW_MASK_TYPE} $((${currentStep}-1)))
-sID=$(prependZero ${currentStep})
+if [[ -n ${PACBIO_TYPE} ]] 
+then 
+	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
+	then
+		# check if DB's are available 
+        if [[ ! ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db ]]
+        then 
+    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db! Run init first!!!");
+   			exit 1        	
+    	fi
+    	
+    	if [[ ! ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_Z_LoFi.db ]]
+        then 
+    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_Z_LoFi.db! Run init first!!!");
+   			exit 1        	
+    	fi
+		
+		DB_Z=${PROJECT_ID}_Z_LoFi
+		DB_M=${PROJECT_ID}_M_LoFi				
+	elif [[ "${PACBIO_TYPE}" == "HiFi" ]]
+	then
+		# check if DB's are available 
+    	if [[ ! ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db ]]
+        then 
+    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db! Run init first!!!");
+   			exit 1        	
+    	fi
+    	
+    	if [[ ! ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_Z_HiFi.db ]]
+        then 
+    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_Z_HiFi.db! Run init first!!!");
+   			exit 1        	
+    	fi
+		
+		DB_Z=${PROJECT_ID}_Z_HiFi
+		DB_M=${PROJECT_ID}_M_HiFi
+	else
+		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: PACBIO_TYPE: ${PACBIO_TYPE} is unknwon! Must be set to either LoFi or HiFi!");
+   		exit 1
+	fi
+else
+	(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Variable PACBIO_TYPE must be set to either LoFi or HiFi!");
+   	exit 1
+fi
 
 # type_0 - stepsp[1-14}: 01_createSubdir, 02_DBdust, 03_Catrack, 04_datander, 05_TANmask, 06_Catrack, 07_daligner, 08_LAmerge, 09_LArepeat, 10_TKmerge, 11-daligner, 12-LAmerge, 13-LArepeat, 14-TKmerge
-if [[ ${RAW_REPMASK_TYPE} -eq 0 ]]
+if [[ ${pipelineTypeID} -eq 0 ]]
 then
-	if [[ ${currentStep} -eq 1 ]]
+	if [[ ${pipelineStepIdx} -eq 1 ]]
     then
-        ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+		### clean up plans 
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done
-        
-        echo "if [[ -d ${RAW_REPMASK_OUTDIR} ]]; then mv ${RAW_REPMASK_OUTDIR} ${RAW_REPMASK_OUTDIR}_\$(stat --format='%Y' ${RAW_REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${RAW_REPMASK_OUTDIR} && ln -s -r .${RAW_DB%.db}.idx .${RAW_DB%.db}.bps ${RAW_DB%.db}.db .${RAW_DAZZ_DB%.db}.idx .${RAW_DAZZ_DB%.db}.bps ${RAW_DAZZ_DB%.db}.db ${RAW_REPMASK_OUTDIR}" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version         
-    elif [[ ${currentStep} -eq 2 ]]
+                        
+        echo -n "if [[ -d ${RAW_REPMASK_OUTDIR} ]]; then mv ${RAW_REPMASK_OUTDIR} ${RAW_REPMASK_OUTDIR}_\$(stat --format='%Y' ${RAW_REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi"
+       	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
+       	then
+       		echo -n " && mkdir ${RAW_REPMASK_OUTDIR}"
+       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -n " && cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -n " && cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e " && cd ${myCWD}"
+        else
+       		echo -n " && mkdir ${RAW_REPMASK_OUTDIR}"
+       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -n " && cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -n " && cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e " && cd ${myCWD}"       		
+       	fi > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+       	
+       	setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version         
+    elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -250,15 +295,18 @@ then
         ### create DBdust commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/DBdust${REPMASK_DBDUST_OPT} ${RAW_DB%.db}.${x} && cd ${myCWD}"
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/DBdust${REPMASK_DBDUST_OPT} ${RAW_DAZZ_DB%.db}.${x} && cd ${myCWD}"
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-        echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 3 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/DBdust${REPMASK_DBDUST_OPT} ${DB_M%.db}.${x} && cd ${myCWD}"
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/DBdust${REPMASK_DBDUST_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL DBdust $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER DBdust $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 3 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -266,31 +314,38 @@ then
         ### find and set Catrack options 
         setCatrackOptions
         ### create Catrack command
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${RAW_DB%.db} dust && cp .${RAW_DB%.db}.dust.anno .${RAW_DB%.db}.dust.data ${myCWD}/ && cd ${myCWD}" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${RAW_DAZZ_DB%.db} dust && cp .${RAW_DAZZ_DB%.db}.dust.anno .${RAW_DAZZ_DB%.db}.dust.data ${myCWD}/ && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-                 
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-        echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 4 ]]
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${DB_M%.db} dust && cp .${DB_M%.db}.dust.anno .${DB_M%.db}.dust.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${DB_Z%.db} dust && cp .${DB_Z%.db}.dust.anno .${DB_Z%.db}.dust.data ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        
+        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara                 
+        echo "MARVEL Catrack $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 4 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+		for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
-        done     
+        done
         ### find and set datander options 
         setDatanderOptions
         
         ### create datander commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${REPMASK_DATANDER_OPT} ${RAW_DAZZ_DB%.db}.${x} && cd ${myCWD}"
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "DAZZLER datander $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 5 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${REPMASK_DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara                 
+        echo "DAZZLER datander $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 5 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -300,13 +355,16 @@ then
         ### create TANmask commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/TANmask${REPMASK_TANMASK_OPT} ${RAW_DAZZ_DB%.db} TAN.${RAW_DAZZ_DB%.db}.${x}.las && cd ${myCWD}" 
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "DAZZLER TANmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 6 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/TANmask${REPMASK_TANMASK_OPT} ${DB_Z%.db} TAN.${DB_Z%.db}.${x}.las && cd ${myCWD}" 
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "DAZZLER TANmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 6 ]]
     then 
         ### clean up plans 
-        for x in $(ls mask_06_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -317,18 +375,22 @@ then
             setCatrackOptions
         fi
         ### create Catrack command
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${RAW_DAZZ_DB%.db} ${RAW_REPMASK_TANMASK_TRACK} && cp .${RAW_DAZZ_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}.anno .${RAW_DAZZ_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}.data ${myCWD}/ && cd ${myCWD}" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${LASTOOLS_PATH}/bin/viewmasks ${RAW_DAZZ_DB%.db} ${RAW_REPMASK_TANMASK_TRACK} > ${RAW_DAZZ_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}.txt && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-      	echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/txt2track -m ${RAW_DB%.db} ${RAW_DAZZ_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}.txt ${RAW_REPMASK_TANMASK_TRACK} && cp .${RAW_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}.a2 .${RAW_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}.d2 ${myCWD}/ && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-      	echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKcombine ${RAW_DB%.db} ${RAW_REPMASK_TANMASK_TRACK}_dust ${RAW_REPMASK_TANMASK_TRACK} dust && cp .${RAW_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}_dust.a2 .${RAW_DB%.db}.${RAW_REPMASK_TANMASK_TRACK}_dust.d2 ${myCWD}/ && cd ${myCWD}" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan 
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${DB_Z%.db} ${RAW_REPMASK_TANMASK_TRACK} && cp .${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.anno .${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${LASTOOLS_PATH}/bin/viewmasks ${DB_Z%.db} ${RAW_REPMASK_TANMASK_TRACK} > ${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.txt && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+      	echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/txt2track -m ${DB_M%.db} ${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.txt ${RAW_REPMASK_TANMASK_TRACK} && cp .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}.a2 .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+      	echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKcombine ${DB_M%.db} ${RAW_REPMASK_TANMASK_TRACK}_dust ${RAW_REPMASK_TANMASK_TRACK} dust && cp .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}_dust.a2 .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}_dust.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 
         
-        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-        echo "LASTOOLS viewmasks $(git --git-dir=${LASTOOLS_SOURCE_PATH}/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version    
-        echo "DAMAR txt2track $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-        echo "DAMAR TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 7 ]]
+        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "LASTOOLS viewmasks $(git --git-dir=${LASTOOLS_SOURCE_PATH}/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version    
+        echo "DAMAR txt2track $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAMAR TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 7 ]]
     then
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -370,14 +432,14 @@ then
             else
                 NUMACTL=""
             fi
-            echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
+            echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
             for y in $(seq ${x} $((${x}+${n}-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
                 then
                     break
                 fi
-                echo -n " ${RAW_DAZZ_DB%.db}.${y}"
+                echo -n " ${DB_Z%.db}.${y}"
             done 
 
 			for y in $(seq ${x} $((${x}+${n}-1)))
@@ -386,18 +448,22 @@ then
                 then
                     break
                 fi
-                echo -n " && mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}"
+                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}"
             done 
             
             n=$((${n}-1))
 
             echo " && cd ${myCWD}"
-   		done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 8 ]]
+   		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+   		
+   		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 8 ]]
     then
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -405,31 +471,37 @@ then
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 32 ${RAW_DB%.db} ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]} && cd ${myCWD}"            
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version  
-    elif [[ ${currentStep} -eq 9 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 32 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]} && cd ${myCWD}"            
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version  
+    elif [[ ${pipelineStepIdx} -eq 9 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
-        done 
+        done
         
         ### find and set LArepeat options 
         setLArepeatOptions 0
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${REPMASK_LAREPEAT_OPT} -b ${x} ${RAW_DB%.db} ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las && cd ${myCWD}/" 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ln -s -f ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask -v -c${RAW_REPMASK_LAREPEAT_COV[0]} -n${RAW_REPMASK_REPEATTRACK} ${RAW_DAZZ_DB%.db} ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && unlink ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 10 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${REPMASK_LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las && cd ${myCWD}/" 
+            echo "cd ${RAW_REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask -v -c${RAW_REPMASK_LAREPEAT_COV[0]} -n${RAW_REPMASK_REPEATTRACK} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 10 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -438,14 +510,17 @@ then
         setTKmergeOptions
         setLArepeatOptions 0
         ### create TKmerge commands
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${RAW_DB%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${RAW_DB%.db}.${RAW_REPMASK_REPEATTRACK}.a2 .${RAW_DB%.db}.${RAW_REPMASK_REPEATTRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${RAW_DAZZ_DB%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${RAW_DAZZ_DB%.db}.${RAW_REPMASK_REPEATTRACK}.anno .${RAW_DAZZ_DB%.db}.${RAW_REPMASK_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version    
-    elif [[ ${currentStep} -eq 11 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version    
+    elif [[ ${pipelineStepIdx} -eq 11 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -492,9 +567,9 @@ then
 
 			if [[ "x${DALIGNER_VERSION}" == "x2" ]]
 			then
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
 			else
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
 			fi			
 			
             for y in $(seq ${x} $((${x}+${n}-1)))
@@ -506,7 +581,7 @@ then
                 fi
                 if [[ "x${DALIGNER_VERSION}" != "x2" ]]
 				then
-					echo -n " ${RAW_DAZZ_DB%.db}.${y}"
+					echo -n " ${DB_Z%.db}.${y}"
 				fi			
                                 
             done 
@@ -524,7 +599,7 @@ then
                 then
                     break
                 fi
-                echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las"
+                echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las"
             done
             echo -n " mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}"
             
@@ -538,18 +613,21 @@ then
                 	then
                     	break
                 	fi
-                	echo -n " && mv ${RAW_DAZZ_DB%.db}.${y}.${RAW_DAZZ_DB%.db}.${x}.las mask_${y}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}"
+                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}"
             	done
         	fi
  
             echo " && cd ${myCWD}"
             n=$((${n}-1))
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan 
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 12 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara 
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 12 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${RAW_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -557,13 +635,16 @@ then
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 32 ${RAW_DB%.db} ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]} && cd ${myCWD}"            
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL LAmerge  $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 13 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 32 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]} && cd ${myCWD}"            
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL LAmerge  $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 13 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -573,15 +654,18 @@ then
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${REPMASK_LAREPEAT_OPT} -b ${x} ${RAW_DB%.db} ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las && cd ${myCWD}/" 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ln -s -f ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask -v -c${RAW_REPMASK_LAREPEAT_COV[1]} -n${RAW_REPMASK_REPEATTRACK} ${RAW_DAZZ_DB%.db} ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && unlink ${RAW_DAZZ_DB%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
-    	done > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_block_${RAW_DB%.db}.${slurmID}.version
-    elif [[ ${currentStep} -eq 14 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${REPMASK_LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las && cd ${myCWD}/" 
+            echo "cd ${RAW_REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask -v -c${RAW_REPMASK_LAREPEAT_COV[1]} -n${RAW_REPMASK_REPEATTRACK} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
+    	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+    elif [[ ${pipelineStepIdx} -eq 14 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
     then 
         ### clean up plans 
-        for x in $(ls ${currentPhase}_${sID}_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -590,10 +674,13 @@ then
         setTKmergeOptions
         setLArepeatOptions 1
         ### create TKmerge commands
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${RAW_DB%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${RAW_DB%.db}.${RAW_REPMASK_REPEATTRACK}.a2 .${RAW_DB%.db}.${RAW_REPMASK_REPEATTRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${RAW_DAZZ_DB%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${RAW_DAZZ_DB%.db}.${RAW_REPMASK_REPEATTRACK}.anno .${RAW_DAZZ_DB%.db}.${RAW_REPMASK_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.plan
-        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
-        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${currentPhase}_${sID}_${sName}_single_${RAW_DB%.db}.${slurmID}.version
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	   	getSlurmRunParameter ${pipelineStepName}
+	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
 	fi
 fi
 
