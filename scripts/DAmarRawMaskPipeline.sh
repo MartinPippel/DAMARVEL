@@ -430,7 +430,7 @@ then
         ### create datander commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${REPMASK_DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+            echo "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
