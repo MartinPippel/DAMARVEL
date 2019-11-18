@@ -261,22 +261,22 @@ then
             rm $x
         done
                         
-        echo -n "if [[ -d ${RAW_REPMASK_OUTDIR} ]]; then mv ${RAW_REPMASK_OUTDIR} ${RAW_REPMASK_OUTDIR}_\$(stat --format='%Y' ${RAW_REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi"
+        echo -e "if [[ -d ${RAW_REPMASK_OUTDIR} ]]; then mv ${RAW_REPMASK_OUTDIR} ${RAW_REPMASK_OUTDIR}_\$(stat --format='%Y' ${RAW_REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi"
        	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
        	then
-       		echo -n " && mkdir ${RAW_REPMASK_OUTDIR}"
-       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -n " && cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
-       		echo -n " && cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
-       		echo -e " && cd ${myCWD}"
+       		echo -e "mkdir ${RAW_REPMASK_OUTDIR}"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "cd ${myCWD}"
         else
-       		echo -n " && mkdir ${RAW_REPMASK_OUTDIR}"
-       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -n " && ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -n " && cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
-       		echo -n " && cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
-       		echo -e " && cd ${myCWD}"       		
+       		echo -e "mkdir ${RAW_REPMASK_OUTDIR}"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "åcd ${myCWD}"       		
        	fi > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
        	
        	setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
