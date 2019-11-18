@@ -109,7 +109,7 @@ function setDatanderOptions()
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -v"	
  	else
- 		echo "-------------> found para: \"${para}\" $(isNumber ${para}) $(${para} -gt 0)"
+ 		echo "-------------> found para: \"${para}\" $(isNumber ${para}) $((${para} > 0))"
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander kmer)
