@@ -105,7 +105,7 @@ function setDatanderOptions()
 	DATANDER_OPT=""
 	
 	para=$(getJobPara ${pipelineName} datander verbose)
-	if [[ "x${para}" != "x" ]] && [[ $(isNumber ${para}) ]] && [[ ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -v"	
  	else
@@ -113,32 +113,32 @@ function setDatanderOptions()
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander kmer)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -k${para}"	
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander window)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -w${para}"	
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander hits)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -h${para}"	
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander threads)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -T${para}"	
 		SLURM_RUN_PARA[1]=${para}
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander err)
-	if [[ "x${para}" != "x" && $(isFloatNumber ${para}) ]]
+	if $(isFloatNumber ${para})
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -e${para}"	
 	fi
@@ -150,13 +150,13 @@ function setDatanderOptions()
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander minLen)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -l${para}"	
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander trace)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -s${para}"	
 	fi	
