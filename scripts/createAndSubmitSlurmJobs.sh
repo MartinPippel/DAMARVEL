@@ -419,7 +419,7 @@ then
 			echo "[INFO] createAndSubmitSlurmJobs: try to restart job ${file}.slurm ${retry}/${retrySubmit} - wait $((${retry}*${wait})) seconds"
 			sleep $((${retry}*${wait}))
 		fi
-		echo "[INFO] createAndSubmitSlurmJobs: run: sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${pipelineName}_final_step.${pipelineRunID}.out -e ${pipelineName}_final_step.${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineRunID ${configFile}\""
+		echo "[INFO] createAndSubmitSlurmJobs: run: sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${pipelineName}_final_step.${pipelineRunID}.out -e ${pipelineName}_final_step.${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap=\"sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineRunID ${configFile}\""
 		TMPRET=$(sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${myCWD}/${pipelineName}_final_step.${pipelineRunID}.out -e ${myCWD}/${pipelineName}_final_step.${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${pipelineName} ${pipelineIdx} ${pipelineStepIdx} $pipelineRunID ${configFile}\"") 
 		echo "[INFO] createAndSubmitSlurmJobs: ${TMPRET}"
 		if ! $(isNumber ${TMPRET##* })
