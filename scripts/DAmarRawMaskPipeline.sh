@@ -32,28 +32,132 @@ echo -e "[DEBUG] DAmarRawMaskPipeline: getStepName \"${pipelineName}\" \"${pipel
 
 function setDBdustOptions()
 {
-    REPMASK_DBDUST_OPT=""
-    if [[ -n ${RAW_REPMASK_DBDUST_BIAS} && ${RAW_REPMASK_DBDUST_BIAS} -ge 1 ]]
-    then
-        REPMASK_DBDUST_OPT="${REPMASK_DBDUST_OPT} -b"
-    fi
+	### available options: window threshold minLen bias
+	DBDUST_OPT=""
+	
+	para=$(getJobPara ${pipelineName} DBdust window)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) ]]
+	then 
+		DBDUST_OPT="${DBDUST_OPT} -w${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} DBdust threshold)
+	if [[ "x${para}" != "x" && $(isFloatNumber ${para}) ]]
+	then 
+		DBDUST_OPT="${DBDUST_OPT} -t${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} DBdust minLen)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) ]]
+	then 
+		DBDUST_OPT="${DBDUST_OPT} -t${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} DBdust bias)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DBDUST_OPT="${DBDUST_OPT} -b"	
+	fi
 }
 
 function setCatrackOptions()
 {
-    REPMASK_CATRACK_OPT=""
-    if [[ -n ${RAW_REPMASK_CATRACK_VERBOSE} && ${RAW_REPMASK_CATRACK_VERBOSE} -ge 1 ]]
-    then
-        REPMASK_CATRACK_OPT="${REPMASK_CATRACK_OPT} -v"
-    fi
-    if [[ -n ${RAW_REPMASK_CATRACK_DELETE} && ${RAW_REPMASK_CATRACK_DELETE} -ge 1 ]]
-    then
-        REPMASK_CATRACK_OPT="${REPMASK_CATRACK_OPT} -d"
-    fi
-    if [[ -n ${RAW_REPMASK_CATRACK_OVERWRITE} && ${RAW_REPMASK_CATRACK_OVERWRITE} -ge 1 ]]
-    then
-        REPMASK_CATRACK_OPT="${REPMASK_CATRACK_OPT} -f"
-    fi
+	### available options: verbose delete force
+	CATRACK_OPT=""
+	
+	para=$(getJobPara ${pipelineName} Catrack verbose)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		CATRACK_OPT="${CATRACK_OPT} -v"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} Catrack delete)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		CATRACK_OPT="${CATRACK_OPT} -d"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} Catrack force)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		CATRACK_OPT="${CATRACK_OPT} -f"	
+	fi
+}
+
+function setDatanderOptions()
+{
+	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	getSlurmRunParameter ${pipelineStepName}
+	
+	### current rmask JobPara can overrule general SLURM_RUN_PARA
+	para=$(getJobPara ${pipelineName} datander partition)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[0]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} datander mem)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[2]=${para}			
+	fi
+	
+	### available options: verbose kmer window hits threads tmpDir err minLen trace
+	DATANDER_OPT=""
+	
+	para=$(getJobPara ${pipelineName} datander verbose)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -v"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander kmer)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -k${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander window)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -w${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander hits)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -h${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander threads)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -T${para}"	
+		SLURM_RUN_PARA[1]=${para}
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander err)
+	if [[ "x${para}" != "x" && $(isFloatNumber ${para}) ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -e${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander tmpDir)
+	if [[ "x${para}" != "x" ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -P${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander minLen)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -l${para}"	
+	fi
+	
+	para=$(getJobPara ${pipelineName} datander trace)
+	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	then 
+		DATANDER_OPT="${DATANDER_OPT} -s${para}"	
+	fi	
 }
 
 function setTANmaskOptions()
@@ -190,19 +294,7 @@ function setTKmergeOptions()
     fi
 }
 
-function setDatanderOptions()
-{
-    ### find and set datander options 
-    REPMASK_DATANDER_OPT=""
-    if [[ -n ${RAW_REPMASK_DATANDER_THREADS} ]]
-    then
-        REPMASK_DATANDER_OPT="${REPMASK_DATANDER_OPT} -T${RAW_REPMASK_DATANDER_THREADS}"
-    fi
-    if [[ -n ${RAW_REPMASK_DATANDER_MINLEN} ]]
-    then
-        REPMASK_DATANDER_OPT="${REPMASK_DATANDER_OPT} -l${RAW_REPMASK_DATANDER_MINLEN}"
-    fi
-}
+
 
 
 
@@ -298,8 +390,8 @@ then
         ### create DBdust commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/DBdust${REPMASK_DBDUST_OPT} ${DB_M%.db}.${x} && cd ${myCWD}"
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/DBdust${REPMASK_DBDUST_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/DBdust${DBDUST_OPT} ${DB_M%.db}.${x} && cd ${myCWD}"
+            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/DBdust${DBDUST_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
@@ -317,8 +409,8 @@ then
         ### find and set Catrack options 
         setCatrackOptions
         ### create Catrack command
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${DB_M%.db} dust && cp .${DB_M%.db}.dust.anno .${DB_M%.db}.dust.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${DB_Z%.db} dust && cp .${DB_Z%.db}.dust.anno .${DB_Z%.db}.dust.data ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/Catrack${CATRACK_OPT} ${DB_M%.db} dust && cp .${DB_M%.db}.dust.anno .${DB_M%.db}.dust.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} dust && cp .${DB_Z%.db}.dust.anno .${DB_Z%.db}.dust.data ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
         
         ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
@@ -398,7 +490,9 @@ then
             rm $x
         done 
         ### find and set daligner options 
-        setDaligerOptions
+        getSlurmRunParameter ${pipelineStepName}
+		THREADS_daligner=${SLURM_RUN_PARA[1]}
+		setDaligerOptions
 		
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
@@ -424,18 +518,7 @@ then
             then
                 REP="-m${RAW_REPMASK_REPEATTRACK}"
             fi
-            if [[ -n ${RAW_REPMASK_DALIGNER_NUMACTL} && ${RAW_REPMASK_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${x} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
-            echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
+            echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
             for y in $(seq ${x} $((${x}+${n}-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
@@ -460,7 +543,6 @@ then
    		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
    		
    		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
     elif [[ ${pipelineStepIdx} -eq 7 ]]
@@ -556,23 +638,12 @@ then
             then
                 REP="-m${RAW_REPMASK_REPEATTRACK}"
             fi
-            if [[ -n ${RAW_REPMASK_DALIGNER_NUMACTL} && ${RAW_REPMASK_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${x} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
 
 			if [[ "x${DALIGNER_VERSION}" == "x2" ]]
 			then
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
 			else
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
 			fi			
 			
             for y in $(seq ${x} $((${x}+${n}-1)))
