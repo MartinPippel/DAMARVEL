@@ -205,6 +205,8 @@ function setDatanderOptions()
 }
 
 
+
+
 if [[ -n ${PACBIO_TYPE} ]] 
 then 
 	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
@@ -223,7 +225,8 @@ then
     	fi
 		
 		DB_Z=${PROJECT_ID}_Z_LoFi
-		DB_M=${PROJECT_ID}_M_LoFi				
+		DB_M=${PROJECT_ID}_M_LoFi
+		nblocks=$(getNumOfDbBlocks ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db)			
 	elif [[ "${PACBIO_TYPE}" == "HiFi" ]]
 	then
 		# check if DB's are available 
@@ -241,6 +244,7 @@ then
 		
 		DB_Z=${PROJECT_ID}_Z_HiFi
 		DB_M=${PROJECT_ID}_M_HiFi
+		nblocks=$(getNumOfDbBlocks ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db)
 	else
 		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: PACBIO_TYPE: ${PACBIO_TYPE} is unknwon! Must be set to either LoFi or HiFi!");
    		exit 1
