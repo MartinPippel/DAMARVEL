@@ -98,7 +98,7 @@ function setDatanderOptions()
 	para=$(getJobPara ${pipelineName} datander mem)
 	if [[ "x${para}" != "x" ]]
 	then 
-		SLURM_RUN_PARA[2]=${para}			
+		SLURM_RUN_PARA[2]=${para}				
 	fi
 	
 	### available options: verbose kmer window hits threads tmpDir err minLen trace
@@ -108,6 +108,8 @@ function setDatanderOptions()
 	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -v"	
+ 	else
+ 		echo "-------------> found para: \"${para}\""
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander kmer)
