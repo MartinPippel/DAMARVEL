@@ -535,7 +535,7 @@ then
 			done
 			echo -e " && pbindex ${f}.ccs.bam && rm pacbio/hifi/bam/${bn%.subreads.bam}.ccs.[0-9]*.bam && cd ${myCWD} && conda deactivate"			
 		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 
-		echo "$(${CONDA_BASE_ENV} && (samtools --version | head -n 2) && conda deactivate)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
+		echo "$(${CONDA_BASE_ENV}) && (samtools --version | head -n 2) && conda deactivate)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
 		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara			
 	elif [[ ${pipelineStepIdx} -eq 2 ]]
