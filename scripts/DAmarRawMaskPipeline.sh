@@ -105,7 +105,7 @@ function setDatanderOptions()
 	DATANDER_OPT=""
 	
 	para=$(getJobPara ${pipelineName} datander verbose)
-	if [[ "x${para}" != "x" && $(isNumber ${para}) && ${para} -gt 0 ]]
+	if [[ "x${para}" != "x" ]] && [[ $(isNumber ${para}) ]] && [[ ${para} -gt 0 ]]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -v"	
  	else
