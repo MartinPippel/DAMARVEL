@@ -34,7 +34,7 @@ fi
 
 ## create (if neccessary) and enter pipeline directory
 DAmarRootDir=$(pwd)
-ensureAndEnterPipelineDir ${pipelineIdx}
+ensureAndEnterPipelineDir ${pipelineTypeID}
 
 echo "[INFO] createAndSubmitSlurmJobs.sh: assembly config file - ${configFile}"
 echo "[INFO] createAndSubmitSlurmJobs.sh: pipeline - name ${pipelineName} pipelineTypeID ${pipelineTypeID} pipelineType ${pipelineType} step ${pipelineStepIdx} ID ${pipelineRunID}"
