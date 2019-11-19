@@ -301,8 +301,8 @@ function setDaligerOptions()
 	local c=0
 	for x in ${blocks_cov}
 	do
-		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}'
-		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}'
+		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}')
+		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}')
 		c=$((c+1))
 	done	 
 }
