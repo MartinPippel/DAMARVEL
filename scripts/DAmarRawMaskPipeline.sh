@@ -621,7 +621,7 @@ then
 			then
 				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} | date '+%Y-%m-%d_%H-%M-%S')	
 			fi
-			mkdir -p ${REPMASK_OUTDIR}/mask_${x}	
+			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}
 		done
 
         bcmp=${REPMASK_BLOCKCMP[0]}
