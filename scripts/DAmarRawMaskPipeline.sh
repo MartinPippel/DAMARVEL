@@ -411,7 +411,7 @@ function setLArepeatOptions()
 		hghCov=$(getJobPara ${pipelineName} LArepeat hghCov)
 		if $(isFloatNumber ${hghCov})
 		then 
-			hghCov=((${hghCov%.*}+1))
+			hghCov=$((${hghCov%.*}+1))
 		else 
 			hghCov=3
 		fi
