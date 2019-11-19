@@ -348,7 +348,7 @@ function setREPmaskOptions()
 		REPMASK_OPT="${REPMASK_OPT} -c${para}"					
 	fi
 	
-	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_LAREPEAT_COV[${idx}]}
+	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
 	
 	REPMASK_OPT="${REPMASK_OPT} -n${REPEAT_TRACK}"
 }
@@ -427,7 +427,7 @@ function setLArepeatOptions()
 		LAREPEAT_OPT="${LAREPEAT_OPT} -M${para}"
 	fi
 	
-	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_LAREPEAT_COV[${idx}]}
+	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
 	
 	LAREPEAT_OPT="${LAREPEAT_OPT} -t${REPEAT_TRACK}"
  }
@@ -650,7 +650,7 @@ then
                 then
                     break
                 fi
-                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}"
+                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}"
             done 
             
             n=$((${n}-1))
@@ -692,8 +692,8 @@ then
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.las && cd ${myCWD}/" 
-            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.las && cd ${myCWD}/" 
+            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
@@ -742,11 +742,11 @@ then
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
 		do
-			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} ]]
+			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} ]]
 			then
-				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} | date '+%Y-%m-%d_%H-%M-%S')	
+				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} | date '+%Y-%m-%d_%H-%M-%S')	
 			fi
-			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}	
+			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}	
 		done		
 
         ### create daligner commands
@@ -798,7 +798,7 @@ then
                 fi
                 echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las"
             done
-            echo -n " mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}"
+            echo -n " mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}"
             
             
 			if [[ -z "${RAW_REPMASK_DALIGNER_ASYMMETRIC}" || ${RAW_REPMASK_DALIGNER_ASYMMETRIC} -ne 0 ]]
@@ -810,7 +810,7 @@ then
                 	then
                     	break
                 	fi
-                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}"
+                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}"
             	done
         	fi
  
@@ -845,7 +845,7 @@ then
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.las mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} && cd ${myCWD}"            
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.las mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} && cd ${myCWD}"            
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
@@ -878,13 +878,13 @@ then
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.las && cd ${myCWD}/" 
-            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.las && cd ${myCWD}/" 
+            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
-    elif [[ ${pipelineStepIdx} -eq 13 && ${#REPMASK_BLOCKCMP[*]} -eq 2 && ${#REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 13 && ${#REPMASK_BLOCKCMP[*]} -eq 2 && ${#REPMASK_REPEAT_COV[*]} -eq 2 ]]
     then 
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
