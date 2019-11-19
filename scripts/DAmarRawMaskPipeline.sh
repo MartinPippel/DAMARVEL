@@ -289,7 +289,7 @@ function setDaligerOptions()
 			m=rep_B$(echo ${blocks_cov[${id}]} | sed -e "s:_:C:")
 			DALIGNER_OPT="${DALIGNER_OPT} -m${m}"
 		else
-			DALIGNER_OPT="${DALIGNER_OPT} -m${para}"
+			DALIGNER_OPT="${DALIGNER_OPT} -m${x}"
 		fi
 	done	
 	
