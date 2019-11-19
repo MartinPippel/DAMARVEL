@@ -62,6 +62,22 @@ function setDBdustOptions()
 
 function setCatrackOptions()
 {
+	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	getSlurmRunParameter ${pipelineStepName}
+	
+	### current rmask JobPara can overrule general SLURM_RUN_PARA
+	para=$(getJobPara ${pipelineName} Catrack partition)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[0]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} Catrack mem)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[2]=${para}				
+	fi
+	
+	
 	### available options: verbose delete force
 	CATRACK_OPT=""
 	
@@ -108,8 +124,6 @@ function setDatanderOptions()
 	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		DATANDER_OPT="${DATANDER_OPT} -v"	
- 	else
- 		echo "-------------> found para: \"${para}\" $(echo $(isNumber ${para})) $(echo $((${para} > 0)))"
 	fi
 	
 	para=$(getJobPara ${pipelineName} datander kmer)
@@ -164,142 +178,259 @@ function setDatanderOptions()
 
 function setTANmaskOptions()
 {
-    REPMASK_TANMASK_OPT=""
-    if [[ -n ${RAW_REPMASK_TANMASK_VERBOSE} && ${RAW_REPMASK_TANMASK_VERBOSE} -ge 1 ]]
-    then
-        REPMASK_TANMASK_OPT="${REPMASK_TANMASK_OPT} -v"
-    fi
-    if [[ -n ${RAW_REPMASK_TANMASK_MINLEN} && ${RAW_REPMASK_TANMASK_MINLEN} -ge 1 ]]
-    then
-        REPMASK_TANMASK_OPT="${REPMASK_TANMASK_OPT} -l${RAW_REPMASK_TANMASK_MINLEN}"
-    fi
-    if [[ -n ${RAW_REPMASK_TANMASK_TRACK} ]]
-    then
-        REPMASK_TANMASK_OPT="${REPMASK_TANMASK_OPT} -n${RAW_REPMASK_TANMASK_TRACK}"
-    fi
+	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+	getSlurmRunParameter ${pipelineStepName}
+	   	        
+    ### current rmask JobPara can overrule general SLURM_RUN_PARA
+	para=$(getJobPara ${pipelineName} TANmask partition)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[0]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} TANmask mem)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[2]=${para}				
+	fi
+	
+	### available options: verbose minLen 
+	TANMASK_OPT=""
+	
+	para=$(getJobPara ${pipelineName} TANmask verbose)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		TANMASK_OPT="${TANMASK_OPT} -v"	
+	fi
+	para=$(getJobPara ${pipelineName} TANmask minLen)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		TANMASK_OPT="${TANMASK_OPT} -n${para}"	
+	fi	
 }
 
 function setDaligerOptions()
 {
-    REPMASK_DALIGNER_OPT=""
-    if [[ -n ${RAW_REPMASK_DALIGNER_IDENTITY_OVLS} && ${RAW_REPMASK_DALIGNER_IDENTITY_OVLS} -gt 0 ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -I"
-    fi
-    if [[ -n ${RAW_REPMASK_DALIGNER_KMER} && ${RAW_REPMASK_DALIGNER_KMER} -gt 0 ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -k${RAW_REPMASK_DALIGNER_KMER}"
-    fi
-    if [[ -n ${RAW_REPMASK_DALIGNER_ERR} ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -e${RAW_REPMASK_DALIGNER_ERR}"
-    fi
-    if [[ -n ${RAW_REPMASK_DALIGNER_BIAS} && ${RAW_REPMASK_DALIGNER_BIAS} -eq 1 ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -b"
-    fi
-    if [[ -n ${RAW_REPMASK_DALIGNER_OLEN} ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -l${RAW_REPMASK_DALIGNER_OLEN}"
-    fi    
-    if [[ -n ${RAW_REPMASK_DALIGNER_MEM} && ${RAW_REPMASK_DALIGNER_MEM} -gt 0 ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -M${RAW_REPMASK_DALIGNER_MEM}"
-    fi    
-    if [[ -n ${RAW_REPMASK_DALIGNER_HITS} ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -h${RAW_REPMASK_DALIGNER_HITS}"
-    fi        
-    if [[ -n ${RAW_REPMASK_DALIGNER_T} ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -t${RAW_REPMASK_DALIGNER_T}"
-    fi  
-    if [[ -n ${RAW_REPMASK_DALIGNER_MASK} ]]
-    then
-        for x in ${RAW_REPMASK_DALIGNER_MASK}
-        do 
-            REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -m${x}"
-        done
-    fi
-    if [[ -n ${RAW_REPMASK_DALIGNER_TRACESPACE} && ${RAW_REPMASK_DALIGNER_TRACESPACE} -gt 0 ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -s${RAW_REPMASK_DALIGNER_TRACESPACE}"
-    fi
-    if [[ -n ${THREADS_daligner} ]]
-    then 
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -T${THREADS_daligner}"
-    fi
+	### find and set daligner options 
+    getSlurmRunParameter ${pipelineStepName}
+    
+    ### current rmask JobPara can overrule general SLURM_RUN_PARA
+	para=$(getJobPara ${pipelineName} daligner partition)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[0]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} daligner threads)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[1]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} daligner mem)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[2]=${para}				
+	fi
+	
+	### available options: verbose identity kmer err minLen	mem	hits trace mask
+	DALIGNER_OPT=""
+	
+	para=$(getJobPara ${pipelineName} daligner verbose)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -v"	
+	fi
+    para=$(getJobPara ${pipelineName} daligner identity)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -I"	
+	fi
+	para=$(getJobPara ${pipelineName} daligner kmer)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -k${para}"	
+	fi
+    para=$(getJobPara ${pipelineName} daligner err)
+	if $(isFloatNumber ${para})
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -e${para}"	
+	fi
+	para=$(getJobPara ${pipelineName} daligner minLen)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -l${para}"	
+	fi
+	para=$(getJobPara ${pipelineName} daligner mem)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -M$((${para}/1024))"				
+	fi
+	para=$(getJobPara ${pipelineName} daligner hits)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -h${para}"				
+	fi
+	para=$(getJobPara ${pipelineName} daligner trace)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -t${para}"				
+	fi
+	para=$(getJobPara ${pipelineName} daligner threads)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		DALIGNER_OPT="${DALIGNER_OPT} -T${para}"					
+	fi
+	
+	para=$(getJobPara ${pipelineName} daligner mask)
+	for x in ${para}
+	do
+		if [[ "$x" =~ ^LArepeatJobPara_[0-9] ]]; then
+		then
+			blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
+			id=$(echo $x | sed -e "s:LArepeatJobPara_::")
+			m=rep_B$(echo ${blocks_cov[${id}]} | sed -e "s:_:C:")
+			DALIGNER_OPT="${DALIGNER_OPT} -m${m}"
+		else
+			DALIGNER_OPT="${DALIGNER_OPT} -m${para}"
+		fi
+	done	
+	
+	## set block comparisons
+	REPMASK_BLOCKCMP=()
+	REPMASK_REPEAT_COV=()
+	
+	blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
+	local c=0
+	for x in ${blocks_cov}
+	do
+		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}'
+		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}'
+		c=$((c+1))
+	done	 
+}
+
+function setREPmaskOptions()
+{
+    idx=$1
+    
+    ## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setDaligerOptions 
+	setDaligerOptions
+    
+    ### find and set daligner options 
+    getSlurmRunParameter ${pipelineStepName}
+    
+    ### current rmask JobPara can overrule general SLURM_RUN_PARA
+	para=$(getJobPara ${pipelineName} REPmask partition)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[0]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} REPmask threads)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[1]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} REPmask mem)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[2]=${para}				
+	fi
+	
+	### available options: verbose repCov
+	REPMASK_OPT=""
+	
+	para=$(getJobPara ${pipelineName} REPmask verbose)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		REPMASK_OPT="${REPMASK_OPT} -v"					
+	fi
+	para=$(getJobPara ${pipelineName} REPmask repCov)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		REPMASK_OPT="${REPMASK_OPT} -c${para}"					
+	fi
+	
+	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_LAREPEAT_COV[${idx}]}
+	
+	REPMASK_OPT="${REPMASK_OPT} -n${REPEAT_TRACK}"
 }
 
 function setLArepeatOptions()
 {
     idx=$1
-    REPMASK_LAREPEAT_OPT=""
-    if [[ -n ${RAW_REPMASK_LAREPEAT_LOW} ]]
-    then
-        REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -l ${RAW_REPMASK_LAREPEAT_LOW}"
-    fi
-    if [[ -n ${RAW_REPMASK_LAREPEAT_HGH} ]]
-    then
-        REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -h ${RAW_REPMASK_LAREPEAT_HGH}"
-    fi
-    if [[ -n ${RAW_REPMASK_LAREPEAT_OLEN} ]]
-    then
-        REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -o ${RAW_REPMASK_LAREPEAT_OLEN}"
-    fi
-    if [[ -n ${RAW_REPMASK_LAREPEAT_REPEATTRACK} ]]
-    then
-        if [[ -z ${idx} ]]
-        then
-          RAW_REPMASK_REPEATTRACK=${RAW_REPMASK_LAREPEAT_REPEATTRACK}
-          REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -t ${RAW_REPMASK_REPEATTRACK}"
-        else 
-            if [[ ${#RAW_REPMASK_LAREPEAT_COV[*]} -lt ${idx} ]]
-            then 
-                (>&2 echo "RAW_REPMASK_LAREPEAT_COV has lower the ${idx} elements")
-                exit 1
-            elif [[ ${#RAW_REPMASK_BLOCKCMP[*]} -lt ${idx} ]]
-            then 
-                (>&2 echo "RAW_REPMASK_BLOCKCMP has lower the ${idx} elements")
-                exit 1
-            fi
-            RAW_REPMASK_REPEATTRACK=${RAW_REPMASK_LAREPEAT_REPEATTRACK}_B${RAW_REPMASK_BLOCKCMP[${idx}]}C${RAW_REPMASK_LAREPEAT_COV[${idx}]}
-            REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -t ${RAW_REPMASK_REPEATTRACK}"
-        fi
-    fi
-    if [[ -n ${RAW_REPMASK_LAREPEAT_COV} ]]
-    then
-        if [[ -z ${idx} ]]
-        then
-            REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -c ${RAW_REPMASK_LAREPEAT_COV}"
-        else
-            if [[ ${#RAW_REPMASK_LAREPEAT_COV[*]} -lt ${idx} ]]
-            then 
-                (>&2 echo "RAW_REPMASK_LAREPEAT_COV has lower the ${idx} elements")
-                exit 1
-            fi
-            REPMASK_LAREPEAT_OPT="${REPMASK_LAREPEAT_OPT} -c ${RAW_REPMASK_LAREPEAT_COV[${idx}]}"
-        fi 
-    fi
-}
-
-function setTKmergeOptions()
-{
-    REPMASK_TKMERGE_OPT=""
-    if [[ -n ${RAW_REPMASK_TKMERGE_DELETE} && ${RAW_REPMASK_TKMERGE_DELETE} -ge 1 ]]
-    then
-        REPMASK_TKMERGE_OPT="${REPMASK_TKMERGE_OPT} -d"
-    fi
-    if [ ! -n ${RAW_REPMASK_LAREPEAT_REPEATTRACK} ] ### fall back to default value!!!
-    then
-        RAW_REPMASK_LAREPEAT_REPEATTRACK="repeats"
-    fi
-}
-
-
-
-
-
+    
+    ## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setDaligerOptions 
+	setDaligerOptions
+    
+    ### find and set daligner options 
+    getSlurmRunParameter ${pipelineStepName}
+    
+    ### current rmask JobPara can overrule general SLURM_RUN_PARA
+	para=$(getJobPara ${pipelineName} LArepeat partition)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[0]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat threads)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[1]=${para}			
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat mem)
+	if [[ "x${para}" != "x" ]]
+	then 
+		SLURM_RUN_PARA[2]=${para}				
+	fi
+	
+	### available options: hghCov lowCov minLen identity ecov maxCov
+	LAREPEAT_OPT=""
+	
+	para=$(getJobPara ${pipelineName} LArepeat hghCov)
+	if $(isFloatNumber ${para})
+	then 
+		LAREPEAT_OPT="${LAREPEAT_OPT} -h${para}"	
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat lowCov)
+	if $(isFloatNumber ${para})
+	then 
+		LAREPEAT_OPT="${LAREPEAT_OPT} -l${para}"	
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat minLen)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		LAREPEAT_OPT="${LAREPEAT_OPT} -o${para}"	
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat identity)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		LAREPEAT_OPT="${LAREPEAT_OPT} -I"	
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat ecov)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		LAREPEAT_OPT="${LAREPEAT_OPT} -c${para}"
+		
+		hghCov=$(getJobPara ${pipelineName} LArepeat hghCov)
+		if $(isFloatNumber ${hghCov})
+		then 
+			hghCov=((${hghCov%.*}+1))
+		else 
+			hghCov=3
+		fi
+		
+		if [[ $((para*hghCov)) -gt 100 ]]
+		then 
+			LAREPEAT_OPT="${LAREPEAT_OPT} -M$((para*hghCov))"
+		fi 
+	fi
+	para=$(getJobPara ${pipelineName} LArepeat maxCov)
+	if $(isNumber ${para}) && [ ${para} -gt 0 ]
+	then 
+		LAREPEAT_OPT="${LAREPEAT_OPT} -M${para}"
+	fi
+	
+	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_LAREPEAT_COV[${idx}]}
+	
+	LAREPEAT_OPT="${LAREPEAT_OPT} -t${REPEAT_TRACK}"
+ }
 
 if [[ -n ${PACBIO_TYPE} ]] 
 then 
@@ -359,21 +490,21 @@ then
             rm $x
         done
                         
-        echo -e "if [[ -d ${RAW_REPMASK_OUTDIR} ]]; then mv ${RAW_REPMASK_OUTDIR} ${RAW_REPMASK_OUTDIR}_\$(stat --format='%Y' ${RAW_REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi"
+        echo -e "if [[ -d ${REPMASK_OUTDIR} ]]; then mv ${REPMASK_OUTDIR} ${REPMASK_OUTDIR}_\$(stat --format='%Y' ${REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi"
        	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
        	then
-       		echo -e "mkdir ${RAW_REPMASK_OUTDIR}"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "mkdir ${REPMASK_OUTDIR}"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${REPMASK_OUTDIR}/"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${REPMASK_OUTDIR}/"
        		echo -e "cd ${myCWD}"
         else
-       		echo -e "mkdir ${RAW_REPMASK_OUTDIR}"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${RAW_REPMASK_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${RAW_REPMASK_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${RAW_REPMASK_OUTDIR}/"
+       		echo -e "mkdir ${REPMASK_OUTDIR}"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${REPMASK_OUTDIR}/"
+       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${REPMASK_OUTDIR}/"
        		echo -e "åcd ${myCWD}"       		
        	fi > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
        	
@@ -392,8 +523,8 @@ then
         ### create DBdust commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/DBdust${DBDUST_OPT} ${DB_M%.db}.${x} && cd ${myCWD}"
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/DBdust${DBDUST_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/DBdust${DBDUST_OPT} ${DB_M%.db}.${x} && cd ${myCWD}"
+            echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/DBdust${DBDUST_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
@@ -411,11 +542,9 @@ then
         ### find and set Catrack options 
         setCatrackOptions
         ### create Catrack command
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/Catrack${CATRACK_OPT} ${DB_M%.db} dust && cp .${DB_M%.db}.dust.anno .${DB_M%.db}.dust.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} dust && cp .${DB_Z%.db}.dust.anno .${DB_Z%.db}.dust.data ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/Catrack${CATRACK_OPT} ${DB_M%.db} dust && cp .${DB_M%.db}.dust.anno .${DB_M%.db}.dust.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} dust && cp .${DB_Z%.db}.dust.anno .${DB_Z%.db}.dust.data ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
         
-        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara                 
         echo "MARVEL Catrack $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
@@ -432,7 +561,7 @@ then
         ### create datander commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+            echo "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	
     	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara                 
@@ -450,10 +579,8 @@ then
         ### create TANmask commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/TANmask${REPMASK_TANMASK_OPT} ${DB_Z%.db} TAN.${DB_Z%.db}.${x}.las && cd ${myCWD}" 
+            echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/TANmask${TANMASK_OPT} ${DB_Z%.db} TAN.${DB_Z%.db}.${x}.las && cd ${myCWD}" 
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DAZZLER TANmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
     elif [[ ${pipelineStepIdx} -eq 5 ]]
@@ -465,18 +592,14 @@ then
         done 
         
         ### find and set Catrack options
-        if [[ -z ${REPMASK_CATRACK_OPT} ]] 
-        then
-            setCatrackOptions
-        fi
-        ### create Catrack command
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_CATRACK_OPT} ${DB_Z%.db} ${RAW_REPMASK_TANMASK_TRACK} && cp .${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.anno .${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${LASTOOLS_PATH}/bin/viewmasks ${DB_Z%.db} ${RAW_REPMASK_TANMASK_TRACK} > ${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.txt && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-      	echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/txt2track -m ${DB_M%.db} ${DB_Z%.db}.${RAW_REPMASK_TANMASK_TRACK}.txt ${RAW_REPMASK_TANMASK_TRACK} && cp .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}.a2 .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-      	echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKcombine ${DB_M%.db} ${RAW_REPMASK_TANMASK_TRACK}_dust ${RAW_REPMASK_TANMASK_TRACK} dust && cp .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}_dust.a2 .${DB_M%.db}.${RAW_REPMASK_TANMASK_TRACK}_dust.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 
+        setCatrackOptions
         
-        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
+        ### create Catrack command
+        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} tan && cp .${DB_Z%.db}.tan.anno .${DB_Z%.db}.tan.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${LASTOOLS_PATH}/bin/viewmasks ${DB_Z%.db} tan > ${DB_Z%.db}.tan.txt && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+      	echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/txt2track -m ${DB_M%.db} ${DB_Z%.db}.tan.txt tan && cp .${DB_M%.db}.tan.a2 .${DB_M%.db}.tan.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+      	echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKcombine ${DB_M%.db} tan_dust tan dust && cp .${DB_M%.db}.tan_dust.a2 .${DB_M%.db}.tan_dust.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 
+        
 	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
@@ -489,36 +612,29 @@ then
         do            
             rm $x
         done 
-        ### find and set daligner options 
-        getSlurmRunParameter ${pipelineStepName}
-		THREADS_daligner=${SLURM_RUN_PARA[1]}
 		setDaligerOptions
 		
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
 		do
-			if [[ -d ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]} ]]
+			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} ]]
 			then
-				mv ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]} ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}_$(stat --format='%Y' ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]} | date '+%Y-%m-%d_%H-%M-%S')	
+				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} | date '+%Y-%m-%d_%H-%M-%S')	
 			fi
-			mkdir -p ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}	
+			mkdir -p ${REPMASK_OUTDIR}/mask_${x}	
 		done
 
-        bcmp=${RAW_REPMASK_BLOCKCMP[0]}
+        bcmp=${REPMASK_BLOCKCMP[0]}
 		
         ### create daligner commands
         n=${bcmp}
         for x in $(seq 1 ${nblocks})
         do
-            if [[ $(echo "$x%${bcmp}" | bc) -eq 1 || ${bcmp} -eq 1 ]]
+            if [[ $((x%bcmp)) -eq 1 || ${bcmp} -eq 1 ]]
             then 
               n=${bcmp}
             fi 
-            if [[ -n ${RAW_REPMASK_REPEATTRACK} ]]
-            then
-                REP="-m${RAW_REPMASK_REPEATTRACK}"
-            fi
-            echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
+            echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
             for y in $(seq ${x} $((${x}+${n}-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
@@ -534,7 +650,7 @@ then
                 then
                     break
                 fi
-                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}"
+                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}"
             done 
             
             n=$((${n}-1))
@@ -542,8 +658,7 @@ then
             echo " && cd ${myCWD}"
    		done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
    		
-   		## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+   		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
     elif [[ ${pipelineStepIdx} -eq 7 ]]
     then
@@ -553,13 +668,14 @@ then
             rm $x
         done 
 		
+		## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setDaligerOptions 
+		setDaligerOptions
+		
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 32 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]} && cd ${myCWD}"            
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.las mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} && cd ${myCWD}"            
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version  
     elif [[ ${pipelineStepIdx} -eq 8 ]]
@@ -572,14 +688,13 @@ then
         
         ### find and set LArepeat options 
         setLArepeatOptions 0
+        setREPmaskOptions 0
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${REPMASK_LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las && cd ${myCWD}/" 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask -v -c${RAW_REPMASK_LAREPEAT_COV[0]} -n${RAW_REPMASK_REPEATTRACK} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[0]}C${RAW_REPMASK_LAREPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.las && cd ${myCWD}/" 
+            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_LAREPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
@@ -595,36 +710,44 @@ then
         setTKmergeOptions
         setLArepeatOptions 0
         ### create TKmerge commands
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
-	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK} && cp .${DB_Z%.db}.${REPEAT_TRACK}.anno .${DB_Z%.db}.${REPEAT_TRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version    
-    elif [[ ${pipelineStepIdx} -eq 10 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 10 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
-        ### find and set daligner options 
-        setDaligerOptions
+        setLArepeatOptions 0   # implictly calls setDalignerOptions, that sets variables REPMASK_BLOCKCMP and REPMASK_REPEAT_COV
+
+		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
+        	exit 1
+		fi
 		
-        setLArepeatOptions 0
-        bcmp=${RAW_REPMASK_BLOCKCMP[1]}
+		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+        	exit 1
+		fi
+
+        bcmp=${REPMASK_BLOCKCMP[1]}
 			
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
 		do
-			if [[ -d ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]} ]]
+			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} ]]
 			then
-				mv ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]} ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}_$(stat --format='%Y' ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]} | date '+%Y-%m-%d_%H-%M-%S')	
+				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} | date '+%Y-%m-%d_%H-%M-%S')	
 			fi
-			mkdir -p ${RAW_REPMASK_OUTDIR}/mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}	
-		done
-		
+			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}	
+		done		
 
         ### create daligner commands
         n=${bcmp}
@@ -641,9 +764,9 @@ then
 
 			if [[ "x${DALIGNER_VERSION}" == "x2" ]]
 			then
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
+				echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
 			else
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${DB_Z%.db}.${x}"
+				echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
 			fi			
 			
             for y in $(seq ${x} $((${x}+${n}-1)))
@@ -675,7 +798,7 @@ then
                 fi
                 echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las"
             done
-            echo -n " mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}"
+            echo -n " mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}"
             
             
 			if [[ -z "${RAW_REPMASK_DALIGNER_ASYMMETRIC}" || ${RAW_REPMASK_DALIGNER_ASYMMETRIC} -ne 0 ]]
@@ -687,35 +810,48 @@ then
                 	then
                     	break
                 	fi
-                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}"
+                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}"
             	done
         	fi
  
             echo " && cd ${myCWD}"
             n=$((${n}-1))
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara 
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
-    elif [[ ${pipelineStepIdx} -eq 11 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 11 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
+        
+        setLArepeatOptions 0   # implictly calls setDalignerOptions, that sets variables REPMASK_BLOCKCMP and REPMASK_REPEAT_COV
+
+		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
+        	exit 1
+		fi
+		
+		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+        	exit 1
+		fi
 
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 32 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las mask_${x}_B${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]} && cd ${myCWD}"            
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.las mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]} && cd ${myCWD}"            
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LAmerge  $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
-    elif [[ ${pipelineStepIdx} -eq 12 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 12 ]]
     then 
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -723,20 +859,32 @@ then
             rm $x
         done 
         
-        ### find and set LArepeat options 
-        setLArepeatOptions 1
+        setLArepeatOptions 1   # implictly calls setDalignerOptions, that sets variables REPMASK_BLOCKCMP and REPMASK_REPEAT_COV
+		setREPmaskOptions 1
+
+		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
+        	exit 1
+		fi
+		
+		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+        	exit 1
+		fi
+        
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${REPMASK_LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las && cd ${myCWD}/" 
-            echo "cd ${RAW_REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask -v -c${RAW_REPMASK_LAREPEAT_COV[1]} -n${RAW_REPMASK_REPEATTRACK} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${RAW_REPMASK_BLOCKCMP[1]}C${RAW_REPMASK_LAREPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.las && cd ${myCWD}/" 
+            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_LAREPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
     	done > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
-    elif [[ ${pipelineStepIdx} -eq 13 && ${#RAW_REPMASK_BLOCKCMP[*]} -eq 2 && ${#RAW_REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 13 && ${#REPMASK_BLOCKCMP[*]} -eq 2 && ${#REPMASK_LAREPEAT_COV[*]} -eq 2 ]]
     then 
         ### clean up plans 
         for x in $(ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -744,14 +892,26 @@ then
             rm $x
         done 
         
+		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
+        	exit 1
+		fi
+		
+		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		then 
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+        	exit 1
+		fi
+        
         ### find and set TKmerge options 
-        setTKmergeOptions
+        setCatrackOptions
         setLArepeatOptions 1
         ### create TKmerge commands
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_REPMASK_REPEATTRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${RAW_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${RAW_REPMASK_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_REPMASK_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
-        ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
-	   	getSlurmRunParameter ${pipelineStepName}
+        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${CATRACK_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} ${REPEAT_TRACK} && cp .${DB_Z%.db}.${REPEAT_TRACK}.anno .${DB_Z%.db}.${REPEAT_TRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan
+
 	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.version
