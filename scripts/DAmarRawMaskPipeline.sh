@@ -282,7 +282,7 @@ function setDaligerOptions()
 	para=$(getJobPara ${pipelineName} daligner mask)
 	for x in ${para}
 	do
-		if [[ "$x" =~ ^LArepeatJobPara_[0-9] ]]; then
+		if [[ "$x" =~ ^LArepeatJobPara_[0-9] ]]; 
 		then
 			blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
 			id=$(echo $x | sed -e "s:LArepeatJobPara_::")
