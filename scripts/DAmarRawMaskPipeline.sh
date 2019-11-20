@@ -363,7 +363,7 @@ function setREPmaskOptions()
 	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
 	REPMASK_OPT="${REPMASK_OPT} -n${REPEAT_TRACK}"
 }
-
+	
 function setLArepeatOptions()
 {
     idx=$1
@@ -891,7 +891,7 @@ then
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
-    elif [[ ${pipelineStepIdx} -eq 13 && ${#REPMASK_BLOCKCMP[*]} -eq 2 && ${#REPMASK_REPEAT_COV[*]} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 13 ]]
     then 
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
