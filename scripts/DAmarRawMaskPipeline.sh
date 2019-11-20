@@ -361,7 +361,6 @@ function setREPmaskOptions()
 	fi
 	
 	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
-	
 	REPMASK_OPT="${REPMASK_OPT} -n${REPEAT_TRACK}"
 }
 
