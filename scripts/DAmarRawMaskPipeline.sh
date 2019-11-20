@@ -422,7 +422,7 @@ function setLArepeatOptions()
 	do
 		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}')
 		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}')
-		if [[ ${x} -eq ${idx} ]]
+		if [[ ${c} -eq ${idx} ]]
 		then
 			LAREPEAT_OPT="${LAREPEAT_OPT} -c ${REPMASK_REPEAT_COV[$c]}"
 			REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
