@@ -208,7 +208,7 @@ function setTANmaskOptions()
 	fi	
 }
 
-function setDaligerOptions()
+function setDalignerOptions()
 {
 	numRepTracks=$1
 	
