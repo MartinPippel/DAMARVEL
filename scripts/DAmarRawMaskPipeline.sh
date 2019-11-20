@@ -899,6 +899,9 @@ then
             rm $x
         done 
         
+        setLArepeatOptions 1
+		setREPmaskOptions 1
+        
 		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
 		then 
 			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
