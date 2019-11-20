@@ -210,6 +210,8 @@ function setTANmaskOptions()
 
 function setDaligerOptions()
 {
+	numRepTracks=$1
+	
 	### find and set daligner options 
     getSlurmRunParameter ${pipelineStepName}
     
@@ -284,10 +286,17 @@ function setDaligerOptions()
 	do
 		if [[ "$x" =~ ^LArepeatJobPara_[0-9] ]]; 
 		then
-			blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
-			id=$(echo $x | sed -e "s:LArepeatJobPara_::")
-			m=rep_B$(echo ${blocks_cov[${id}]} | sed -e "s:_:C:")
-			DALIGNER_OPT="${DALIGNER_OPT} -m${m}"
+			for y in $(seq 0 9)
+			do
+				if [[ ${numRepTracks} -eq  -1 || $((y+1)) -eq ${numRepTracks} ]]; 
+				then
+					blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
+					id=$(echo $x | sed -e "s:LArepeatJobPara_::")
+					m=rep_B$(echo ${blocks_cov[${id}]} | sed -e "s:_:C:")
+					DALIGNER_OPT="${DALIGNER_OPT} -m${m}"
+					break
+				fi
+			done
 		else
 			DALIGNER_OPT="${DALIGNER_OPT} -m${x}"
 		fi
@@ -345,7 +354,10 @@ function setREPmaskOptions()
 	para=$(getJobPara ${pipelineName} REPmask repCov)
 	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
-		REPMASK_OPT="${REPMASK_OPT} -c${para}"					
+		REPMASK_OPT="${REPMASK_OPT} -c${para}"
+	else 
+		(>&2 echo "[WARNING] DAmarRawMaskPipeline - No repeat coverage threshold could be found! Please set array REPmaskJobPara+=(rmask repCov <YourRepeatCoverage>) appropriately!")
+		exit 1
 	fi
 	
 	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
@@ -356,12 +368,13 @@ function setREPmaskOptions()
 function setLArepeatOptions()
 {
     idx=$1
-    
-    ## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setDaligerOptions 
-	setDaligerOptions
-    
+        
     ### find and set daligner options 
     getSlurmRunParameter ${pipelineStepName}
+    
+    REPMASK_BLOCKCMP=()
+    REPMASK_REPEAT_COV=()
+    REPEAT_TRACK=""
     
     ### current rmask JobPara can overrule general SLURM_RUN_PARA
 	para=$(getJobPara ${pipelineName} LArepeat partition)
@@ -380,7 +393,7 @@ function setLArepeatOptions()
 		SLURM_RUN_PARA[2]=${para}				
 	fi
 	
-	### available options: hghCov lowCov minLen identity ecov maxCov
+	### available options: hghCov lowCov minLen identity blocks_cov maxCov
 	LAREPEAT_OPT=""
 	
 	para=$(getJobPara ${pipelineName} LArepeat hghCov)
@@ -403,34 +416,28 @@ function setLArepeatOptions()
 	then 
 		LAREPEAT_OPT="${LAREPEAT_OPT} -I"	
 	fi
-	para=$(getJobPara ${pipelineName} LArepeat ecov)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		LAREPEAT_OPT="${LAREPEAT_OPT} -c${para}"
-		
-		hghCov=$(getJobPara ${pipelineName} LArepeat hghCov)
-		if $(isFloatNumber ${hghCov})
-		then 
-			hghCov=$((${hghCov%.*}+1))
-		else 
-			hghCov=3
-		fi
-		
-		if [[ $((para*hghCov)) -gt 100 ]]
-		then 
-			LAREPEAT_OPT="${LAREPEAT_OPT} -M$((para*hghCov))"
-		fi 
-	fi
+	para=$(getJobPara ${pipelineName} LArepeat blocks_cov)
+	c=0
+	for x in "${para}"
+	do
+		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}')
+		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}')
+		if [[ ${x} -eq ${idx} ]]
+		then
+			LAREPEAT_OPT="${LAREPEAT_OPT} -c ${REPMASK_REPEAT_COV[$c]}"
+			REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
+			LAREPEAT_OPT="${LAREPEAT_OPT} -t${REPEAT_TRACK}"			
+			break	
+		fi		
+		c=$((c+1))
+	done
+	
 	para=$(getJobPara ${pipelineName} LArepeat maxCov)
 	if $(isNumber ${para}) && [ ${para} -gt 0 ]
 	then 
 		LAREPEAT_OPT="${LAREPEAT_OPT} -M${para}"
 	fi
-	
-	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
-	
-	LAREPEAT_OPT="${LAREPEAT_OPT} -t${REPEAT_TRACK}"
- }
+}
 
 if [[ -n ${PACBIO_TYPE} ]] 
 then 

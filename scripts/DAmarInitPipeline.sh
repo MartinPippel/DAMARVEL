@@ -806,7 +806,7 @@ then
         
         if [[ ! -f ${longrangerOut} ]]
         then 
-        	(>&2 echo "ERROR - longranger 10x data is not present at: ${longrangerOut}! Run longranger basic on 10x reads first!")
+        	(>&2 echo "[ERROR] DAmarInitPipeline - longranger 10x data is not present at: ${longrangerOut}! Run longranger basic on 10x reads first!")
 	        exit 1
     	fi
         
