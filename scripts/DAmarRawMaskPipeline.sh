@@ -284,18 +284,19 @@ function setDalignerOptions()
 	para=$(getJobPara ${pipelineName} daligner mask)
 	for x in ${para}
 	do
-		if [[ "$x" =~ ^LArepeatJobPara_[0-9] ]]; 
+		if [[ "$x" == "^LArepeatJobPara" ]]; 
 		then
-			for y in $(seq 0 9)
+			blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
+			local to=${numRepTracks}
+			if [[ ${to} -lt 0 ]]
+			then 
+				to=${#blocks_cov[@]}
+			fi 
+			
+			for y in $(seq 1 ${to})
 			do
-				if [[ ${numRepTracks} -eq  -1 || $((y+1)) -eq ${numRepTracks} ]]; 
-				then
-					blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
-					id=$(echo $x | sed -e "s:LArepeatJobPara_::")
-					m=rep_B$(echo ${blocks_cov[${id}]} | sed -e "s:_:C:")
-					DALIGNER_OPT="${DALIGNER_OPT} -m${m}"
-					break
-				fi
+				m=rep_B$(echo ${blocks_cov[${y}]} | sed -e "s:_:C:")
+				DALIGNER_OPT="${DALIGNER_OPT} -m${m}"				
 			done
 		else
 			DALIGNER_OPT="${DALIGNER_OPT} -m${x}"
