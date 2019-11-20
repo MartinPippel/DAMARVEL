@@ -284,7 +284,7 @@ function setDalignerOptions()
 	para=$(getJobPara ${pipelineName} daligner mask)
 	for x in ${para}
 	do
-		if [[ "$x" == "^LArepeatJobPara" ]]; 
+		if [[ "$x" == "LArepeatJobPara" ]]; 
 		then
 			blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
 			local to=${numRepTracks}
