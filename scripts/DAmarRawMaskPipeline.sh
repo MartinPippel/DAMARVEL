@@ -712,7 +712,7 @@ then
         done 
         
         ### find and set TKmerge options 
-        setTKmergeOptions
+        setCatrackOptions
         setLArepeatOptions 0
         ### create TKmerge commands
         echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
