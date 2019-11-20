@@ -734,6 +734,7 @@ then
 		then 
 			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
+			(>&2 echo "                                - found REPMASK_BLOCKCMP: ${REPMASK_BLOCKCMP[@]} and REPMASK_REPEAT_COV: ${REPMASK_REPEAT_COV[@]}")
         	exit 1
 		fi
 		
