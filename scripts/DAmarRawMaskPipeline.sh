@@ -417,7 +417,7 @@ function setLArepeatOptions()
 	fi
 	para=$(getJobPara ${pipelineName} LArepeat blocks_cov)
 	c=0
-	for x in "${para}"
+	for x in ${para}
 	do
 		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}')
 		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}')
