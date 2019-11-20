@@ -306,9 +306,9 @@ function setDalignerOptions()
 	REPMASK_BLOCKCMP=()
 	REPMASK_REPEAT_COV=()
 	
-	blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
+	para=$(getJobPara ${pipelineName} LArepeat blocks_cov)
 	local c=0
-	for x in ${blocks_cov}
+	for x in ${para}
 	do
 		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}')
 		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}')
@@ -734,7 +734,7 @@ then
 		then 
 			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
-			(>&2 echo "                                - found REPMASK_BLOCKCMP: ${REPMASK_BLOCKCMP[@]} and REPMASK_REPEAT_COV: ${REPMASK_REPEAT_COV[@]}")
+			(>&2 echo "                                - found REPMASK_BLOCKCMP: \"${REPMASK_BLOCKCMP[@]}\" and REPMASK_REPEAT_COV: \"${REPMASK_REPEAT_COV[@]}\"")
         	exit 1
 		fi
 		
