@@ -20,7 +20,7 @@ pipelineType=${RUN_DAMAR[$((pipelineIdx+1))]}
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineType: \"${pipelineType}\""
 pipelineTypeID=$(pipelineNameToID ${pipelineName})		### pipeline identifier: e.g. 01 - init, 02 - mito etc
 echo "[DEBUG] createAndSubmitSlurmJobs.sh: pipelineTypeID: \"${pipelineTypeID}\""
-pipelineStepIdx=$(prependZero $3)
+pipelineStepIdx=$3
 pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx})
 echo -e "[DEBUG] createAndSubmitSlurmJobs.sh: getStepName \"${pipelineName}\" \"${pipelineType}\" \"${pipelineStepIdx}\"  -> ${pipelineStepName}"
 pipelineRunID=$4
@@ -52,20 +52,20 @@ then
 	fi 
 fi
 
-if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan 1> /dev/null 2>&1;
+if ! ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan 1> /dev/null 2>&1;
 then
-    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan")
+    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan")
     exit 1
 fi
 
-if ! ls ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara 1> /dev/null 2>&1;
+if ! ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara 1> /dev/null 2>&1;
 then
-    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara")
+    (>&2 echo "[ERROR] createAndSubmitSlumJobs.sh: missing file ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara")
     exit 1
 fi
 
 ### get slurm running mode: parallel or sequential
-sType=$(getSlurmParaMode ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+sType=$(getSlurmParaMode ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
 if [[ ${sType} != "sequential" && ${sType} != "parallel" ]]
 then
     (>&2 echo "[ERROR] createAndSubmitSlumJobs: unknown slurm type ${sType}. valid types: sequential, parallel")
@@ -77,18 +77,18 @@ fi
 if [[ ${resumeIdx} -eq 0 ]]
 then
 	### setup runtime conditions, time, memory, etc 
-	MEM=$(getSlurmParaMem ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
-	TIME=$(getSlurmParaTime ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
-	CORES=$(getSlurmParaCores ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
-	NTASKS_PER_NODE=$(getSlurmParaTasks ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
-	STEPSIZE=$(getSlurmParaStep ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	MEM=$(getSlurmParaMem ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	TIME=$(getSlurmParaTime ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	CORES=$(getSlurmParaCores ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	NTASKS_PER_NODE=$(getSlurmParaTasks ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	STEPSIZE=$(getSlurmParaStep ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
 	if [[ -n "${STEPSIZE}" ]]
 	then
 		STEPSIZE=":${STEPSIZE}"	
 	fi 
-	PARTITION=$(getSlurmParaPartition ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.slurmPara)
+	PARTITION=$(getSlurmParaPartition ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara)
 	MEM_PER_CORE=$((${MEM}/${CORES}))
-	JOBS=$(wc -l ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan | awk '{print $1}')
+	JOBS=$(wc -l ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan | awk '{print $1}')
 	log_folder=log_${pipelineName}_${pipelineStepName}
 	mkdir -p ${log_folder}
 	first=1
@@ -99,18 +99,18 @@ then
 	    d=1
 	    while [[ $from -lt ${JOBS} ]]
 	    do
-	        file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.${d}
-	        sed -n ${from},${to}p ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.plan > ${file}.plan
+	        file=${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.${d}
+	        sed -n ${from},${to}p ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan > ${file}.plan
 	        jobs=$((${to}-${from}+1))
 	        ### create slurm submit file
 	        echo "#!/bin/bash
-#SBATCH -J ${PROJECT_ID}_p${pipelineName}s${pipelineStepIdx}
+#SBATCH -J ${PROJECT_ID}_${pipelineName}_$(prependZero ${pipelineStepIdx})
 #SBATCH -p ${PARTITION}
 #SBATCH -a 1-${jobs}${STEPSIZE}
 #SBATCH -c ${CORES} # Number of cores 
 #SBATCH -n 1 # number of nodes
-#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_${d}_%A_%a.out # Standard output 
-#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_${d}_%A_%a.err # Standard error
+#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_$(prependZero ${pipelineStepIdx})_${d}_%A_%a.out # Standard output 
+#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_$(prependZero ${pipelineStepIdx})_${d}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
@@ -165,18 +165,18 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 	    done
 	else ## less then ${Slurm_MaxArrayCount} jobs 
 	    jobs=${JOBS}
-	    file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}
+	    file=${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}
 	    ### create slurm submit file
 	    if [[ ${sType} == "parallel" ]]
 	    then 
 	        echo "#!/bin/bash
-#SBATCH -J ${PROJECT_ID}_p${pipelineName}s${pipelineStepIdx}
+#SBATCH -J ${PROJECT_ID}_${pipelineName}_$(prependZero ${pipelineStepIdx})
 #SBATCH -p ${PARTITION}
 #SBATCH -a 1-${jobs}${STEPSIZE}
 #SBATCH -c ${CORES} # Number of cores 
 #SBATCH -n 1 # number of nodes
-#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A_%a.out # Standard output
-#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A_%a.err # Standard error
+#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_$(prependZero ${pipelineStepIdx})_%A_%a.out # Standard output
+#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_$(prependZero ${pipelineStepIdx})_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
@@ -222,12 +222,12 @@ echo \"${file}.plan end \$end\"
 echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 	    else
 	        echo "#!/bin/bash
-#SBATCH -J ${PROJECT_ID}_p${pipelineName}s${pipelineStepIdx}
+#SBATCH -J ${PROJECT_ID}_${pipelineName}_$(prependZero ${pipelineStepIdx})
 #SBATCH -p ${PARTITION}
 #SBATCH -c ${CORES} # Number of cores
 #SBATCH -n 1 # number of nodes
-#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A.out # Standard output
-#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_${pipelineStepIdx}_%A.err # Standard error
+#SBATCH -o ${log_folder}/${pipelineName}_${pipelineRunID}_$(prependZero ${pipelineStepIdx})_%A.out # Standard output
+#SBATCH -e ${log_folder}/${pipelineName}_${pipelineRunID}_$(prependZero ${pipelineStepIdx})_%A.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=${MEM_PER_CORE}
 #SBATCH --mail-user=pippel@mpi-cbg.de
@@ -272,12 +272,12 @@ then
 	if [[ ${JOBS} -gt ${Slurm_MaxArrayCount} && ${sType} == "block" ]]
 	then
 		resumeIdx=1
-		file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
+		file=${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
 	else
-		file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}
+		file=${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}
 	fi		
 else
-	file=${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
+	file=${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
 fi
 
 retry=0
@@ -320,7 +320,7 @@ fi
 
 if [[ ${resumeIdx} -gt 0 ]]
 then 
-	if [[ -f ${pipelineName}_${pipelineStepIdx}_${pipelineStepName}.${pipelineRunID}.$((${resumeIdx}+1)).slurm ]]
+	if [[ -f ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.$((${resumeIdx}+1)).slurm ]]
 	then
 		retry=0
 		TMPRET=-1
