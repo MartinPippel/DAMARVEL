@@ -320,8 +320,8 @@ function setREPmaskOptions()
 {
     idx=$1
     
-    ## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setDaligerOptions 
-	setDaligerOptions
+    ## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setLArepeatOptions 
+	setLArepeatOptions ${idx} 
     
     ### find and set daligner options 
     getSlurmRunParameter ${pipelineStepName}
@@ -618,7 +618,7 @@ then
         do            
             rm $x
         done 
-		setDaligerOptions
+		setDaligerOptions 0
 		
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
@@ -674,8 +674,7 @@ then
             rm $x
         done 
 		
-		## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setDaligerOptions 
-		setDaligerOptions
+		setDaligerOptions 0
 		
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
@@ -728,9 +727,10 @@ then
         do            
             rm $x
         done 
-        setLArepeatOptions 0   # implictly calls setDalignerOptions, that sets variables REPMASK_BLOCKCMP and REPMASK_REPEAT_COV
+        
+        setDalignerOptions 1 
 
-		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		if [[ ${#REPMASK_BLOCKCMP[@]} -lt 2 || ${#REPMASK_REPEAT_COV[@]} -lt 2 ]]
 		then 
 			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
@@ -833,7 +833,7 @@ then
             rm $x
         done 
         
-        setLArepeatOptions 0   # implictly calls setDalignerOptions, that sets variables REPMASK_BLOCKCMP and REPMASK_REPEAT_COV
+        setDalignerOptions 1
 
 		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
 		then 
@@ -865,7 +865,7 @@ then
             rm $x
         done 
         
-        setLArepeatOptions 1   # implictly calls setDalignerOptions, that sets variables REPMASK_BLOCKCMP and REPMASK_REPEAT_COV
+        setLArepeatOptions 1
 		setREPmaskOptions 1
 
 		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
