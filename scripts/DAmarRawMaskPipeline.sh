@@ -295,7 +295,7 @@ function setDalignerOptions()
 			
 			for y in $(seq 1 ${to})
 			do
-				m=rep_B$(echo ${blocks_cov[${y}]} | sed -e "s:_:C:")
+				m=rep_B$(echo ${blocks_cov[$((y-1))]} | sed -e "s:_:C:")
 				DALIGNER_OPT="${DALIGNER_OPT} -m${m}"				
 			done
 		else
