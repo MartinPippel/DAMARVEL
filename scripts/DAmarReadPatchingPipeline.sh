@@ -596,7 +596,7 @@ function setHaploSplitOptions()
 #type-3 - steps[1-1]:  01_patchStats 
 if [[ ${pipelineType} -eq 0 ]]
 then 
-	if [[ ${pipelineStepIdx} -eq 1 ]]
+	if [[ ${pipelineStepIdx} -eq 0 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -629,7 +629,7 @@ then
 		
 		setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DAmar $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
-    elif [[ ${pipelineStepIdx} -eq 2 ]]
+    elif [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
