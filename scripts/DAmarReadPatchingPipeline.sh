@@ -458,10 +458,10 @@ then
                 if [[ $count -lt ${DALIGNER_BLOCKCMP} ]]
                 then
                     count=$((${count}+1))
-                    if [[ "x${DALIGNER_VERSION}" == "x2" ]]
+                    if [[ "x${DALIGNER_VERSION}" != "x2" ]]
             		then    
                     	echo -n " ${DB_Z%.db}.${y}"
-                   fi
+                    fi
                 else
                 	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then    
@@ -668,8 +668,7 @@ then
         echo "cd ${DALIGN_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} trim0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType} && cp .${DB_M%.db}.trim0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.a2 .${DB_M%.db}.trim0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.d2 ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo "cd ${DALIGN_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} q0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}n && cp .${DB_M%.db}.q0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.a2 .${DB_M%.db}.q0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan       
         setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
-        echo "DAmar TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version               
-	### 10_LAfix    
+        echo "DAmar TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version	
     elif [[ ${pipelineStepIdx} -eq 9 ]]
     then
         ### clean up plans 
