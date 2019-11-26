@@ -11,7 +11,7 @@ then
 fi
 
 configFile=$1
-pipelineName="rmask"
+pipelineName="fix"
 pipelineType=$2
 pipelineStepIdx=$3
 pipelineRunID=$4
@@ -31,7 +31,6 @@ pipelineStepName=$(getStepName ${pipelineName} ${pipelineType} ${pipelineStepIdx
 echo -e "[DEBUG] DAmarReadPatchingPipeline.sh: getStepName \"${pipelineName}\" \"${pipelineType}\" \"${pipelineStepIdx}\" --> ${pipelineStepName}"
 
 setDabaseName
-
 
 if [[ ! -n "${pipelineType}" ]]
 then 
