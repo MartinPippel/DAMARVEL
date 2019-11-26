@@ -644,9 +644,9 @@ then
         do 
         	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
         	then
-        		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
+        		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
 			else
-        		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
+        		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
 			fi
             cmdLine=$((${cmdLine}+1))
             count=0
@@ -690,9 +690,9 @@ then
 				    echo " && cd ${myCWD}"
                     if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then
-                    		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${y}"
+                    		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${y}"
                 	else
-                		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.${y}"
+                		echo -n "cd ${DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.${y}"
                 	fi
                     cmdLine=$((${cmdLine}+1))
                     count=1
@@ -726,8 +726,7 @@ then
                     echo " && cd ${myCWD}"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara 
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
-        exit 1        
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
     elif [[ ${pipelineStepIdx} -eq 3 ]]
     then
         ### clean up plans 
