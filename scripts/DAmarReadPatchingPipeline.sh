@@ -653,25 +653,29 @@ then
 
             for y in $(seq ${x} ${nblocks})
             do  
-                if [[ $count -lt ${RAW_FIX_DALIGNER_DAL} ]]
+                if [[ $count -lt ${DALIGNER_BLOCKCMP} ]]
                 then
                     count=$((${count}+1))
-                    echo -n " ${DB_Z%.db}.${y}"
+                    if [[ "x${DALIGNER_VERSION}" == "x2" ]]
+            		then    
+                    	echo -n " ${DB_Z%.db}.${y}"
+                   fi
                 else
                 	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then    
-                    	        echo -n "-$((y-1)) && mv"
+                   		echo -n "-$((y-1)) && mv"
                 	else
                 		echo -n " && mv"
                 	fi
-                    	z=${count}
+                    
+                    z=${count}
 		    		while [[ $z -ge 1 ]]
 		    		do
 						echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.$((y-z)).las"
 						z=$((z-1))
 		    		done
 		    		echo -n " d${x}"
-				    if [[ -z "${DALIGNER_OPT_ASYMMETRIC}" ]]
+				    if [[ -z "${DALIGNER_ASYMMETRIC}" ]]
 				    then
 						z=${count}
 			            while [[ $z -ge 1 ]]
@@ -707,7 +711,7 @@ then
                         z=$((z-1))
                     done
                     echo -n " d${x}"
-                    if [[ -z "${DALIGNER_OPT_ASYMMETRIC}" ]]
+                    if [[ -z "${DALIGNER_ASYMMETRIC}" ]]
                     then
                         z=$((count-1))
                         while [[ $z -ge 0 ]]
@@ -722,7 +726,8 @@ then
                     echo " && cd ${myCWD}"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara 
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version        
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
+        exit 1        
     elif [[ ${pipelineStepIdx} -eq 3 ]]
     then
         ### clean up plans 

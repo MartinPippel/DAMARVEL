@@ -659,7 +659,7 @@ then
             echo -n " mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}"
             
             
-			if [[ -z "${DALIGNER_OPT_ASYMMETRIC}" || ${DALIGNER_OPT_ASYMMETRIC} -ne 0 ]]
+			if [[ -z "${DALIGNER_ASYMMETRIC}" || ${DALIGNER_ASYMMETRIC} -ne 0 ]]
 			then
 				
 				for y in $(seq $((x+1)) $((x+n-1)))
