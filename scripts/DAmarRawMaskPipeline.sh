@@ -208,114 +208,9 @@ function setTANmaskOptions()
 	fi	
 }
 
-function setDalignerOptions()
-{
-	numRepTracks=$1
-	
-	### find and set daligner options 
-    getSlurmRunParameter ${pipelineStepName}
-    
-    ### current rmask JobPara can overrule general SLURM_RUN_PARA
-	para=$(getJobPara ${pipelineName} daligner partition)
-	if [[ "x${para}" != "x" ]]
-	then 
-		SLURM_RUN_PARA[0]=${para}			
-	fi
-	para=$(getJobPara ${pipelineName} daligner threads)
-	if [[ "x${para}" != "x" ]]
-	then 
-		SLURM_RUN_PARA[1]=${para}			
-	fi
-	para=$(getJobPara ${pipelineName} daligner mem)
-	if [[ "x${para}" != "x" ]]
-	then 
-		SLURM_RUN_PARA[2]=${para}				
-	fi
-	
-	### available options: verbose identity kmer err minLen	mem	hits trace mask
-	DALIGNER_OPT=""
-	
-	para=$(getJobPara ${pipelineName} daligner verbose)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -v"	
-	fi
-    para=$(getJobPara ${pipelineName} daligner identity)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -I"	
-	fi
-	para=$(getJobPara ${pipelineName} daligner kmer)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -k${para}"	
-	fi
-    para=$(getJobPara ${pipelineName} daligner err)
-	if $(isFloatNumber ${para})
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -e${para}"	
-	fi
-	para=$(getJobPara ${pipelineName} daligner minLen)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -l${para}"	
-	fi
-	para=$(getJobPara ${pipelineName} daligner mem)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -M$((${para}/1024))"				
-	fi
-	para=$(getJobPara ${pipelineName} daligner hits)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -h${para}"				
-	fi
-	para=$(getJobPara ${pipelineName} daligner trace)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -t${para}"				
-	fi
-	para=$(getJobPara ${pipelineName} daligner threads)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		DALIGNER_OPT="${DALIGNER_OPT} -T${para}"					
-	fi
-	
-	para=$(getJobPara ${pipelineName} daligner mask)
-	for x in ${para}
-	do
-		if [[ "$x" == "LArepeatJobPara" ]]; 
-		then
-			blocks_cov=($(getJobPara ${pipelineName} LArepeat blocks_cov))
-			local to=${numRepTracks}
-			if [[ ${to} -lt 0 ]]
-			then 
-				to=${#blocks_cov[@]}
-			fi 
-			
-			for y in $(seq 1 ${to})
-			do
-				m=rep_B$(echo ${blocks_cov[$((y-1))]} | sed -e "s:_:C:")
-				DALIGNER_OPT="${DALIGNER_OPT} -m${m}"				
-			done
-		else
-			DALIGNER_OPT="${DALIGNER_OPT} -m${x}"
-		fi
-	done	
-	
-	## set block comparisons
-	REPMASK_BLOCKCMP=()
-	REPMASK_REPEAT_COV=()
-	
-	para=$(getJobPara ${pipelineName} LArepeat blocks_cov)
-	local c=0
-	for x in ${para}
-	do
-		REPMASK_BLOCKCMP[$c]=$(echo ${x} | awk -F _ '{print $1}')
-		REPMASK_REPEAT_COV[$c]=$(echo ${x} | awk -F _ '{print $2}')
-		c=$((c+1))
-	done	 
-}
+
+
+
 
 function setREPmaskOptions()
 {
@@ -439,52 +334,7 @@ function setLArepeatOptions()
 	fi
 }
 
-if [[ -n ${PACBIO_TYPE} ]] 
-then 
-	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
-	then
-		# check if DB's are available 
-        if [[ ! ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db ]]
-        then 
-    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db! Run init first!!!");
-   			exit 1        	
-    	fi
-    	
-    	if [[ ! ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_Z_LoFi.db ]]
-        then 
-    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_Z_LoFi.db! Run init first!!!");
-   			exit 1        	
-    	fi
-		
-		DB_Z=${PROJECT_ID}_Z_LoFi
-		DB_M=${PROJECT_ID}_M_LoFi
-		nblocks=$(getNumOfDbBlocks ../${INIT_DIR}/pacbio/lofi/db/run/${PROJECT_ID}_M_LoFi.db)			
-	elif [[ "${PACBIO_TYPE}" == "HiFi" ]]
-	then
-		# check if DB's are available 
-    	if [[ ! ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db ]]
-        then 
-    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db! Run init first!!!");
-   			exit 1        	
-    	fi
-    	
-    	if [[ ! ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_Z_HiFi.db ]]
-        then 
-    		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Could not find database: ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_Z_HiFi.db! Run init first!!!");
-   			exit 1        	
-    	fi
-		
-		DB_Z=${PROJECT_ID}_Z_HiFi
-		DB_M=${PROJECT_ID}_M_HiFi
-		nblocks=$(getNumOfDbBlocks ../${INIT_DIR}/pacbio/hifi/db/run/${PROJECT_ID}_M_HiFi.db)
-	else
-		(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: PACBIO_TYPE: ${PACBIO_TYPE} is unknwon! Must be set to either LoFi or HiFi!");
-   		exit 1
-	fi
-else
-	(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh: Variable PACBIO_TYPE must be set to either LoFi or HiFi!");
-   	exit 1
-fi
+setDabaseName
 
 # type_0 - stepsp[1-14}: 01_createSubdir, 02_DBdust, 03_Catrack, 04_datander, 05_TANmask, 06_Catrack, 07_daligner, 08_LAmerge, 09_LArepeat, 10_TKmerge, 11-daligner, 12-LAmerge, 13-LArepeat, 14-TKmerge
 if [[ ${pipelineType} -eq 0 ]]
@@ -497,7 +347,7 @@ then
             rm $x
         done
                         
-        echo -e "if [[ -d ${REPMASK_OUTDIR} ]]; then mv ${REPMASK_OUTDIR} ${REPMASK_OUTDIR}_\$(stat --format='%Y' ${REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi"
+        echo -e "if [[ -d ${REPMASK_OUTDIR} ]]; then mv ${REPMASK_OUTDIR} ${REPMASK_OUTDIR}_\$(stat --format='%Y' ${REPMASK_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
        	then
        		echo -e "mkdir ${REPMASK_OUTDIR}"
@@ -512,11 +362,11 @@ then
        		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${REPMASK_OUTDIR}/"
        		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${REPMASK_OUTDIR}/"
        		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${REPMASK_OUTDIR}/"
-       		echo -e "åcd ${myCWD}"       		
+       		echo -e "cd ${myCWD}"       		
        	fi > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	
        	setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
+        echo "DAmar $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
     elif [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
@@ -619,7 +469,7 @@ then
         do            
             rm $x
         done 
-		setDaligerOptions 0
+		setDalignerOptions 0
 		
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
@@ -809,7 +659,7 @@ then
             echo -n " mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}"
             
             
-			if [[ -z "${RAW_REPMASK_DALIGNER_ASYMMETRIC}" || ${RAW_REPMASK_DALIGNER_ASYMMETRIC} -ne 0 ]]
+			if [[ -z "${DALIGNER_OPT_ASYMMETRIC}" || ${DALIGNER_OPT_ASYMMETRIC} -ne 0 ]]
 			then
 				
 				for y in $(seq $((x+1)) $((x+n-1)))
