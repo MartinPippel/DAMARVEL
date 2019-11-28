@@ -632,7 +632,7 @@ then
 	        rm $x
 	    done 
 	    
-	    echo -e "if [[ -d ${REPCOMP_OUTDIR} ]]; then mv ${REPCOMP_OUTDIR} ${REPCOMP_OUTDIR}_\$(stat --format='%Y' ${REPCOMP_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+		echo -e "if [[ -d ${REPCOMP_OUTDIR} ]]; then mv ${REPCOMP_OUTDIR} ${REPCOMP_OUTDIR}_\$(stat --format='%Y' ${REPCOMP_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
        	then
        		echo -e "mkdir ${REPCOMP_OUTDIR}"
@@ -650,11 +650,9 @@ then
        		echo -e "cd ${myCWD}"       		
        	fi >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	
-		for x in $(seq 1 ${nblocks})
-	    do
-			echo "mkdir -p ${REPCOMP_OUTDIR}/r${x} ${REPCOMP_OUTDIR}/d${x}_ForRepComp ${REPCOMP_OUTDIR}/d${x}_NoRepComp"
-		done >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-		
+       	echo "for x in .${DB_Z}.*.anno .${DB_Z}.*.data .${DB_M}.*.d2 .${DB_M}.*.a2 .${DB_M}.*.anno .${DB_M}.*.data; do if [[ -f \${x} ]]; then ln -s -r \${x} ${REPCOMP_OUTDIR}/; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "for x in \$(seq 1 ${nblocks}); do mkdir -p ${REPCOMP_OUTDIR}/r${x} ${REPCOMP_OUTDIR}/d${x}_ForRepComp ${REPCOMP_OUTDIR}/d${x}_NoRepComp; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+	    		
 		setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DAmar $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
   	#### LAseparate
@@ -769,7 +767,7 @@ then
     	echo "DAmar LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
     	echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
     ### 06_TKmerge         
-    elif [[ ${pipelineStepIdx} -eq 6 ]]
+    elif [[ ${pipelineStepIdx} -eq 5 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -777,20 +775,26 @@ then
             rm $x
         done 
         
-        # we need the name of the repeat track, especially if the plan starts with step4
-        setLArepeatOptions 2
-        ### find and set TKmerge options 
-        if [[ -z ${TKMERGE_OPT} ]]
-        then 
-            setTKmergeOptions
-        fi
-        ### create TKmerge command
-        echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} ${RAW_FIX_LAREPEAT_REPEATTRACK} && cp .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.d2 ${myCWD} && cd ${myCWD}" > fix_${sID}_TKmerge_single_${DB_M%.db}.${slurmID}.plan      
-        echo "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${TKMERGE_OPT} -f -v ${DB_Z%.db} ${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/" >> fix_${sID}_TKmerge_single_${DB_M%.db}.${slurmID}.plan
-        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_TKmerge_single_${DB_M%.db}.${slurmID}.version
-        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> fix_${sID}_TKmerge_single_${DB_M%.db}.${slurmID}.version
+        setLArepeatOptions ${pipelineType} -1
+        setTKmergeOptions
+        setCatrackOptions
+	
+		for x in $(seq 1 ${nblocks})
+        do 
+        	y=0
+        	while [[ ${y} -lt ${#REPEAT_TRACK[@]} ]]
+        	do
+        		### create TKmerge command
+		        echo -n "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} ${RAW_FIX_LAREPEAT_REPEATTRACK} && cp .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.d2 ${myCWD}"      
+		        echo -e "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} -f -v ${DB_Z%.db} ${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/"
+		      	y+$((y+1))
+			done
+		done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
     ### 07_TKcombine   
-    elif [[ ${pipelineStepIdx} -eq 7 ]]
+    elif [[ ${pipelineStepIdx} -eq 6 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
