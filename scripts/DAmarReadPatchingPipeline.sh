@@ -349,12 +349,8 @@ then
        		echo -e "cd ${myCWD}"       		
        	fi >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	
-       	echo "for x in .${DB_Z}.* .${DB_M}.*; do if [[ -f \${x} ]]; then echo "ln -s \${x} ${DALIGN_OUTDIR}/"; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-       	
-		for x in $(seq 1 ${nblocks})
-	    do
-			echo "mkdir -p ${DALIGN_OUTDIR}/d${x}"
-		done >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo "for x in .${DB_Z}.*.anno .${DB_Z}.*.data .${DB_M}.*.d2 .${DB_M}.*.a2 .${DB_M}.*.anno .${DB_M}.*.data; do if [[ -f \${x} ]]; then ln -s \${x} ${DALIGN_OUTDIR}/; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "for x in \$(seq 1 ${nblocks}); do mkdir -p ${DALIGN_OUTDIR}/d\${x}; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 		
 		setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DAmar $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
