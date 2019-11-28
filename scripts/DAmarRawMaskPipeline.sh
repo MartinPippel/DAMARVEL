@@ -451,7 +451,7 @@ then
             rm $x
         done 
 		
-		setDaligerOptions 0
+		setDalignerOptions 0
 		
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
