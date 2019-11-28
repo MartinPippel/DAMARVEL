@@ -209,57 +209,6 @@ function setTANmaskOptions()
 }
 
 
-
-
-
-function setREPmaskOptions()
-{
-    idx=$1
-    
-    ## set variable REPEAT_BLOCKCMP and REPEAT_COV via setLArepeatOptions 
-	setLArepeatOptions ${idx} 
-    
-    ### find and set daligner options 
-    getSlurmRunParameter ${pipelineStepName}
-    
-    ### current rmask JobPara can overrule general SLURM_RUN_PARA
-	para=$(getJobPara ${pipelineName} REPmask partition)
-	if [[ "x${para}" != "x" ]]
-	then 
-		SLURM_RUN_PARA[0]=${para}			
-	fi
-	para=$(getJobPara ${pipelineName} REPmask threads)
-	if [[ "x${para}" != "x" ]]
-	then 
-		SLURM_RUN_PARA[1]=${para}			
-	fi
-	para=$(getJobPara ${pipelineName} REPmask mem)
-	if [[ "x${para}" != "x" ]]
-	then 
-		SLURM_RUN_PARA[2]=${para}				
-	fi
-	
-	### available options: verbose repCov
-	REPMASK_OPT=""
-	
-	para=$(getJobPara ${pipelineName} REPmask verbose)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		REPMASK_OPT="${REPMASK_OPT} -v"					
-	fi
-	para=$(getJobPara ${pipelineName} REPmask repCov)
-	if $(isNumber ${para}) && [ ${para} -gt 0 ]
-	then 
-		REPMASK_OPT="${REPMASK_OPT} -c${para}"
-	else 
-		(>&2 echo "[WARNING] DAmarRawMaskPipeline - No repeat coverage threshold could be found! Please set array REPmaskJobPara+=(rmask repCov <YourRepeatCoverage>) appropriately!")
-		exit 1
-	fi
-	
-	REPEAT_TRACK=rep_B${REPEAT_BLOCKCMP[${idx}]}C${REPEAT_COV[${idx}]}
-	REPMASK_OPT="${REPMASK_OPT} -n${REPEAT_TRACK}"
-}
-
 setDabaseName
 
 # type_0 - stepsp[1-14}: 01_createSubdir, 02_DBdust, 03_Catrack, 04_datander, 05_TANmask, 06_Catrack, 07_daligner, 08_LAmerge, 09_LArepeat, 10_TKmerge, 11-daligner, 12-LAmerge, 13-LArepeat, 14-TKmerge
@@ -469,9 +418,9 @@ then
         done
         
         ### find and set LArepeat options 
-        setLArepeatOptions 0
-        setREPmaskOptions 0
-        ### create LArepeat commands
+        setREPmaskOptions ${pipelineName} 0
+        
+		### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
             echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.las && cd ${myCWD}/" 
@@ -490,7 +439,7 @@ then
         
         ### find and set TKmerge options 
         setCatrackOptions
-        setLArepeatOptions 0
+        setLArepeatOptions ${pipelineName} 0
         ### create TKmerge commands
         echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK} && cp .${DB_Z%.db}.${REPEAT_TRACK}.anno .${DB_Z%.db}.${REPEAT_TRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
@@ -643,8 +592,7 @@ then
             rm $x
         done 
         
-        setLArepeatOptions 1
-		setREPmaskOptions 1
+        setREPmaskOptions ${pipelineName} 1		 
 
 		if [[ ${#REPEAT_BLOCKCMP[@]} -ne 2 || ${#REPEAT_COV[@]} -ne 2 ]]
 		then 
@@ -676,8 +624,7 @@ then
             rm $x
         done 
         
-        setLArepeatOptions 1
-		setREPmaskOptions 1
+        setREPmaskOptions ${pipelineName} 1		
         
 		if [[ ${#REPEAT_BLOCKCMP[@]} -ne 2 || ${#REPEAT_COV[@]} -ne 2 ]]
 		then 
@@ -694,7 +641,7 @@ then
         
         ### find and set TKmerge options 
         setCatrackOptions
-        setLArepeatOptions 1
+        setLArepeatOptions ${pipelineName} 1
         ### create TKmerge commands
         echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${CATRACK_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} ${REPEAT_TRACK} && cp .${DB_Z%.db}.${REPEAT_TRACK}.anno .${DB_Z%.db}.${REPEAT_TRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
