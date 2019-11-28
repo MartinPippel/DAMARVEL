@@ -762,7 +762,7 @@ then
         for x in $(seq 1 ${nblocks})
         do 
         	y=0
-        	while [[ ${y} -lt ${#REPEAT_TRACK[@]}]]
+        	while [[ ${y} -lt ${#REPEAT_TRACK[@]} ]]
         	do
 	            echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -l${REPEAT_LOWCOV[${y}]} -h${REPEAT_HGHCOV[${y}]} -c${REPEAT_COV[${y}]} -t${REPEAT_TRACK[${y}]} -b ${x} ${DB_M%.db} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}/"
 	            echo "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/REPmask -v -c${REPEAT_COV[${y}]} -n${REPEAT_TRACK[${y}]} ${DB_Z%.db} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}/"
