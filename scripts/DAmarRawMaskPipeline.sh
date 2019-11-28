@@ -262,8 +262,8 @@ then
         setCatrackOptions
         setLArepeatOptions ${pipelineName} 0
         ### create TKmerge commands
-        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK} && cp .${DB_Z%.db}.${REPEAT_TRACK}.anno .${DB_Z%.db}.${REPEAT_TRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${REPMASK_TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK[0]} && cp .${DB_M%.db}.${REPEAT_TRACK[0]}.a2 .${DB_M%.db}.${REPEAT_TRACK[0]}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${REPMASK_TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK[0]} && cp .${DB_Z%.db}.${REPEAT_TRACK[0]}.anno .${DB_Z%.db}.${REPEAT_TRACK[0]}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version    
@@ -464,8 +464,8 @@ then
         setCatrackOptions
         setLArepeatOptions ${pipelineName} 1
         ### create TKmerge commands
-        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${CATRACK_OPT} ${DB_M%.db} ${REPEAT_TRACK} && cp .${DB_M%.db}.${REPEAT_TRACK}.a2 .${DB_M%.db}.${REPEAT_TRACK}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} ${REPEAT_TRACK} && cp .${DB_Z%.db}.${REPEAT_TRACK}.anno .${DB_Z%.db}.${REPEAT_TRACK}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${CATRACK_OPT} ${DB_M%.db} ${REPEAT_TRACK[1]} && cp .${DB_M%.db}.${REPEAT_TRACK[1]}.a2 .${DB_M%.db}.${REPEAT_TRACK[1]}.d2 ${myCWD}/ && cd ${myCWD}/" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} ${REPEAT_TRACK[1]} && cp .${DB_Z%.db}.${REPEAT_TRACK[1]}.anno .${DB_Z%.db}.${REPEAT_TRACK[1]}.data ${myCWD}/ && cd ${myCWD}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 
 	   	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
