@@ -407,7 +407,7 @@ then
 			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}
 		done
 
-        bcmp=${REPMASK_BLOCKCMP[0]}
+        bcmp=${DALIGNER_BLOCKCMP}
 		
         ### create daligner commands
         n=${bcmp}
@@ -521,7 +521,7 @@ then
         	exit 1
 		fi
 
-        bcmp=${REPMASK_BLOCKCMP[1]}
+        bcmp=${DALIGNER_BLOCKCMP}
 			
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
