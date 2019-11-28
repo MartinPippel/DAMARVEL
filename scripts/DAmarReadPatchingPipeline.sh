@@ -486,7 +486,7 @@ then
             	echo "cd ${DALIGN_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -l${REPEAT_LOWCOV[${y}]} -h${REPEAT_HGHCOV[${y}]} -c${REPEAT_COV[${y}]} -t${REPEAT_TRACK[${y}]} -b ${x} ${DB_M%.db} ${DB_Z%.db}.dalignFilt.${x}.las && cd ${myCWD}/"
             	if [[ ${REPEAT_COV[${y}]} -gt 0 ]]
             	then
-            		repmaskCov=$(echo "${REPEAT_HGHCOV[${y}]} ${REPEAT_COV[${y}]}" | awk '{printf "%d", \$1*\$2}')
+            		repmaskCov=$(echo "${REPEAT_HGHCOV[${y}]} ${REPEAT_COV[${y}]}" | awk '{printf "%d", $1*$2}')
             		echo "cd ${DALIGN_OUTDIR} && ${DAZZLER_PATH}/bin/REPmask -v -c${repmaskCov} -n${REPEAT_TRACK[$y]} ${DB_Z%.db} ${DB_Z%.db}.dalignFilt.${x}.las && cd ${myCWD}/"
             	fi
             	y=$((y+1))
