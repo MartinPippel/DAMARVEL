@@ -349,6 +349,8 @@ then
        		echo -e "cd ${myCWD}"       		
        	fi >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	
+       	echo "for x in .${DB_Z}.* .${DB_M}.*; do if [[ -f \${x} ]]; then echo "ln -s \${x} ${DALIGN_OUTDIR}/"; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	
 		for x in $(seq 1 ${nblocks})
 	    do
 			echo "mkdir -p ${DALIGN_OUTDIR}/d${x}"
