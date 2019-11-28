@@ -279,8 +279,8 @@ then
        		echo -e "mkdir ${REPMASK_OUTDIR}"
        		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps . && ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${REPMASK_OUTDIR}/"
        		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps . && ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${REPMASK_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db . && ln -s .${DB_Z}.idx ${DB_Z}.db ${REPMASK_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db . && ln -s .${DB_M}.idx ${DB_M}.db ${REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db . && ln -s -r .${DB_Z}.idx ${DB_Z}.db ${REPMASK_OUTDIR}/"
+       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db . && ln -s -r .${DB_M}.idx ${DB_M}.db ${REPMASK_OUTDIR}/"
        		echo -e "cd ${myCWD}"
         else
        		echo -e "mkdir ${REPMASK_OUTDIR}"
