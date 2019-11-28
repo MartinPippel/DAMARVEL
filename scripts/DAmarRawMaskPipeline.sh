@@ -293,7 +293,7 @@ then
         ### create datander commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
+            echo "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} datander${DATANDER_OPT} ${DB_Z%.db}.${x} && cd ${myCWD}"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	
     	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara                 
@@ -366,7 +366,7 @@ then
             then 
               n=${bcmp}
             fi 
-            echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
+            echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
             for y in $(seq ${x} $((${x}+${n}-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
@@ -497,9 +497,9 @@ then
 
 			if [[ "x${DALIGNER_VERSION}" == "x2" ]]
 			then
-				echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
+				echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x} ${DB_Z%.db}.@${x}"
 			else
-				echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
+				echo -n "cd ${REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} daligner${DALIGNER_OPT} ${DB_Z%.db}.${x}"
 			fi			
 			
             for y in $(seq ${x} $((${x}+${n}-1)))
