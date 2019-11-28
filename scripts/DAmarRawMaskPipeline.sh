@@ -216,7 +216,7 @@ function setREPmaskOptions()
 {
     idx=$1
     
-    ## set variable REPMASK_BLOCKCMP and REPMASK_REPEAT_COV via setLArepeatOptions 
+    ## set variable REPEAT_BLOCKCMP and REPEAT_COV via setLArepeatOptions 
 	setLArepeatOptions ${idx} 
     
     ### find and set daligner options 
@@ -256,7 +256,7 @@ function setREPmaskOptions()
 		exit 1
 	fi
 	
-	REPEAT_TRACK=rep_B${REPMASK_BLOCKCMP[${idx}]}C${REPMASK_REPEAT_COV[${idx}]}
+	REPEAT_TRACK=rep_B${REPEAT_BLOCKCMP[${idx}]}C${REPEAT_COV[${idx}]}
 	REPMASK_OPT="${REPMASK_OPT} -n${REPEAT_TRACK}"
 }
 
@@ -400,14 +400,14 @@ then
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
 		do
-			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} ]]
+			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]} ]]
 			then
-				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} | date '+%Y-%m-%d_%H-%M-%S')	
+				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]} ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]} | date '+%Y-%m-%d_%H-%M-%S')	
 			fi
-			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}
+			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}
 		done
 
-        bcmp=${DALIGNER_BLOCKCMP}
+        bcmp=${REPEAT_BLOCKCMP[0]}
 		
         ### create daligner commands
         n=${bcmp}
@@ -433,7 +433,7 @@ then
                 then
                     break
                 fi
-                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}"
+                echo -n " && mv ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}"
             done 
             
             n=$((${n}-1))
@@ -456,7 +456,7 @@ then
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.las mask_${x}_B${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]} && cd ${myCWD}"            
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.las mask_${x}_B${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]} && cd ${myCWD}"            
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version  
@@ -474,8 +474,8 @@ then
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.las && cd ${myCWD}/" 
-            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[0]}C${REPMASK_REPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.las && cd ${myCWD}/" 
+            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.las ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[0]}C${REPEAT_COV[0]}.${x}.las && cd ${myCWD}/"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
@@ -507,30 +507,30 @@ then
         
         setDalignerOptions 1 
 
-		if [[ ${#REPMASK_BLOCKCMP[@]} -lt 2 || ${#REPMASK_REPEAT_COV[@]} -lt 2 ]]
+		if [[ ${#REPEAT_BLOCKCMP[@]} -lt 2 || ${#REPEAT_COV[@]} -lt 2 ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
-			(>&2 echo "                                - found REPMASK_BLOCKCMP: \"${REPMASK_BLOCKCMP[@]}\" and REPMASK_REPEAT_COV: \"${REPMASK_REPEAT_COV[@]}\"")
+			(>&2 echo "                                - found REPEAT_BLOCKCMP: \"${REPEAT_BLOCKCMP[@]}\" and REPEAT_COV: \"${REPEAT_COV[@]}\"")
         	exit 1
 		fi
 		
-		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		if [[ ${REPEAT_BLOCKCMP[0]} -eq ${REPEAT_BLOCKCMP[1]} && ${REPEAT_COV[0]} -eq ${REPEAT_COV[1]} ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV contain the same arguments for first and second repeat mask!")
         	exit 1
 		fi
 
-        bcmp=${DALIGNER_BLOCKCMP}
+        bcmp=${REPEAT_BLOCKCMP[1]}
 			
 		## create job directories before daligner runs
 		for x in $(seq 1 ${nblocks})
 		do
-			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} ]]
+			if [[ -d ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]} ]]
 			then
-				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} | date '+%Y-%m-%d_%H-%M-%S')	
+				mv ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]} ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}_$(stat --format='%Y' ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]} | date '+%Y-%m-%d_%H-%M-%S')	
 			fi
-			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}	
+			mkdir -p ${REPMASK_OUTDIR}/mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}	
 		done		
 
         ### create daligner commands
@@ -582,7 +582,7 @@ then
                 fi
                 echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.${y}.las"
             done
-            echo -n " mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}"
+            echo -n " mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}"
             
             
 			if [[ -z "${DALIGNER_ASYMMETRIC}" || ${DALIGNER_ASYMMETRIC} -ne 0 ]]
@@ -594,7 +594,7 @@ then
                 	then
                     	break
                 	fi
-                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}"
+                	echo -n " && mv ${DB_Z%.db}.${y}.${DB_Z%.db}.${x}.las mask_${y}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}"
             	done
         	fi
  
@@ -613,23 +613,23 @@ then
         
         setDalignerOptions 1
 
-		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		if [[ ${#REPEAT_BLOCKCMP[@]} -ne 2 || ${#REPEAT_COV[@]} -ne 2 ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
         	exit 1
 		fi
 		
-		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		if [[ ${REPEAT_BLOCKCMP[0]} -eq ${REPEAT_BLOCKCMP[1]} && ${REPEAT_COV[0]} -eq ${REPEAT_COV[1]} ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV contain the same arguments for first and second repeat mask!")
         	exit 1
 		fi
 
         ### create LAmerge commands 
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.las mask_${x}_B${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]} && cd ${myCWD}"            
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge -n 255 ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}.las mask_${x}_B${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]} && cd ${myCWD}"            
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 	   	getSlurmRunParameter ${pipelineStepName}
@@ -646,24 +646,24 @@ then
         setLArepeatOptions 1
 		setREPmaskOptions 1
 
-		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		if [[ ${#REPEAT_BLOCKCMP[@]} -ne 2 || ${#REPEAT_COV[@]} -ne 2 ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
         	exit 1
 		fi
 		
-		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		if [[ ${REPEAT_BLOCKCMP[0]} -eq ${REPEAT_BLOCKCMP[1]} && ${REPEAT_COV[0]} -eq ${REPEAT_COV[1]} ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV contain the same arguments for first and second repeat mask!")
         	exit 1
 		fi
         
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.las && cd ${myCWD}/" 
-            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPMASK_BLOCKCMP[1]}C${REPMASK_REPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
+            echo "cd ${REPMASK_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -b ${x} ${DB_M%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}.las && cd ${myCWD}/" 
+            echo "cd ${REPMASK_OUTDIR} && ln -s -f ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}.las ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}.${x}.las && ${DAZZLER_PATH}/bin/REPmask${REPMASK_OPT} ${DB_Z%.db} ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}.${x}.las && unlink ${DB_Z%.db}.${x}.maskB${REPEAT_BLOCKCMP[1]}C${REPEAT_COV[1]}.${x}.las && cd ${myCWD}/"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 	   	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
@@ -679,16 +679,16 @@ then
         setLArepeatOptions 1
 		setREPmaskOptions 1
         
-		if [[ ${#REPMASK_BLOCKCMP[@]} -ne 2 || ${#REPMASK_REPEAT_COV[@]} -ne 2 ]]
+		if [[ ${#REPEAT_BLOCKCMP[@]} -ne 2 || ${#REPEAT_COV[@]} -ne 2 ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV are not set with a second repeat parameter!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV are not set with a second repeat parameter!")
 			(>&2 echo "                                - You have to specify a second block and cov argument in your assembly.cfg file. e.g.: LArepeatJobPara+=(rmask blocks_cov 2_10)")
         	exit 1
 		fi
 		
-		if [[ ${REPMASK_BLOCKCMP[0]} -eq ${REPMASK_BLOCKCMP[1]} && ${REPMASK_REPEAT_COV[0]} -eq ${REPMASK_REPEAT_COV[1]} ]]
+		if [[ ${REPEAT_BLOCKCMP[0]} -eq ${REPEAT_BLOCKCMP[1]} && ${REPEAT_COV[0]} -eq ${REPEAT_COV[1]} ]]
 		then 
-			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPMASK_BLOCKCMP and/or REPMASK_REPEAT_COV contain the same arguments for first and second repeat mask!")
+			(>&2 echo "[ERROR] DAmarRawMaskPipeline.sh - Array variables REPEAT_BLOCKCMP and/or REPEAT_COV contain the same arguments for first and second repeat mask!")
         	exit 1
 		fi
         
