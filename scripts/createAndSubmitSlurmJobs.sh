@@ -368,7 +368,7 @@ then
 			sleep $((${retry}*${wait}))
 		fi
 		echo "[INFO] createAndSubmitSlurmJobs: run: sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${myCWD}/${pipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${myCWD}/${pipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineRunID}\""
-		TMPRET=$(sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${myCWD}/${pipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${myCWD}/${pipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineRunID}") 
+		TMPRET=$(sbatch${appAccount} -J ${PROJECT_ID}_${pipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${myCWD}/${pipelineName}_${pipelineType}_${nextPipelineStep}_${pipelineRunID}.out -e ${myCWD}/${pipelineName}_${pipelineType}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${pipelineIdx} ${nextPipelineStep} ${pipelineRunID}") 
 		echo "[INFO] createAndSubmitSlurmJobs: ${TMPRET}"
 		if ! $(isNumber ${TMPRET##* })
 		then
@@ -398,7 +398,7 @@ else
 				sleep $((${retry}*${wait}))
 			fi
 			echo "[INFO] createAndSubmitSlurmJobs: run: sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${myCWD}/${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${myCWD}/${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineRunID}\""
-			TMPRET=$(sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${myCWD}/${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.out -e ${myCWD}/${nextPipelineName}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineRunID}") 
+			TMPRET=$(sbatch${appAccount} -J ${PROJECT_ID}_${nextPipelineName}_${nextPipelineStep}_${pipelineRunID} -o ${myCWD}/${nextPipelineName}_${pipelineType}_${nextPipelineStep}_${pipelineRunID}.out -e ${myCWD}/${nextPipelineName}_${pipelineType}_${nextPipelineStep}_${pipelineRunID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${configFile} ${nextPipelineLineIdx} ${nextPipelineStep} ${pipelineRunID}") 
 			echo "[INFO] createAndSubmitSlurmJobs: ${TMPRET}"
 			if ! $(isNumber ${TMPRET##* })
 			then
