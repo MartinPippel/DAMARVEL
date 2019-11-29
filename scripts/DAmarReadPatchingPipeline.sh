@@ -41,66 +41,6 @@ fi
 ## 1st argument ptype
 
 
-function setForcealignOptions()
-{
-    FIX_FORCEALIGN_OPT=""
-    if [[ -n ${RAW_FIX_FORCEALIGN_PARTIAL} && ${RAW_FIX_FORCEALIGN_PARTIAL} -ne 0 ]]
-    then
-        FIX_FORCEALIGN_OPT="${FIX_FORCEALIGN_OPT} --partial"
-    fi
-    if [[ -n ${RAW_FIX_FORCEALIGN_THREADS} && ${RAW_FIX_FORCEALIGN_THREADS} -gt 0 ]]
-    then 
-        FIX_FORCEALIGN_OPT="${FIX_FORCEALIGN_OPT} -t${RAW_FIX_FORCEALIGN_THREADS}"
-    fi 
-    if [[ -n ${RAW_FIX_FORCEALIGN_MAXDIST} && ${RAW_FIX_FORCEALIGN_MAXDIST} -gt 0 ]]
-    then 
-        FIX_FORCEALIGN_OPT="${FIX_FORCEALIGN_OPT} --maxdist${RAW_FIX_FORCEALIGN_MAXDIST}"
-    fi 
-    if [[ -n ${RAW_FIX_FORCEALIGN_BORDER} && ${RAW_FIX_FORCEALIGN_BORDER} -gt 0 ]]
-    then 
-        FIX_FORCEALIGN_OPT="${FIX_FORCEALIGN_OPT} --border${RAW_FIX_FORCEALIGN_BORDER}"
-    fi 
-    if [[ -n ${RAW_FIX_FORCEALIGN_CORRELATION} ]]
-    then 
-        FIX_FORCEALIGN_OPT="${FIX_FORCEALIGN_OPT} --correlation${RAW_FIX_FORCEALIGN_CORRELATION}"
-    fi 
-
-
-    if [[ -z ${RAW_FIX_FORCEALIGN_RUNID} ]]
-    then
-        if [[ -z ${RAW_FIX_REPCOMP_RUNID} ]]
-        then
-            RAW_FIX_FORCEALIGN_RUNID=$((${RAW_FIX_DALIGNER_RUNID}+2))
-        else 
-            RAW_FIX_FORCEALIGN_RUNID=$((${RAW_FIX_REPCOMP_RUNID}+1))
-        fi
-    fi
-}
-
-
-
-function setlassortOptions()
-{
-	FIX_LASSORT_OPT=""
-	
-	if [[ -z ${RAW_FIX_LASSORT_THREADS} ]]
-	then 
-		RAW_FIX_LASSORT_THREADS=8
-	fi	
-	FIX_LASSORT_OPT="${FIX_LASSORT_OPT} -t${RAW_FIX_LASSORT_THREADS}"
-	
-	if [[ -z ${RAW_FIX_LASSORT_MERGEFAN} ]]
-	then 
-		RAW_FIX_LASSORT_MERGEFAN=64
-	fi	
-	FIX_LASSORT_OPT="${FIX_LASSORT_OPT} -f${RAW_FIX_LASSORT_MERGEFAN}"
-
-	if [[ -z ${RAW_FIX_LASSORT_SORT} ]]
-	then 
-		RAW_FIX_LASSORT_SORT=full
-	fi	
-	FIX_LASSORT_OPT="${FIX_LASSORT_OPT} -s${RAW_FIX_LASSORT_SORT}"
-}
 
 function setLAfilterOptions()
 {
@@ -153,7 +93,7 @@ function setLAfilterChainsOptions()
 	
 	# add default trim and q tracks
 	
-	if [[ "${RAW_DACCORD_INDIR}" == "${REPCOMP_OUTDIR}" ]]
+	if [[ "${DACCORD_INDIR}" == "${REPCOMP_OUTDIR}" ]]
 	then
 		FIX_LAFILTERCHAINS_OPT="${FIX_LAFILTERCHAINS_OPT} -t trim0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp -q q0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp"	
 	else
@@ -339,14 +279,12 @@ then
        		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${DALIGN_OUTDIR}/"
        		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${DALIGN_OUTDIR}/"
        		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${DALIGN_OUTDIR}/"
-       		echo -e "cd ${myCWD}"
-        else
+       	else
        		echo -e "mkdir ${DALIGN_OUTDIR}"
        		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${DALIGN_OUTDIR}/"
        		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${DALIGN_OUTDIR}/"
        		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${DALIGN_OUTDIR}/"
        		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${DALIGN_OUTDIR}/"
-       		echo -e "cd ${myCWD}"       		
        	fi >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	
        	echo "for x in .${DB_Z}.*.anno .${DB_Z}.*.data .${DB_M}.*.d2 .${DB_M}.*.a2 .${DB_M}.*.anno .${DB_M}.*.data; do if [[ -f \${x} ]]; then ln -s -r \${x} ${DALIGN_OUTDIR}/; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
@@ -642,19 +580,22 @@ then
         ### find and set LAfix options 
         setLAfixOptions
         
-    	mkdir -p patchedReads_pType${pipelineType}
+    	mkdir -p ${DALIGN_OUTDIR}/patchedReads_pType${pipelineType}
 		
 		addOpt=""
         for x in $(seq 1 ${nblocks})
         do 
         	if [[ -n ${LAFIX_TRIMFILE} ]]
         	then 
-        		addOpt="-T${LAFIX_TRIMFILE}_${x}.txt "
+        		addOpt="-T${DALIGN_OUTDIR}/${LAFIX_TRIMFILE}_${x}.txt "
         	fi
-            echo "${MARVEL_PATH}/bin/LAfix${LAFIX_OPT} ${addOpt}${DB_M%.db} ${DALIGN_OUTDIR}/${DB_Z%.db}.dalignFilt.${x}.las patchedReads_pType${pipelineType}/${DB_M%.db}.${x}${RAW_FIX_LAFIX_FILESUFFIX}.fasta"
+            echo "${MARVEL_PATH}/bin/LAfix${LAFIX_OPT} ${addOpt}${DB_M%.db} ${DALIGN_OUTDIR}/${DB_Z%.db}.dalignFilt.${x}.las ${DALIGN_OUTDIR}/patchedReads_pType${pipelineType}/${DB_M%.db}.${x}.fasta"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
-    	echo "DAmar LAfix $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version                 
+    	echo "DAmar LAfix $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
+    else 
+        (>&2 echo "[ERROR] DAmarReadPatchingPipeline.sh - pipelineStepIdx ${pipelineStepIdx} not supported! Current - pipelineName: ${pipelineName} pipelineType: ${pipelineType}")
+        exit 1                             
     fi     
 #type-1 steps   [ 1-1] :  01-createSubdir, 02-LAseparate, 03-repcomp, 04-LAmerge, 05-LArepeat, 06-TKmerge, 07-TKcombine, 08-LAq, 09-TKmerge, 10-LAfix     
 elif [[ ${pipelineType} -eq 1 ]]
@@ -665,25 +606,20 @@ then
 	    for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
 	    do            
 	        rm $x
-	    done 
+	    done
+	    
+	    if [[ ! -d ${DALIGN_OUTDIR} ]]
+	    then 
+	    	(>&2 echo "[ERROR] DAmarReadPatchingPipeline.sh - Current - pipelineName: ${pipelineName} pipelineType: ${pipelineType} - Directory ${DALIGN_OUTDIR} not present, run previous read patching pipeline first (at least until pipelineStepIdx 2)!")
+	    	exit 1
+		fi  
 	    
 		echo -e "if [[ -d ${REPCOMP_OUTDIR} ]]; then mv ${REPCOMP_OUTDIR} ${REPCOMP_OUTDIR}_\$(stat --format='%Y' ${REPCOMP_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-       	if [[ "${PACBIO_TYPE}" == "LoFi" ]]
-       	then
-       		echo -e "mkdir ${REPCOMP_OUTDIR}"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.bps ${REPCOMP_OUTDIR}/"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.bps ${REPCOMP_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_Z}.db ${REPCOMP_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/lofi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/lofi/db/run/${DB_M}.db ${REPCOMP_OUTDIR}/"
-       		echo -e "cd ${myCWD}"
-        else
-       		echo -e "mkdir ${REPCOMP_OUTDIR}"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.bps ${REPCOMP_OUTDIR}/"
-       		echo -e "ln -s -r ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.bps ${REPCOMP_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_Z}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_Z}.db ${REPCOMP_OUTDIR}/"
-       		echo -e "cp ../${INIT_DIR}/pacbio/hifi/db/run/.${DB_M}.idx ../${INIT_DIR}/pacbio/hifi/db/run/${DB_M}.db ${REPCOMP_OUTDIR}/"
-       		echo -e "cd ${myCWD}"       		
-       	fi >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "mkdir ${REPCOMP_OUTDIR}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "ln -s -r .${DB_Z}.bps ${REPCOMP_OUTDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "ln -s -r .${DB_M}.bps ${REPCOMP_OUTDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "cp .${DB_Z}.idx ${DB_Z}.db ${REPCOMP_OUTDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "cp .${DB_M}.idx ${DB_M}.db ${REPCOMP_OUTDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
        	
        	echo "for x in .${DB_Z}.*.anno .${DB_Z}.*.data .${DB_M}.*.d2 .${DB_M}.*.a2 .${DB_M}.*.anno .${DB_M}.*.data; do if [[ -f \${x} ]]; then ln -s -r \${x} ${REPCOMP_OUTDIR}/; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo "for x in \$(seq 1 ${nblocks}); do mkdir -p ${REPCOMP_OUTDIR}/r${x} ${REPCOMP_OUTDIR}/d${x}_ForRepComp ${REPCOMP_OUTDIR}/d${x}_NoRepComp; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
@@ -794,7 +730,24 @@ then
         	while [[ ${y} -lt ${#REPEAT_TRACK[@]} ]]
         	do
 	            echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/LArepeat${LAREPEAT_OPT} -l${REPEAT_LOWCOV[${y}]} -h${REPEAT_HGHCOV[${y}]} -c${REPEAT_COV[${y}]} -t${REPEAT_TRACK[${y}]} -b ${x} ${DB_M%.db} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}/"
-	            echo "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/REPmask -v -c${REPEAT_COV[${y}]} -n${REPEAT_TRACK[${y}]} ${DB_Z%.db} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}/"
+				if [[ ${REPEAT_COV[${y}]} -gt 0 ]]
+            	then
+            		found=0
+            		z=0
+            		while [[ $z -lt $y ]]
+            		do
+            			if [[ ${REPEAT_COV[${z}]} == ${REPEAT_COV[${y}]} ]]
+            			then
+            				found=1
+            				break
+            			fi
+            			z=$((z+1))
+            		done
+            		if [[ ${found} -eq 0 ]]
+            		then      
+	            	            echo "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/REPmask -v -c${REPEAT_COV[${y}]} -n${REPEAT_TRACK[${y}]} ${DB_Z%.db} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}/"
+	            	fi
+	        	fi
 	        	y=$((y+1))    
 	    	done
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
@@ -820,50 +773,66 @@ then
         	while [[ ${y} -lt ${#REPEAT_TRACK[@]} ]]
         	do
         		### create TKmerge command
-		        echo -n "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} ${RAW_FIX_LAREPEAT_REPEATTRACK} && cp .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.d2 ${myCWD}"      
-		        echo -e "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} -f -v ${DB_Z%.db} ${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK} && cp .${DB_Z%.db}.${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK}.anno .${DB_Z%.db}.${RAW_DAZZ_FIX_LAREPEAT_REPEATTRACK}.data ${myCWD}/ && cd ${myCWD}/"
+		        echo -e "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK[${y}]} && cp .${DB_M%.db}.${REPEAT_TRACK[${y}]}.a2 .${DB_M%.db}.${REPEAT_TRACK[${y}]}.d2 ${myCWD} && cd ${myCWD}/"
+				if [[ ${REPEAT_COV[${y}]} -gt 0 ]]
+            	then
+            		found=0
+            		z=0
+            		while [[ $z -lt $y ]]
+            		do
+            			if [[ ${REPEAT_COV[${z}]} == ${REPEAT_COV[${y}]} ]]
+            			then
+            				found=1
+            				break
+            			fi
+            			z=$((z+1))
+            		done
+            		if [[ ${found} -eq 0 ]]
+            		then      
+		        		echo -e "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} ${REPEAT_TRACK[${y}]} && cp .${DB_Z%.db}.${REPEAT_TRACK[${y}]}.anno .${DB_Z%.db}.${REPEAT_TRACK[${y}]}.data ${myCWD}/ && cd ${myCWD}/"
+			        fi
+			    fi
 		      	y+$((y+1))
 			done
 		done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
-    ### 07_TKcombine   
+    ### TKcombine   
     elif [[ ${pipelineStepIdx} -eq 6 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
-        done     
+        done
+        
+        repeatTracks=""     
         # we need the name of the repeat track, especially if the plan starts with step5
-        setLArepeatOptions 2
-        ### find and set TKcombine options
-        setTKcombineOptions 1
-        ### set repmask tracks 
-        if [[ ${#RAW_REPMASK_LAREPEAT_COV[*]} -ne ${#RAW_REPMASK_BLOCKCMP[*]} ]]
-        then 
-            (>&2 echo "step ${pipelineStepIdx} in pipelineType ${pipelineType}: arrays RAW_REPMASK_LAREPEAT_COV and RAW_REPMASK_BLOCKCMP must have same number of elements")
-            exit 1
-        fi
-        RAW_REPMASK_REPEATTRACK=""
-        for x in $(seq 1 ${#RAW_REPMASK_BLOCKCMP[*]})
+    	setLArepeatOptions rmask -1
+        x=0
+        while [[ $x -lt ${#REPEAT_TRACK[@]} ]] 
         do
-            idx=$(($x-1))
-            RAW_REPMASK_REPEATTRACK="${RAW_REPMASK_REPEATTRACK} ${RAW_REPMASK_LAREPEAT_REPEATTRACK}_B${RAW_REPMASK_BLOCKCMP[${idx}]}C${RAW_REPMASK_LAREPEAT_COV[${idx}]}"
-        done 
-        ### create TKcombine command        
-        if [[ -n ${RAW_REPMASK_REPEATTRACK} ]]
-        then
-            echo "${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} ${RAW_FIX_LAREPEAT_REPEATTRACK}_${RAW_REPMASK_LAREPEAT_REPEATTRACK} ${RAW_FIX_LAREPEAT_REPEATTRACK} ${RAW_REPMASK_REPEATTRACK}" > fix_${sID}_TKcombine_single_${DB_M%.db}.${slurmID}.plan
-            echo "${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} ${RAW_FIX_LAREPEAT_REPEATTRACK}_${RAW_REPMASK_LAREPEAT_REPEATTRACK}_${RAW_REPMASK_TANMASK_TRACK}_dust ${RAW_FIX_LAREPEAT_REPEATTRACK}_${RAW_REPMASK_LAREPEAT_REPEATTRACK} ${RAW_REPMASK_TANMASK_TRACK} dust" >> fix_${sID}_TKcombine_single_${DB_M%.db}.${slurmID}.plan         
-        else
-            echo "ln -s .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.d2 .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}_${RAW_REPMASK_LAREPEAT_REPEATTRACK}.d2"  > fix_${sID}_TKcombine_single_${DB_M%.db}.${slurmID}.plan         
-            echo "ln -s .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}.a2 .${DB_M%.db}.${RAW_FIX_LAREPEAT_REPEATTRACK}_${RAW_REPMASK_LAREPEAT_REPEATTRACK}.a2"  >> fix_${sID}_TKcombine_single_${DB_M%.db}.${slurmID}.plan         
-        fi 
-        echo "MARVEL TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_TKcombine_single_${DB_M%.db}.${slurmID}.version
-    ### 08_LAq  
-    elif [[ ${pipelineStepIdx} -eq 8 ]]
+        	repeatTracks="${repeatTrack} ${REPEAT_TRACK[${x}]}"
+        	x=$(($x+1))
+        done
+
+        setLArepeatOptions ${pipelineName} -1
+        x=0
+        while [[ $x -lt ${#REPEAT_TRACK[@]} ]] 
+        do
+        	echo -n "${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} combinedRep${x}_pType${pipelineType} ${repeatTracks} ${REPEAT_TRACK[${x}]}" 
+        	echo " && ${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} combinedRep${x}_pType${pipelineType}_tan_dust combinedRep${x}_pType${pipelineType} tan dust"
+        	
+        	x=$(($x+1))
+    	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        
+        ### find and set TKcombine options
+        setTKcombineOptions 0
+        setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara         
+        echo "DAmar TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
+    ### LAq  
+    elif [[ ${pipelineStepIdx} -eq 7 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -876,11 +845,11 @@ then
         ### create LAq commands
         for x in $(seq 1 ${nblocks})
         do 
-            echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/LAq${FIX_LAQ_OPT} -T trim0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp -Q q0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp ${DB_M%.db} -b ${x} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}"
+            echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/LAq${LAQ_OPT} -T trim0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp -Q q0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp ${DB_M%.db} -b ${x} ${DB_Z%.db}.repcompFilt.${x}.las && cd ${myCWD}"
 		done > fix_${sID}_LAq_block_${DB_M%.db}.${slurmID}.plan
     	echo "MARVEL LAq $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_LAq_block_${DB_M%.db}.${slurmID}.version
 	### 09_TKmerge    	                 
-    elif [[ ${pipelineStepIdx} -eq 9 ]]
+    elif [[ ${pipelineStepIdx} -eq 8 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -889,71 +858,86 @@ then
         done  
            
         # we need the name of the q and trim track names, especially if the plan starts with step11
-        if [[ -z ${FIX_LAQ_OPT} ]]
-        then 
-            setLAqOptions
-        fi  
-        if [[ -z ${TKMERGE_OPT} ]]
-        then 
-            setTKmergeOptions
-        fi
+        setLAqOptions
+        setTKmergeOptions
+        
         ### create TKmerge command
-        echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} trim0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp && cp .${DB_M%.db}.trim0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp.a2 .${DB_M%.db}.trim0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp.d2 ${myCWD}/ && cd ${myCWD}" > fix_${sID}_TKmerge_block_${DB_M%.db}.${slurmID}.plan
-        echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} q0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp&& cp .${DB_M%.db}.q0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp.a2 .${DB_M%.db}.q0_d${RAW_FIX_LAQ_QTRIMCUTOFF}_s${RAW_FIX_LAQ_MINSEG}_repcomp.d2 ${myCWD}/ && cd ${myCWD}" >> fix_${sID}_TKmerge_block_${DB_M%.db}.${slurmID}.plan
-        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_TKmerge_block_${DB_M%.db}.${slurmID}.version               
+        echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} trim0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType} && cp .${DB_M%.db}.trim0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.a2 .${DB_M%.db}.trim0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.d2 ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${REPCOMP_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} q0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType} && cp .${DB_M%.db}.q0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.a2 .${DB_M%.db}.q0_d${LAQ_QCUTOFF}_s${LAQ_MINSEG}_pType${pipelineType}.d2 ${myCWD}/ && cd ${myCWD}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan       
+        setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "DAmar TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version	                       
    ### 10 LAfix
-    elif [[ ${pipelineStepIdx} -eq 10 ]]
+    elif [[ ${pipelineStepIdx} -eq 9 ]]
     then
-        ### clean up plans 
-        for x in $(ls fix_10_*_*_${DB_M%.db}.${slurmID}.* 2> /dev/null)
+    	### clean up plans 
+        for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
         done 
         ### find and set LAfix options 
-        setLAfixOptions repcomp
-        mkdir -p ${RAW_FIX_LAFIX_PATH}
-		addopt=""
+        setLAfixOptions
+        
+    	mkdir -p ${REPCOMP_OUTDIR}/patchedReads_pType${pipelineType}
+		
+		addOpt=""
         for x in $(seq 1 ${nblocks})
         do 
-        	if [[ -n ${RAW_FIX_LAFIX_TRIMFILEPREFIX} ]]
+        	if [[ -n ${LAFIX_TRIMFILE} ]]
         	then 
-        		addopt="-T${RAW_FIX_LAFIX_TRIMFILEPREFIX}_${x}.txt "
+        		addOpt="-T${REPCOMP_OUTDIR}/${LAFIX_TRIMFILE}_${x}.txt "
         	fi
-            echo "${MARVEL_PATH}/bin/LAfix${FIX_LAFIX_OPT} ${addopt}${DB_M%.db} ${REPCOMP_OUTDIR}/${DB_Z%.db}.repcompFilt.${x}.las ${RAW_FIX_LAFIX_PATH}/${DB_M%.db}.${x}${RAW_FIX_LAFIX_FILESUFFIX}.fasta"
-		done > fix_10_LAfix_block_${DB_M%.db}.${slurmID}.plan
-    	echo "MARVEL LAfix $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_10_LAfix_block_${DB_M%.db}.${slurmID}.version                                  
+            echo "${MARVEL_PATH}/bin/LAfix${LAFIX_OPT} ${addOpt}${DB_M%.db} ${REPCOMP_OUTDIR}/${DB_Z%.db}.repcompFilt.${x}.las ${REPCOMP_OUTDIR}/patchedReads_pType${pipelineType}/${DB_M%.db}.${x}.fasta"
+    	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+    	echo "DAmar LAfix $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version    	                                  
     else 
-        (>&2 echo "step ${pipelineStepIdx} in pipelineType ${pipelineType} not supported")
-        (>&2 echo "valid steps are: ${myTypes[${pipelineType}]}")
+       	(>&2 echo "[ERROR] DAmarReadPatchingPipeline.sh - pipelineStepIdx ${pipelineStepIdx} not supported! Current - pipelineName: ${pipelineName} pipelineType: ${pipelineType}")
         exit 1        
     fi  
 elif [[ ${pipelineType} -eq 2 ]]
 then 
 	
-	if [[ -z "${RAW_DACCORD_INDIR}" ]]
-	then
-		RAW_DACCORD_INDIR=${DALIGN_OUTDIR}	
-	fi
-	
 	fsuffix="dalignFilt"
-	if [[ "${RAW_DACCORD_INDIR}" == "${REPCOMP_OUTDIR}" ]]
+	if [[ "${DACCORD_INDIR}" == "${REPCOMP_OUTDIR}" ]]
 	then
 		fsuffix="repcompFilt"
 	fi	
 	
     ### create sub-directory and link relevant DB and Track files
-    if [[ ${pipelineStepIdx} -eq 1 ]]
+    if [[ ${pipelineStepIdx} -eq 0 ]]
     then
         ### clean up plans 
     for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
         do            
             rm $x
-        done                 
-
-    	echo "if [[ -d ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} ]]; then mv ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ln -s -r .${DB_M%.db}.* ${DB_M%.db}.db .${DB_Z%.db}.* ${DB_Z%.db}.db ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR}" > fix_${sID}_createSubDir_single_${DB_M%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_createSubDir_single_${DB_M%.db}.${slurmID}.version
+        done     
+        
+		if [[ ${fsuffix} == "dalignFilt" && ! -d ${DALIGN_OUTDIR} ]]
+	    then 
+	    	(>&2 echo "[ERROR] DAmarReadPatchingPipeline.sh - Current - pipelineName: ${pipelineName} pipelineType: ${pipelineType} - Directory ${DALIGN_OUTDIR} not present, run previous read patching pipeline first (at least until pipelineStepIdx 2)!")
+	    	exit 1
+		fi
+		
+		if [[ ${fsuffix} == "repcompFilt" && ! -d ${REPCOMP_OUTDIR} ]]
+	    then 
+	    	(>&2 echo "[ERROR] DAmarReadPatchingPipeline.sh - Current - pipelineName: ${pipelineName} pipelineType: ${pipelineType} - Directory ${REPCOMP_OUTDIR} not present, run previous read patching pipeline first (at least until pipelineStepIdx 3)!")
+	    	exit 1
+		fi  
+		  
+	    
+		echo -e "if [[ -d ${DACCORD_OUTDIR}_${DACCORD_INDIR} ]]; then mv ${DACCORD_OUTDIR}_${DACCORD_INDIR} ${DACCORD_OUTDIR}_${DACCORD_INDIR}_\$(stat --format='%Y' ${REPCOMP_OUTDIR} | date '+%Y-%m-%d_%H-%M-%S'); fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "mkdir ${DACCORD_OUTDIR}_${DACCORD_INDIR}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "ln -s -r .${DB_Z}.bps ${DACCORD_OUTDIR}_${DACCORD_INDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "ln -s -r .${DB_M}.bps ${DACCORD_OUTDIR}_${DACCORD_INDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "cp .${DB_Z}.idx ${DB_Z}.db ${DACCORD_OUTDIR}_${DACCORD_INDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	echo -e "cp .${DB_M}.idx ${DB_M}.db ${DACCORD_OUTDIR}_${DACCORD_INDIR}/" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+       	
+       	echo "for x in .${DB_Z}.*.anno .${DB_Z}.*.data .${DB_M}.*.d2 .${DB_M}.*.a2 .${DB_M}.*.anno .${DB_M}.*.data; do if [[ -f \${x} ]]; then ln -s -r \${x} ${DACCORD_OUTDIR}_${DACCORD_INDIR}/; fi; done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+	    		
+		setRunInfo ${SLURM_PARTITION} sequential 1 2048 00:30:00 -1 -1 > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "DAmar $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
  	### 02-lassort
-	elif [[ ${pipelineStepIdx} -eq 2 ]]
+	elif [[ ${pipelineStepIdx} -eq 1 ]]
     then
         ### clean up plans 
     	for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -965,11 +949,12 @@ then
 		
 		for x in $(seq 1 ${nblocks})
         do
-        	echo "${LASTOOLS_PATH}/bin/lassort ${FIX_LASSORT_OPT} ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}Sort.${x}.las ${RAW_DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}.${x}.las"
-		done > fix_${sID}_lassort_block_${DB_M%.db}.${slurmID}.plan    	         
-        echo "LASTOOLS lassort $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_lassort_block_${DB_M%.db}.${slurmID}.version
+        	echo "${LASTOOLS_PATH}/bin/lassort ${LASSORT_OPT} ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}Sort.${x}.las ${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}.${x}.las"
+		done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan    	 
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara        
+        echo "LASTOOLS lassort $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
     ### 03-computeIntrinsicQV
-	elif [[ ${pipelineStepIdx} -eq 3 ]]
+	elif [[ ${pipelineStepIdx} -eq 2 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -977,13 +962,16 @@ then
             rm $x
         done 				
 		
+		setComputeIntrinsicQV2Options
+		
 		for x in $(seq 1 ${nblocks})
         do
-        	echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ln -s -f ${DB_Z%.db}.${fsuffix}Sort.${x}.las ${DB_Z%.db}.${x}.${fsuffix}Sort.las && ${DACCORD_PATH}/bin/computeintrinsicqv2 -d${RAW_COV} ${DB_Z%.db}.db ${DB_Z%.db}.${x}.${fsuffix}Sort.las && unlink ${DB_Z%.db}.${x}.${fsuffix}Sort.las && cd ${myCWD}"
-		done > fix_${sID}_computeintrinsicqv2_block_${DB_M%.db}.${slurmID}.plan    	         
-        echo "DACCORD computeintrinsicqv2 $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_computeintrinsicqv2_block_${DB_M%.db}.${slurmID}.version
+        	echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ln -s -f ${DB_Z%.db}.${fsuffix}Sort.${x}.las ${DB_Z%.db}.${x}.${fsuffix}Sort.las && ${DACCORD_PATH}/bin/computeintrinsicqv2${COMPUTEINTRINSICQV_OPT} ${DB_Z%.db}.db ${DB_Z%.db}.${x}.${fsuffix}Sort.las && unlink ${DB_Z%.db}.${x}.${fsuffix}Sort.las && cd ${myCWD}"
+		done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara    	         
+        echo "DACCORD computeintrinsicqv2 $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
 	### 04_Catrack
-	elif [[ ${pipelineStepIdx} -eq 4 ]]
+	elif [[ ${pipelineStepIdx} -eq 3 ]]
     then
         ### clean up plans 
         for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
@@ -991,9 +979,29 @@ then
             rm $x
         done
         
-        echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DAZZLER_PATH}/bin/Catrack -v -f -d ${DB_Z%.db}.db inqual && cp .${DB_Z%.db}.inqual.anno .${DB_Z%.db}.inqual.data ${myCWD}/ && cd ${myCWD}" > fix_${sID}_Catrack_single_${DB_M%.db}.${slurmID}.plan
-		echo "DAZZ_DB Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > fix_${sID}_Catrack_single_${DB_M%.db}.${slurmID}.version                
+        setCatrackOptions
+        
+        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DAZZLER_PATH}/bin/Catrack ${DB_Z%.db}.db inqual && cp .${DB_Z%.db}.inqual.anno .${DB_Z%.db}.inqual.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+		echo "DAZZ_DB Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version                
     ### 05_lasdetectsimplerepeats
+    elif [[ ${pipelineStepIdx} -eq 4 ]]
+    then
+        ### clean up plans 
+        for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+               
+        setLasDetectSimpleRepeatsOptions      
+                   	
+        for x in $(seq 1 ${nblocks})
+        do
+        	echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasdetectsimplerepeats${LASDETECTSIMPLEREPEATS_OPT} ${DB_Z%.db}.rep.${x}.data ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}Sort.${x}.las && cd ${myCWD}"
+		done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+      	echo "DACCORD lasdetectsimplerepeats $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
+    ### 06_mergeAndSortRepeats
     elif [[ ${pipelineStepIdx} -eq 5 ]]
     then
         ### clean up plans 
@@ -1001,55 +1009,24 @@ then
         do            
             rm $x
         done
-                
-        OPT=""
-        if [[ -z "${RAW_FIX_LASDETECTSIMPLEREPEATS_ERATE}" ]]
-        then 
-        	RAW_FIX_LASDETECTSIMPLEREPEATS_ERATE=0.35
-   	 	fi 
-   	 	
-   	 	OPT="${OPT} -d$((RAW_COV/2)) -e${RAW_FIX_LASDETECTSIMPLEREPEATS_ERATE}"
-    	
-        for x in $(seq 1 ${nblocks})
-        do
-        	echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasdetectsimplerepeats ${OPT} ${DB_Z%.db}.rep.${x}.data ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}Sort.${x}.las && cd ${myCWD}"
-		done > fix_${sID}_lasdetectsimplerepeats_block_${DB_M%.db}.${slurmID}.plan
-      	echo "DACCORD lasdetectsimplerepeats $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_lasdetectsimplerepeats_block_${DB_M%.db}.${slurmID}.version
-    ### 06_mergeAndSortRepeats
-    elif [[ ${pipelineStepIdx} -eq 6 ]]
-    then
-        ### clean up plans 
-        for x in $(ls ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.* 2> /dev/null)
-        do            
-            rm $x
-        done
-        
-        files="${DB_Z%.db}.rep.[0-9].data"
-		if [[ ${nblocks} -gt 9 ]]
-		then
-			files="${files} ${DB_Z%.db}.rep.[0-9][0-9].data"
-		fi
-		if [[ ${nblocks} -gt 99 ]]
-		then
-			files="${files} ${DB_Z%.db}.rep.[0-9][0-9][0-9].data"
-		fi
-		if [[ ${nblocks} -gt 999 ]]
-		then
-			files="${files} ${DB_Z%.db}.rep.[0-9][0-9][0-9][0-9].data"
-		fi
-		if [[ ${nblocks} -gt 9999 ]]
-		then
-			files="${files} ${DB_Z%.db}.rep.[0-9][0-9][0-9][0-9][0-9].data"
-		fi
-    	if [[ ${nblocks} -gt 99999 ]]
-        then
-    		(>&2 echo "fix_${sID}_mergeAndSortRepeats: more than 99999 db blocks are not supported!!!")
-        	exit 1	
-    	fi
-    	## sanity check 
-    	cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && if [[ $(ls ${files} | wc -l) -ne ${nblocks} ]]; then exit 1; fi && cd ${myCWD}
-    	echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && cat ${files} | ${DACCORD_PATH}/bin/repsort ${DB_Z%.db}.db > ${DB_Z%.db}.rep.data && cd ${myCWD}" >> fix_${sID}_mergeAndSortRepeats_single_${DB_M%.db}.${slurmID}.plan
-        echo "DACCORD repsort $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_mergeAndSortRepeats_single_${DB_M%.db}.${slurmID}.version
+       
+    	echo "if [[ -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data ]]; then echo \"[WARNING] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data already exists! Will be removed!\"; rm ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data; fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	# create empty file !!! 
+    	echo -e "touch ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "for x in $(seq 1 ${nblocks});" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "	if [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "   then " >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "        echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data is missing. Stop here!\";" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "        exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "   fi;"  >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "   cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data | ${DACCORD_PATH}/bin/repsort ${DB_Z%.db}.db > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.repSort.data && mv ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.repSort.data ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
+		getSlurmRunParameter ${pipelineStepName}
+    	setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+        echo "DACCORD repsort $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version
     ### 07_lasfilteralignments 
     elif [[ ${pipelineStepIdx} -eq 7 ]]
     then
@@ -1070,7 +1047,7 @@ then
     	
         for x in $(seq 1 ${nblocks})
         do
-        	echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasfilteralignments ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt1.${x}.las ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}Sort.${x}.las && cd ${myCWD}"
+        	echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasfilteralignments ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt1.${x}.las ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}Sort.${x}.las && cd ${myCWD}"
 		done > fix_${sID}_lasfilteralignments_block_${DB_M%.db}.${slurmID}.plan
       	echo "DACCORD lasfilteralignments $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_lasfilteralignments_block_${DB_M%.db}.${slurmID}.version
     ### 08_mergesym2
@@ -1082,8 +1059,8 @@ then
             rm $x
         done
         
-        echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/mergesym2 ${DB_Z%.db}.${fsuffix}SortFilt1.sym ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt1.*.las.sym && cd ${myCWD}" > fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
-        echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && rm ${DB_Z%.db}.${fsuffix}SortFilt1.*.las.sym && cd ${myCWD}" >> fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
+        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/mergesym2 ${DB_Z%.db}.${fsuffix}SortFilt1.sym ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt1.*.las.sym && cd ${myCWD}" > fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
+        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && rm ${DB_Z%.db}.${fsuffix}SortFilt1.*.las.sym && cd ${myCWD}" >> fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
         echo "DACCORD mergesym2 $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.version        
 	### 09_filtersym
     elif [[ ${pipelineStepIdx} -eq 9 ]]
@@ -1108,7 +1085,7 @@ then
    	 	
    	 	for x in $(seq 1 ${nblocks})
         do
-    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/filtersym ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt1.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt1.sym" 
+    		echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/filtersym ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt1.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt1.sym" 
 		done > fix_${sID}_filtsym_block_${DB_M%.db}.${slurmID}.plan
       	echo "DACCORD filtsym $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_filtsym_block_${DB_M%.db}.${slurmID}.version                 
    	### 10_lasfilteralignmentsborderrepeats
@@ -1137,7 +1114,7 @@ then
    	 	OPT="${OPT} -e${RAW_FILT_LASFILTERALIGNMENTSBORDERREPEATS_ERATE}"
    	 	for x in $(seq 1 ${nblocks})
         do
-    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasfilteralignmentsborderrepeats ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2.${x}.las ${DB_Z%.db}.db ${DB_Z%.db}.rep.data ${DB_Z%.db}.${fsuffix}SortFilt1.${x}.las && cd ${mxCWD}" 
+    		echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasfilteralignmentsborderrepeats ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2.${x}.las ${DB_Z%.db}.db ${DB_Z%.db}.rep.data ${DB_Z%.db}.${fsuffix}SortFilt1.${x}.las && cd ${mxCWD}" 
 		done > fix_10_lasfilteralignmentsborderrepeats_block_${DB_M%.db}.${slurmID}.plan
       	echo "DACCORD lasfilteralignmentsborderrepeats $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_10_lasfilteralignmentsborderrepeats_block_${DB_M%.db}.${slurmID}.version
   	### 11_mergesym2
@@ -1150,8 +1127,8 @@ then
         done
         
         OPT=""        
-        echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/mergesym2 ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2.sym ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" > fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
-        echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && rm ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" >> fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
+        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/mergesym2 ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2.sym ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" > fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
+        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && rm ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" >> fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.plan
         echo "DACCORD mergesym2 $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_mergesym2_single_${DB_M%.db}.${slurmID}.version        
 	### 12_filtersym
     elif [[ ${pipelineStepIdx} -eq 12 ]]
@@ -1176,7 +1153,7 @@ then
    	 	
    	 	for x in $(seq 1 ${nblocks})
         do
-    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/filtersym ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt2.sym && cd ${myCWD}" 
+    		echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/filtersym ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt2.sym && cd ${myCWD}" 
 		done > fix_${sID}_filtsym_block_${DB_M%.db}.${slurmID}.plan
       	echo "DACCORD filtsym $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_filtsym_block_${DB_M%.db}.${slurmID}.version
     ### 13_filterchainsraw
@@ -1198,7 +1175,7 @@ then
    	 	OPT="-l${RAW_FILT_FILTERCHAINSRAW_LEN}"
         for x in $(seq 1 ${nblocks})
         do
-    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/filterchainsraw ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2Chain.${x}.las ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2.${x}.las && ${MARVEL_PATH}/bin/LAfilter ${FIX_LAFILTER_OPT} ${DB_M%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2Chain.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las && cd ${myCWD}" 
+    		echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/filterchainsraw ${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2Chain.${x}.las ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2.${x}.las && ${MARVEL_PATH}/bin/LAfilter ${FIX_LAFILTER_OPT} ${DB_M%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2Chain.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las && cd ${myCWD}" 
 		done > fix_${sID}_filterchainsraw_block_${DB_M%.db}.${slurmID}.plan
     	echo "DACCORD filterchainsraw $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_filterchainsraw_block_${DB_M%.db}.${slurmID}.version      	
     ### 14_daccord
@@ -1214,7 +1191,7 @@ then
 		
 		for x in $(seq 1 ${nblocks})
 		do
-    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/daccord ${FIX_DACCORD_OPT} --eprofonly -E${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.eprof ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las ${DB_Z%.db}.db && ${DACCORD_PATH}/bin/daccord ${FIX_DACCORD_OPT} -E${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.eprof ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las ${DB_Z%.db}.db > ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.dac.fasta && cd ${myCWD}"
+    		echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/daccord ${FIX_DACCORD_OPT} --eprofonly -E${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.eprof ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las ${DB_Z%.db}.db && ${DACCORD_PATH}/bin/daccord ${FIX_DACCORD_OPT} -E${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.eprof ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las ${DB_Z%.db}.db > ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.dac.fasta && cd ${myCWD}"
 		done > fix_${sID}_daccord_block_${DB_M%.db}.${slurmID}.plan
         echo "DACCORD daccord $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_daccord_block_${DB_M%.db}.${slurmID}.version
    	### 15_computeextrinsicqv
@@ -1248,7 +1225,7 @@ then
         then
         	OPT="${OPT} -t${RAW_FILT_COMPUTEEXTRINSICQ_THREADS}"
    	 	fi
-		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && cat ${files} > ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta && ${DACCORD_PATH}/bin/computeextrinsicqv${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta ${DB_Z%.db}.db && cd ${myCWD}" > fix_${sID}_computeextrinsicqv_single_${DB_M%.db}.${slurmID}.plan
+		echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && cat ${files} > ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta && ${DACCORD_PATH}/bin/computeextrinsicqv${OPT} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta ${DB_Z%.db}.db && cd ${myCWD}" > fix_${sID}_computeextrinsicqv_single_${DB_M%.db}.${slurmID}.plan
         echo "DACCORD computeextrinsicqv $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_computeextrinsicqv_single_${DB_M%.db}.${slurmID}.version
     ### 16_split
     elif [[ ${pipelineStepIdx} -eq 16 ]]
@@ -1267,7 +1244,7 @@ then
 		# create folder structure
 		for x in $(seq 1 ${nblocks})
 		do
-			directory="${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR}/${RAW_FIX_SPLIT_TYPE}_s${x}"
+			directory="${DACCORD_OUTDIR}_${DACCORD_INDIR}/${RAW_FIX_SPLIT_TYPE}_s${x}"
 			if [[ -d "${directory}" ]]
 			then
 					mv ${directory} ${directory}_$(date '+%Y-%m-%d_%H-%M-%S'); 
@@ -1282,7 +1259,7 @@ then
 		do
 			for y in $(seq 0 $((RAW_FIX_SPLIT_DIVIDEBLOCK-1)))
 			do
-				echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/${FIX_SPLIT_OPT} -E${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.eprof -J${y},${RAW_FIX_SPLIT_DIVIDEBLOCK} ${RAW_FIX_SPLIT_TYPE}_s${x}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2Split.${y}.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.dac.fasta ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las ${DB_Z%.db}.db && cd ${myCWD}"		
+				echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/${FIX_SPLIT_OPT} -E${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.eprof -J${y},${RAW_FIX_SPLIT_DIVIDEBLOCK} ${RAW_FIX_SPLIT_TYPE}_s${x}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2Split.${y}.${x}.las ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.dac.fasta ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.${x}.las ${DB_Z%.db}.db && cd ${myCWD}"		
 			done	    		
 		done > fix_${sID}_split_block_${DB_M%.db}.${slurmID}.plan
         echo "DACCORD ${RAW_FIX_SPLIT_TYPE} $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_split_block_${DB_M%.db}.${slurmID}.version
@@ -1300,8 +1277,8 @@ then
         
         for x in $(seq 1 ${nblocks})
 		do
-			echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${MARVEL_PATH}/bin/LAmerge ${LAMERGE_OPT} ${DB_M%.db} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2_${RAW_FIX_SPLIT_TYPE}.${x}.keep.las ${RAW_FIX_SPLIT_TYPE}_s${x}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2Split.*.${x}.las ${myCWD}/identity/${DB_Z%.db}.identity.${x}.las && cd ${myCWD}"
-			echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${MARVEL_PATH}/bin/LAmerge ${LAMERGE_OPT} ${DB_M%.db} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2_${RAW_FIX_SPLIT_TYPE}.${x}.drop.las ${RAW_FIX_SPLIT_TYPE}_s${x}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2Split.*.${x}_drop.las ${myCWD}/identity/${DB_Z%.db}.identity.${x}.las && cd ${myCWD}"	
+			echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${MARVEL_PATH}/bin/LAmerge ${LAMERGE_OPT} ${DB_M%.db} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2_${RAW_FIX_SPLIT_TYPE}.${x}.keep.las ${RAW_FIX_SPLIT_TYPE}_s${x}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2Split.*.${x}.las ${myCWD}/identity/${DB_Z%.db}.identity.${x}.las && cd ${myCWD}"
+			echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${MARVEL_PATH}/bin/LAmerge ${LAMERGE_OPT} ${DB_M%.db} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2_${RAW_FIX_SPLIT_TYPE}.${x}.drop.las ${RAW_FIX_SPLIT_TYPE}_s${x}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2Split.*.${x}_drop.las ${myCWD}/identity/${DB_Z%.db}.identity.${x}.las && cd ${myCWD}"	
 		done > fix_${sID}_LAmerge_block_${DB_M%.db}.${slurmID}.plan
         echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_LAmerge_block_${DB_M%.db}.${slurmID}.version
 	### 18_LAfix    
@@ -1333,7 +1310,7 @@ then
         	then 
         		addopt="-T${RAW_FIX_LAFIX_TRIMFILEPREFIX}_${x}.txt "
         	fi
-            echo "${MARVEL_PATH}/bin/LAfix${FIX_LAFIX_OPT} ${addopt}${DB_M%.db} ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2_${RAW_FIX_SPLIT_TYPE}.${x}.keep.las ${RAW_FIX_LAFIX_PATH}_daccord_${RAW_FIX_SPLIT_TYPE}/${DB_M%.db}.${x}${RAW_FIX_LAFIX_FILESUFFIX}.fasta"
+            echo "${MARVEL_PATH}/bin/LAfix${FIX_LAFIX_OPT} ${addopt}${DB_M%.db} ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2_${RAW_FIX_SPLIT_TYPE}.${x}.keep.las ${RAW_FIX_LAFIX_PATH}_daccord_${RAW_FIX_SPLIT_TYPE}/${DB_M%.db}.${x}${RAW_FIX_LAFIX_FILESUFFIX}.fasta"
     	done > fix_${sID}_LAfix_block_${DB_M%.db}.${slurmID}.plan
     echo "MARVEL LAfix $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_${sID}_LAfix_block_${DB_M%.db}.${slurmID}.version                
 	else
