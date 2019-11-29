@@ -560,11 +560,11 @@ then
         
         repeatTracks=""     
         # we need the name of the repeat track, especially if the plan starts with step5
-        setLArepeatOptions rmask -1
+    	setLArepeatOptions rmask -1
         x=0
         while [[ $x -lt ${#REPEAT_TRACK[@]} ]] 
         do
-        	repeatTracks="${repeatTrack} ${#REPEAT_TRACK[${x}]}"
+        	repeatTracks="${repeatTrack} ${REPEAT_TRACK[${x}]}"
         	x=$(($x+1))
         done
 
@@ -572,8 +572,8 @@ then
         x=0
         while [[ $x -lt ${#REPEAT_TRACK[@]} ]] 
         do
-        	echo -n "${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} combinedRep${x}_pType${pipelineType} ${repeatTracks} ${#REPEAT_TRACK[${x}]}" 
-        	echo " && ${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} combinedRep${x}_pType${pipelineType}_tan_dust combinedRep_${pipelineType} tan dust"
+        	echo -n "${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} combinedRep${x}_pType${pipelineType} ${repeatTracks} ${REPEAT_TRACK[${x}]}" 
+        	echo " && ${MARVEL_PATH}/bin/TKcombine${TKCOMBINE_OPT} ${DB_M%.db} combinedRep${x}_pType${pipelineType}_tan_dust combinedRep${x}_pType${pipelineType} tan dust"
         	
         	x=$(($x+1))
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
