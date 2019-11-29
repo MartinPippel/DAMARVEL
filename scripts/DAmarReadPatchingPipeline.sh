@@ -401,7 +401,7 @@ then
 						z=$((z-1))
 		    		done
 		    		echo -n " d${x}"
-				    if [[ ${DALIGNER_ASYMMETRIC} -eq 1 ]]
+				    if [[ ${DALIGNER_ASYMMETRIC} -eq 0 ]]
 				    then
 						z=${count}
 			            while [[ $z -ge 1 ]]
@@ -437,7 +437,7 @@ then
                 z=$((z-1))
             done
             echo -n " d${x}"
-            if [[ ${DALIGNER_ASYMMETRIC} -eq 1 ]]
+            if [[ ${DALIGNER_ASYMMETRIC} -eq 0 ]]
             then
                 z=$((count-1))
                 while [[ $z -ge 0 ]]
