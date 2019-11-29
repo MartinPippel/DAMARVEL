@@ -526,8 +526,25 @@ then
         while [[ $x -lt ${#REPEAT_TRACK[@]} ]] 
         do
         	### create TKmerge command
-        	echo "cd ${DALIGN_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK[${x}]} && cp .${DB_M%.db}.${REPEAT_TRACK[${x}]}.a2 .${DB_M%.db}.${REPEAT_TRACK[${x}]}.d2 ${myCWD} && cd ${myCWD}"      
-        	echo "cd ${DALIGN_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK[${x}]} && cp .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.anno .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.data ${myCWD}/ && cd ${myCWD}/"
+        	echo "cd ${DALIGN_OUTDIR} && ${MARVEL_PATH}/bin/TKmerge${TKMERGE_OPT} ${DB_M%.db} ${REPEAT_TRACK[${x}]} && cp .${DB_M%.db}.${REPEAT_TRACK[${x}]}.a2 .${DB_M%.db}.${REPEAT_TRACK[${x}]}.d2 ${myCWD} && cd ${myCWD}"
+        	if [[ ${REPEAT_COV[${y}]} -gt 0 ]]
+            	then
+            		found=0
+            		z=0
+            		while [[ $z -lt $y ]]
+            		do
+            			if [[ ${REPEAT_COV[${z}]} == ${REPEAT_COV[${y}]} ]]
+            			then
+            				found=1
+            				break
+            			fi
+            			z=$((z+1))
+            		done
+            		if [[ ${found} -eq 0 ]]
+            		then      
+        				echo "cd ${DALIGN_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK[${x}]} && cp .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.anno .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.data ${myCWD}/ && cd ${myCWD}/"
+        			fi
+        	fi
         	x=$((x+1))
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
