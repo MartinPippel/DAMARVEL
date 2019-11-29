@@ -401,7 +401,7 @@ then
 						z=$((z-1))
 		    		done
 		    		echo -n " d${x}"
-				    if [[ -z "${DALIGNER_ASYMMETRIC}" ]]
+				    if [[ ${DALIGNER_ASYMMETRIC} -eq 1 ]]
 				    then
 						z=${count}
 			            while [[ $z -ge 1 ]]
@@ -426,30 +426,30 @@ then
             done
 	    if [[ "x${DALIGNER_VERSION}" == "x2" ]]	
 	    then
-            	echo -n "-${y} && mv"
+            echo -n "-${y} && mv"
 	    else
-		echo -n " && mv"
+			echo -n " && mv"
 	    fi
             z=$((count-1))
-                    while [[ $z -ge 0 ]]
-                    do
-                        echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.$((y-z)).las"
-                        z=$((z-1))
-                    done
-                    echo -n " d${x}"
-                    if [[ -z "${DALIGNER_ASYMMETRIC}" ]]
+            while [[ $z -ge 0 ]]
+            do
+                echo -n " ${DB_Z%.db}.${x}.${DB_Z%.db}.$((y-z)).las"
+                z=$((z-1))
+            done
+            echo -n " d${x}"
+            if [[ ${DALIGNER_ASYMMETRIC} -eq 1 ]]
+            then
+                z=$((count-1))
+                while [[ $z -ge 0 ]]
+                do
+                    if [[ ${x} -ne $((y-z)) ]]
                     then
-                        z=$((count-1))
-                        while [[ $z -ge 0 ]]
-                        do
-                                if [[ ${x} -ne $((y-z)) ]]
-                                then
-                                   echo -n " && mv ${DB_Z%.db}.$((y-z)).${DB_Z%.db}.${x}.las d$((y-z))"
-                                fi
-                                z=$((z-1))
-                        done
+                       echo -n " && mv ${DB_Z%.db}.$((y-z)).${DB_Z%.db}.${x}.las d$((y-z))"
                     fi
-                    echo " && cd ${myCWD}"
+                    z=$((z-1))
+                done
+            fi
+            echo " && cd ${myCWD}"
     	done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara 
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version         
