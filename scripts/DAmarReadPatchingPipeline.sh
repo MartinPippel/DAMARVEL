@@ -574,7 +574,7 @@ then
 		        		echo -e "cd ${REPCOMP_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db} ${REPEAT_TRACK[${y}]} && cp .${DB_Z%.db}.${REPEAT_TRACK[${y}]}.anno .${DB_Z%.db}.${REPEAT_TRACK[${y}]}.data ${myCWD}/ && cd ${myCWD}/"
 			        fi
 			    fi
-		      	y+$((y+1))
+		      	y=$((y+1))
 			done
 		done > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
