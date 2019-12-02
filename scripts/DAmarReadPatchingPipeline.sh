@@ -418,7 +418,7 @@ then
         done 
 
         ### find and set LAseparate options 
-        setLAseparateOptions 0
+        setLAseparateOptions 0 0
 
         for x in $(seq 1 ${nblocks}); 
         do 
