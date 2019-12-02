@@ -504,7 +504,7 @@ then
             rm $x
         done 
         
-        setLArepeatOptions ${pipelineType} -1
+        setLArepeatOptions ${pipelineName} -1
         ### create LArepeat commands
         for x in $(seq 1 ${nblocks})
         do 
@@ -545,7 +545,7 @@ then
             rm $x
         done 
         
-        setLArepeatOptions ${pipelineType} -1
+        setLArepeatOptions ${pipelineName} -1
         setTKmergeOptions
         setCatrackOptions
 	
