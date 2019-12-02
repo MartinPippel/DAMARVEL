@@ -269,7 +269,7 @@ fi
 
 if [[ ${resumeIdx} -eq 0 ]]
 then
-	if [[ ${JOBS} -gt ${Slurm_MaxArrayCount} && ${sType} == "block" ]]
+	if [[ ${JOBS} -gt ${Slurm_MaxArrayCount} && ${sType} == "parallel" ]]
 	then
 		resumeIdx=1
 		file=${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.${resumeIdx}
