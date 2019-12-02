@@ -448,7 +448,7 @@ then
         cmdLine=1
         for x in $(seq 1 ${nblocks}); 
         do 
-            srcDir=${DALIGN_OUTDIR}/d${x}_ForRepComp
+            srcDir=${REPCOMP_OUTDIR}/d${x}_ForRepComp
             desDir=${REPCOMP_OUTDIR}/r${x}
 
             if [[ ! -d ${desDir} ]]
