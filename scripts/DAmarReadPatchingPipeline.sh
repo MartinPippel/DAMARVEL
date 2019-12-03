@@ -262,7 +262,7 @@ then
             		done
             		if [[ ${found} -eq 0 ]]
             		then      
-        				echo "cd ${DALIGN_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack${TKMERGE_OPT} -f -v ${DB_Z%.db} ${REPEAT_TRACK[${x}]} && cp .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.anno .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.data ${myCWD}/ && cd ${myCWD}/"
+        				echo "cd ${DALIGN_OUTDIR} && ${DAZZLER_PATH}/bin/Catrack -f -v ${DB_Z%.db} ${REPEAT_TRACK[${x}]} && cp .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.anno .${DB_Z%.db}.${REPEAT_TRACK[${x}]}.data ${myCWD}/ && cd ${myCWD}/"
         			fi
         	fi
         	x=$((x+1))
@@ -761,7 +761,7 @@ then
         
         setCatrackOptions
         
-        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DAZZLER_PATH}/bin/Catrack ${DB_Z%.db}.db inqual && cp .${DB_Z%.db}.inqual.anno .${DB_Z%.db}.inqual.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DAZZLER_PATH}/bin/Catrack${CATRACK_OPT} ${DB_Z%.db}.db inqual && cp .${DB_Z%.db}.inqual.anno .${DB_Z%.db}.inqual.data ${myCWD}/ && cd ${myCWD}" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
 		setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
 		echo "DAZZ_DB Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version                
     ### 05_lasdetectsimplerepeats
