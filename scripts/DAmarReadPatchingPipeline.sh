@@ -949,14 +949,14 @@ then
         
         setComputeExtrinsicQVOptions
         
-        echo -e "for x in \$(seq 1 ${nblocks});" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -e "do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -e "  if  [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -e "  then" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -e "    (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta is missing. Stop here!\");" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "    exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -e "  fi" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -e "  cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n "for x in \$(seq 1 ${nblocks});" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " if  [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " then" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta is missing. Stop here!\");" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " fi" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "done > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo -e "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/computeextrinsicqv${COMPUTEEXTRINSICQV_OPT} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta ${DB_Z%.db}.db && cd ${myCWD}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan 
         setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
