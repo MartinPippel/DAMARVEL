@@ -793,15 +793,15 @@ then
     	echo "if [[ -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data ]]; then (>&2 echo \"[WARNING] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data already exists! Will be removed!\"); rm ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data; fi" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	# create empty file !!! 
     	echo -e "touch ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "for x in \$(seq 1 ${nblocks});" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "	if [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "   then " >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "        (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data is missing. Stop here!\";)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "        exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "   fi;"  >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "   cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "done > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n "for x in \$(seq 1 ${nblocks});" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " if [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " then " >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data is missing. Stop here!\";)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " fi;"  >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e " done > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data | ${DACCORD_PATH}/bin/repsort ${DB_Z%.db}.db > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.repSort.data && mv ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.repSort.data ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 		getSlurmRunParameter ${pipelineStepName}
