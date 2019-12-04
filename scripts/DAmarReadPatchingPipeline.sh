@@ -882,11 +882,11 @@ then
             rm $x
         done
         
-        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/mergesym2 ${DB_Z%.db}.${fsuffix}SortFilt2.sym ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && rm ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/mergesym2 ${DB_Z%.db}.${fsuffix}SortFilt2.sym ${DB_Z%.db}.db ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -e " && rm ${DB_Z%.db}.${fsuffix}SortFilt2.*.las.sym && cd ${myCWD}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         ## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 		getSlurmRunParameter ${pipelineStepName}
-        setRunInfo ${SLURM_RUN_PARA[0]} parallel ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
+        setRunInfo ${SLURM_RUN_PARA[0]} sequential ${SLURM_RUN_PARA[1]} ${SLURM_RUN_PARA[2]} ${SLURM_RUN_PARA[3]} ${SLURM_RUN_PARA[4]} ${SLURM_RUN_PARA[5]} > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.slurmPara
         echo "DACCORD mergesym2 $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.version        
 	### 12_filtersym
     elif [[ ${pipelineStepIdx} -eq 11 ]]
