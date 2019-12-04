@@ -797,11 +797,11 @@ then
     	echo -e "do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "	if [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "   then " >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "        echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data is missing. Stop here!\";" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "        (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data is missing. Stop here!\";)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "        exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "   fi;"  >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "   cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -e "done" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "   cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.${x}.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -e "done > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data | ${DACCORD_PATH}/bin/repsort ${DB_Z%.db}.db > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.repSort.data && mv ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.repSort.data ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	## this sets the global array variable SLURM_RUN_PARA (partition, nCores, mem, time, step, tasks)
 		getSlurmRunParameter ${pipelineStepName}
