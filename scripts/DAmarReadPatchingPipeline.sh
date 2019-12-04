@@ -797,7 +797,7 @@ then
     	echo -n " do" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -n " if [[ ! -f ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data ]];" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -n " then " >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-    	echo -n " (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data is missing. Stop here!\";)" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+    	echo -n " (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data is missing. Stop here!\");" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -n " exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -n " fi;"  >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -n " cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.rep.\${x}.data" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
