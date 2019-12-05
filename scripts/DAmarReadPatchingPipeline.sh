@@ -957,7 +957,7 @@ then
         echo -n " then" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo -n " (>&2 echo \"[ERROR] - File ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta is missing. Stop here!\");" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -n " exit 1;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
-        echo -n " fi" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
+        echo -n " fi;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo -n " cat ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.\${x}.dac.fasta;" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
     	echo -e "done > ${DACCORD_OUTDIR}_${DACCORD_INDIR}/${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan
         echo -e "cd ${DACCORD_OUTDIR}_${DACCORD_INDIR} && ${DACCORD_PATH}/bin/computeextrinsicqv${COMPUTEEXTRINSICQV_OPT} ${DB_Z%.db}.${fsuffix}SortFilt2Chain2.dac.fasta ${DB_Z%.db}.db && cd ${myCWD}" >> ${pipelineName}_$(prependZero ${pipelineStepIdx})_${pipelineStepName}.${pipelineRunID}.plan 
