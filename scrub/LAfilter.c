@@ -58,6 +58,8 @@
 #define ANCHOR_TRIM 		(1 << 1)
 #define ANCHOR_LOWCOMP 	(1 << 2)
 
+#define DEBUG_CHIMER
+
 typedef struct
 {
 
@@ -163,6 +165,8 @@ typedef struct
 	int mergeRepeatsMaxLen;
 
 	int maxSegmentErrorRate;
+	int chimerCoverage;
+	int chimerAnchorBases;
 } FilterContext;
 
 extern char* optarg;
@@ -1881,6 +1885,91 @@ static int cmp_ovls_qual(const void* a, const void* b)
 	return ((100 - (o1->path.diffs * 100.0 / (o1->path.aepos - o1->path.abpos))) * 10 - (100 - (o2->path.diffs * 100.0 / (o2->path.aepos - o2->path.abpos))) * 10);
 }
 
+static void removeChimerOvls(FilterContext* ctx, Overlap *ovl, int novl)
+{
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: a[%d]\n",ovl->aread);
+#endif
+
+	int trimABeg = 0;
+	int trimAEnd = DB_READ_LEN(ctx->db, ovl->aread);
+
+	if (ctx->trackTrim)
+		get_trim(ctx->db, ctx->trackTrim, ovl->aread, &trimABeg, &trimAEnd);
+
+	int i;
+	if (novl < ctx->chimerCoverage)
+	{
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: a[%d] has less then chimerCoverage (%d) overlaps (%d)\n",ovl->aread, ctx->chimerCoverage, novl);
+#endif
+		for (i = 0; i < novl; i++)
+		{
+			ovl[i].flags |= OVL_DISCARD;
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: discard %d vs %d a[%d, %d] %c b[%d, %d]\n",ovl[i].aread,ovl[i].bread,ovl[i].path.abpos, ovl[i].path.aepos, (ovl[i].flags & OVL_COMP)?'c':'n', ovl[i].path.bbpos, ovl[i].path.bepos);
+#endif
+		}
+	}
+
+	Overlap * o1 = ovl;
+	Overlap * o3 = ovl;
+	int curCov = 0;
+
+	for (i = 1; i < novl; i++)
+	{
+		Overlap * o2 = ovl + i;
+
+		if(o1->path.abpos == trimABeg && o1->path.aepos == trimAEnd)
+		{
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: found fully spanning B-read %d. Skip chimer detection! a[%d, %d] %c b[%d, %d]\n",o1->bread, o1->path.abpos, o1->path.aepos, (o1->flags & OVL_COMP)?'c':'n', o1->path.bbpos, o1->path.bepos);
+#endif
+			curCov = ctx->chimerCoverage;
+			break;
+		}
+
+		if(o2->path.aepos > o3->path.aepos)
+		{
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: mark overlap with largest aepos!  a[%d, %d] %c b[%d, %d]\n",o2->path.abpos, o2->path.aepos, (o2->flags & OVL_COMP)?'c':'n', o2->path.bbpos, o2->path.bepos);
+#endif
+			o3 = o2;
+		}
+
+		if(o2->path.abpos <= o1->path.aepos - MAX(ctx->chimerAnchorBases,o1->path.aepos) && o2->path.aepos >= o1->path.aepos + MIN(ctx->chimerAnchorBases, trimAEnd-o1->path.aepos))
+		{
+			curCov++;
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: anchorCov %d (a[%d, %d] %c b[%d, %d])\n",curCov, o2->path.abpos, o2->path.aepos, (o2->flags & OVL_COMP)?'c':'n', o2->path.bbpos, o2->path.bepos);
+#endif
+		}
+
+		if(curCov >= ctx->chimerCoverage && o3->path.aepos < trimAEnd)
+		{
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: No chimer at %d anchorCov %d\n", o1->path.aepos, curCov);
+#endif
+			curCov = 0;
+			o1 = o3;
+		}
+	}
+
+	if (curCov < ctx->chimerCoverage)
+	{
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: found chimer at position %d. Remove all overlaps.\n", o1->path.aepos);
+#endif
+			for (i = 0; i < novl; i++)
+			{
+				ovl[i].flags |= OVL_DISCARD;
+#ifdef DEBUG_CHIMER
+				printf("CHIMER: discard %d vs %d a[%d, %d] %c b[%d, %d]\n",ovl[i].aread,ovl[i].bread,ovl[i].path.abpos, ovl[i].path.aepos, (ovl[i].flags & OVL_COMP)?'c':'n', ovl[i].path.bbpos, ovl[i].path.bepos);
+#endif
+	}
+
+}
+
 static void removeWorstAlignments(FilterContext* ctx, Overlap* ovl, int novl)
 {
 	int i;
@@ -2619,6 +2708,11 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 	if (ctx->removeFlags != 0)
 		removeOvls(ctx, ovl, novl, ctx->removeFlags);
 
+
+	// check for chimers and gaps
+	if (ctx->chimerCoverage > 0)
+		removeChimerOvls(ctx, ovl, novl);
+
 	// filter by read flags
 	int aread = ovl->aread;
 	HITS_READ* reads = ctx->db->reads;
@@ -2664,7 +2758,7 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 
 static void usage()
 {
-	fprintf(stderr, "[-vpLqTwZj] [-dnolRsSumMfyYzZVWb <int>] [-rtD <track>] [-xPIaA <file>] <db> <overlaps_in> <overlaps_out>\n");
+	fprintf(stderr, "[-vpLqTwZj] [-dnolRsSumMfyYzZVWb <int>] [-rtD <track>] [-xPIaA <file>] [-c<int,int>] <db> <overlaps_in> <overlaps_out>\n");
 
 	fprintf(stderr, "options: -v ... verbose\n");
 	fprintf(stderr, "         -d ... max divergence allowed [0,100]\n");
@@ -2710,7 +2804,10 @@ static void usage()
 	fprintf(stderr, "         -W ... window size in bases. Merge repeats that are closer then -V bases and have a decent number of low complexity bases in between both repeats\n");
 	fprintf(stderr, "                or at -W bases at the tips of the neighboring repeat. Those can cause a fragmented repeat mask. (default: 600)\n");
 	fprintf(stderr, "         -b ... remove alignments which have segments error rates above -b <int>%% (default: not set)\n");
+	fprintf(stderr, "         -c <inta,intb> remove overlaps from chimeric reads (Chimer detection: locations that have less then <inta> coverage and less then in <intb> anchor bases around that location)\n");
+	fprintf(stderr, "OBSOLETE - will be removed in future\n");
 	fprintf(stderr, "         -j ... trim off unaligned bases (indels) from start/end of alignments\n");
+
 }
 
 static int opt_repeat_count(int argc, char** argv, char opt)
@@ -2784,6 +2881,8 @@ int main(int argc, char* argv[])
 	fctx.includeReadFlag = 0;
 	fctx.removeLowCoverageOverlaps = 0;
 	fctx.maxSegmentErrorRate = -1;
+	fctx.chimerCoverage = -1;
+	fctx.chimerAnchorBases = 1000;
 
 	fctx.stitch_aggressively = 0;
 	fctx.removeFlags = 0;
@@ -2806,7 +2905,7 @@ int main(int argc, char* argv[])
 	}
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:j")) != -1)
+	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:jc:")) != -1)
 	{
 		switch (c)
 		{
@@ -2949,7 +3048,22 @@ int main(int argc, char* argv[])
 			fctx.mergeRepeatsMaxLen = atoi(optarg);
 			break;
 
-
+		case 'c':
+		{
+			char * pch;
+			pch=strchr(optarg,',');
+			if (pch == NULL)
+			{
+				fprintf(stderr, "[ERROR]: Unsupported argument for chimer detection: \"%s\". format must be -c <int>,<int> \n" ,optarg);
+				usage();
+				exit(1);
+			}
+			*pch = '\0';
+			fctx.chimerCoverage = atoi(optarg);
+			*pch = ',';
+			fctx.chimerAnchorBases = atoi(pch+1);
+		}
+		break;
 		default:
 			fprintf(stderr, "[ERROR] unknown option -%c\n", optopt);
 			usage();
