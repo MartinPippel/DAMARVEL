@@ -132,6 +132,17 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 		exit(1);
 	}
 
+	uint64 inputBases = 0;
+
+	uint64 originalBases=0;
+	int originalContigs=0;
+
+	uint64 trimmedBases=0;
+	int trimmedContigs=0;
+
+	uint64 containedBases = 0;
+	int containedContigs = 0;
+
 	int i, j;
 	char *contig = New_Read_Buffer(ctx->db);
 	assert(contig != NULL);
@@ -141,6 +152,9 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 	for (i = 0; i < DB_NREADS(ctx->db); i++)
 	{
 		int clen = DB_READ_LEN(ctx->db, i);
+
+		inputBases += clen;
+
 		TrimInfo *t = ctx->trim + i;
 		Load_Read(ctx->db, i, contig, upper);
 
@@ -149,8 +163,10 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 
 		if (t->status & CONTIG_IS_CONTAINED)
 		{
+			containedContigs++;
+			containedBases+= lst-fst;
 			// write stats file
-			fprintf(statsFile, "%d\tCONTAINED\t%d\t%d\t%d\t%d\t", i, clen, clen - fst - (clen - lst), fst, clen - lst);
+			fprintf(statsFile, "%d\tCONT\t%d\t%d\t%d\t%d\t", i, clen, clen - fst - (clen - lst), fst, clen - lst);
 			for (j = 0; j < t->curID; j++)
 			{
 				fprintf(statsFile, "%d", t->correspID[j]);
@@ -170,8 +186,11 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 		{
 			if (t->status & CONTIG_TRIM)
 			{
+				trimmedContigs++;
+				trimmedBases+= lst-fst;
+
 				// write stats
-				fprintf(statsFile, "%d\tTRIMMED\t%d\t%d\t%d\t%d\t", i, clen, clen - fst - (clen - lst), fst, clen - lst);
+				fprintf(statsFile, "%d\tTRIM\t%d\t%d\t%d\t%d\t", i, clen, clen - fst - (clen - lst), fst, clen - lst);
 
 				for (j = 0; j < t->curID; j++)
 				{
@@ -209,8 +228,11 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 			}
 			else
 			{
+				originalContigs++;
+				originalBases+= lst-fst;
+
 				// write out stats
-				fprintf(statsFile, "%d\tORIGINAL\t%d\t%d\t%d\t%d\t-1\n", i, clen, clen - fst - (clen - lst), fst, clen - lst);
+				fprintf(statsFile, "%d\tORIG\t%d\t%d\t%d\t%d\t-1\n", i, clen, clen - fst - (clen - lst), fst, clen - lst);
 
 				// write out original sequence
 				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
@@ -218,12 +240,18 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 					fprintf(fastaFile, "%.*s\n", width, contig + j);
 				if (j < lst)
 					fprintf(fastaFile, "%.*s\n", lst - j, contig + j);
-
 			}
-
 		}
-
 	}
+
+	// output some statistics
+
+	printf("IN ALL   contigs %6d (%3.2f) bases %12llu (%3.2f)\n", i, 100.0, inputBases, 100.0);
+
+	printf("OUT ALL  contigs %6d (%3.2f) bases %12llu (%3.2f)\n", trimmedContigs + originalContigs, (trimmedContigs + originalContigs)*100.0/i, trimmedBases+originalBases, (trimmedBases+originalBases)*100.0/inputBases);
+	printf("OUT ORIG contigs %6d (%3.2f) bases %12llu (%3.2f)\n", originalContigs, (originalContigs)*100.0/i, originalBases, (originalBases)*100.0/inputBases);
+	printf("OUT TRIM contigs %6d (%3.2f) bases %12llu (%3.2f)\n", trimmedContigs, (trimmedContigs)*100.0/i, trimmedBases, (trimmedBases)*100.0/inputBases);
+	printf("OUT CONT contigs %6d (%3.2f) bases %12llu (%3.2f) #should be moved to ALT set\n", containedContigs, (containedContigs)*100.0/i, containedBases, (containedBases)*100.0/inputBases);
 
 	fclose(statsFile);
 	fclose(fastaFile);
