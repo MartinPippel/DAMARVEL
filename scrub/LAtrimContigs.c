@@ -205,6 +205,9 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 		}
 		else
 		{
+			int alen = DB_READ_LEN(ctx->db, ovl->aread);
+			int blen = DB_READ_LEN(ctx->db, ovl->bread);
+
 			/*  trim A at the beginning
 			* 	A			 -------->			OR			A			 -------->
 			* 	B	------->										B	<------
@@ -213,23 +216,23 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 			{
 				if(novl == 1)
 				{
-					trim_ab = (ovl->path.aepos - ovl->path.abpos) / 2 - TRIM_OFFSET;
+					trim_ab = ovl->path.abpos + (ovl->path.aepos - ovl->path.abpos) / 2 + TRIM_OFFSET;
 
 					if(ovl->flags & OVL_COMP)
 					{
-						trim_bb = (ovl->path.bepos - ovl->path.bbpos) / 2 - TRIM_OFFSET;
+						trim_bb = blen - (ovl->path.bbpos + (ovl->path.bepos - ovl->path.bbpos) / 2) + TRIM_OFFSET;
 					}
 					else
 					{
-						trim_be = DB_READ_LEN(ctx->db, ovl->bread) - (((ovl->path.bepos - ovl->path.bbpos) / 2) + TRIM_OFFSET);
+						trim_be = ovl->path.bbpos + ((ovl->path.bepos - ovl->path.bbpos) / 2) - TRIM_OFFSET;
 					}
 				}
-				else
+				else // we have a chain with multiple overlaps
 				{
 					trim_ab = (o2->path.abpos) + TRIM_OFFSET;
 					if(ovl->flags & OVL_COMP)
 					{
-						trim_bb = DB_READ_LEN(ctx->db, ovl->bread) - (ovl->path.bepos) + TRIM_OFFSET;
+						trim_bb = blen - (ovl->path.bepos) + TRIM_OFFSET;
 					}
 					else
 					{
@@ -248,11 +251,11 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 					trim_ae = o2->path.abpos + ((o2->path.aepos - o2->path.abpos) / 2) - TRIM_OFFSET;
 					if(ovl->flags & OVL_COMP)
 					{
-						trim_be = DB_READ_LEN(ctx->db,o2->bread) -  (o2->path.bepos - o2->path.bbpos)/2 - TRIM_OFFSET;
+						trim_be = blen - (o2->path.bbpos + (o2->path.bepos - o2->path.bbpos)/2) - TRIM_OFFSET;
 					}
 					else
 					{
-						trim_bb = (o2->path.bepos - o2->path.bbpos)/2 + TRIM_OFFSET;
+						trim_bb = o2->path.bbpos + (o2->path.bepos - o2->path.bbpos)/2 + TRIM_OFFSET;
 					}
 				}
 				else
@@ -260,7 +263,7 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 					trim_ae = ovl->path.aepos - TRIM_OFFSET;
 					if(ovl->flags & OVL_COMP)
 					{
-						trim_be = DB_READ_LEN(ctx->db, o2->bread) - o2->path.bbpos - TRIM_OFFSET;
+						trim_be = blen - o2->path.bbpos - TRIM_OFFSET;
 					}
 					else
 					{
