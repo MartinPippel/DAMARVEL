@@ -36,14 +36,17 @@
 #define TRIM_OFFSET 100
 
 #define CONTIG_IS_CONTAINED 	(1 << 0)
-#define CONTIG_HAS_CONTAINED 	(1 << 1)
-#define CONTIG_TRIM 					(1 << 2)
+#define CONTIG_TRIM 					(1 << 1)
 
 typedef struct
 {
 	int beg;
 	int end;
 	int status;
+
+	int *correspID;
+	int numIDs;
+	int curID;
 
 } TrimInfo;
 
@@ -59,7 +62,7 @@ typedef struct
 
 static void usage()
 {
-	fprintf(stderr, "[-v] <db> <chained_contig_overlaps_in> <contigs_out>\n");
+	fprintf(stderr, "[-v] <db> <chained_contig_overlaps_in> <out_prefix>\n");
 
 	fprintf(stderr, "options: -v ... verbose\n");
 }
@@ -78,11 +81,161 @@ static void contig_pre(PassContext* pctx, TrimContigContext* tctx)
 		tctx->trim[i].beg = 0;
 		tctx->trim[i].end = DB_READ_LEN(tctx->db, i);
 		tctx->trim[i].status = 0;
+		tctx->trim[i].numIDs = 1;
+		tctx->trim[i].curID = 0;
+		tctx->trim[i].correspID = (int*) malloc(sizeof(int) * tctx->trim[i].numIDs);
 	}
 }
 
-static void contig_post(TrimContigContext* ctx)
+static void contig_post(TrimContigContext* ctx, char *prefixOut)
 {
+	// TODO put file handling into contig_pre !!!!!
+	// open output files
+	char * statsOut = malloc(strlen(prefixOut) + 20);
+	assert(statsOut != NULL);
+	char * fastaOut = malloc(strlen(prefixOut) + 20);
+	assert(fastaOut != NULL);
+	char * trimOut = malloc(strlen(prefixOut) + 20);
+	assert(trimOut != NULL);
+	char * contOut = malloc(strlen(prefixOut) + 20);
+	assert(contOut != NULL);
+
+	FILE* statsFile = NULL;
+	sprintf(statsOut, "%s.stats", prefixOut);
+	if ((statsFile = fopen(statsOut, "w")) == NULL)
+	{
+		fprintf(stderr, "could not open %s\n", statsOut);
+		exit(1);
+	}
+
+	FILE* fastaFile = NULL;
+	sprintf(fastaOut, "%s.contigs.fasta", prefixOut);
+	if ((fastaFile = fopen(fastaOut, "w")) == NULL)
+	{
+		fprintf(stderr, "could not open %s\n", fastaOut);
+		exit(1);
+	}
+
+	FILE* trimFile = NULL;
+	sprintf(trimOut, "%s.trimmed.fasta", prefixOut);
+	if ((trimFile = fopen(trimOut, "w")) == NULL)
+	{
+		fprintf(stderr, "could not open %s\n", trimOut);
+		exit(1);
+	}
+
+	FILE* contFile = NULL;
+	sprintf(contOut, "%s.contained.fasta", prefixOut);
+	if ((contFile = fopen(contOut, "w")) == NULL)
+	{
+		fprintf(stderr, "could not open %s\n", contOut);
+		exit(1);
+	}
+
+	int i, j;
+	char *contig = New_Read_Buffer(ctx->db);
+	assert(contig != NULL);
+	int upper = 1; // 2 upper case , 1 lower case, 0 int
+	int width = 100;
+	int fst, lst;
+	for (i = 0; i < DB_NREADS(ctx->db); i++)
+	{
+		int clen = DB_READ_LEN(ctx->db, i);
+		TrimInfo *t = ctx->trim + i;
+		Load_Read(ctx->db, i, contig, upper);
+
+		fst = t->beg;
+		lst = t->end;
+
+		if (t->status & CONTIG_IS_CONTAINED)
+		{
+			// write stats file
+			fprintf(statsFile, "%d\tCONTAINED\t%d\t%d\t%d\t%d\t", i, clen, clen - fst - (clen - lst), fst, clen - lst);
+			for (j = 0; j < t->curID; j++)
+			{
+				fprintf(statsFile, "%d", t->correspID[j]);
+				if (j + 1 < t->curID)
+					fprintf(statsFile, ",");
+			}
+			fprintf(statsFile, "\n");
+
+			// write out contained sequence
+			fprintf(contFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
+			for (j = fst; j + width < lst; j += width)
+				fprintf(contFile, "%.*s\n", width, contig + j);
+			if (j < lst)
+				fprintf(contFile, "%.*s\n", lst - j, contig + j);
+		}
+		else
+		{
+			if (t->status & CONTIG_TRIM)
+			{
+				// write stats
+				fprintf(statsFile, "%d\tTRIMMED\t%d\t%d\t%d\t%d\t", i, clen, clen - fst - (clen - lst), fst, clen - lst);
+
+				for (j = 0; j < t->curID; j++)
+				{
+					fprintf(statsFile, "%d", t->correspID[j]);
+					if (j + 1 < t->curID)
+						fprintf(statsFile, ",");
+				}
+				fprintf(statsFile, "\n");
+
+				// write trimmed contig sequence
+				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
+				for (j = fst; j + width < lst; j += width)
+					fprintf(fastaFile, "%.*s\n", width, contig + j);
+				if (j < lst)
+					fprintf(fastaFile, "%.*s\n", lst - j, contig + j);
+
+				if (fst > 0)
+				{
+					// write left-trimmed-off sequence
+					fprintf(trimFile, ">%s/%d/%d_%d len=%d\n", ctx->db->path, i, 0, fst, fst);
+					for (j = 0; j + width < fst; j += width)
+						fprintf(trimFile, "%.*s\n", width, contig + j);
+					if (j < fst)
+						fprintf(fastaFile, "%.*s\n", fst - j, contig + j);
+				}
+				if (lst < clen)
+				{
+					// write left-trimmed-off sequence
+					fprintf(trimFile, ">%s/%d/%d_%d len=%d\n", ctx->db->path, i, lst, clen, clen-lst);
+					for (j = lst; j + width < clen; j += width)
+						fprintf(trimFile, "%.*s\n", width, contig + j);
+					if (j < clen)
+						fprintf(fastaFile, "%.*s\n", clen - j, contig + j);
+				}
+			}
+			else
+			{
+				// write out stats
+				fprintf(statsFile, "%d\tORIGINAL\t%d\t%d\t%d\t%d\t-1\n", i, clen, clen - fst - (clen - lst), fst, clen - lst);
+
+				// write out original sequence
+				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
+				for (j = fst; j + width < lst; j += width)
+					fprintf(fastaFile, "%.*s\n", width, contig + j);
+				if (j < lst)
+					fprintf(fastaFile, "%.*s\n", lst - j, contig + j);
+
+			}
+
+		}
+
+	}
+
+	fclose(statsFile);
+	fclose(fastaFile);
+	fclose(trimFile);
+	fclose(contFile);
+	free(statsOut);
+	free(fastaOut);
+	free(trimOut);
+	free(contOut);
+	free(contig - 1);
+	for (i = 0; i < DB_NREADS(ctx->db); i++)
+		free(ctx->trim[i].correspID);
 
 	free(ctx->trim);
 }
@@ -182,26 +335,63 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 		fprintf(stderr, "WARNING: LAS chain coordinates of contig %d [%d, %d] is out of MAX_TRIM [%d, %d]\n", o1->bread, o1->path.bbpos, o2->path.bepos, MAX_TRIM, DB_READ_LEN(ctx->db,o1->bread) - MAX_TRIM);
 	}
 
+	// ensure enough space for contigs IDs
+	if (ctx->trim[o1->aread].curID == ctx->trim[o1->aread].numIDs)
+	{
+		ctx->trim[o1->aread].numIDs += 2;
+		ctx->trim[o1->aread].correspID = (int*) realloc(ctx->trim[o1->aread].correspID, sizeof(int) * ctx->trim[o1->aread].numIDs);
+		assert(ctx->trim[o1->aread].correspID != NULL);
+	}
+
+	if (ctx->trim[o1->bread].curID == ctx->trim[o1->bread].numIDs)
+	{
+		ctx->trim[o1->bread].numIDs += 2;
+		ctx->trim[o1->bread].correspID = (int*) realloc(ctx->trim[o1->bread].correspID, sizeof(int) * ctx->trim[o1->bread].numIDs);
+		assert(ctx->trim[o1->bread].correspID != NULL);
+	}
+
 	if (contained == 0)
 	{
 		ctx->trim[o1->aread].status |= CONTIG_IS_CONTAINED;
-		ctx->trim[o1->bread].status |= CONTIG_HAS_CONTAINED;
+		ctx->trim[o1->aread].correspID[ctx->trim[o1->aread].curID] = o1->bread;
+		ctx->trim[o1->aread].curID++;
 	}
 	else if (contained == 1)
 	{
 		ctx->trim[o1->bread].status |= CONTIG_IS_CONTAINED;
-		ctx->trim[o1->aread].status |= CONTIG_HAS_CONTAINED;
+		ctx->trim[o1->bread].correspID[ctx->trim[o1->bread].curID] = o1->aread;
+		ctx->trim[o1->bread].curID++;
 	}
 	else if (contained == 2)
 	{
 		ctx->trim[o1->aread].status |= CONTIG_IS_CONTAINED;
-		ctx->trim[o1->aread].status |= CONTIG_HAS_CONTAINED;
 		ctx->trim[o1->bread].status |= CONTIG_IS_CONTAINED;
-		ctx->trim[o1->bread].status |= CONTIG_HAS_CONTAINED;
+
+		for (i = 0; i < ctx->trim[o1->aread].curID; i++)
+		{
+			if (ctx->trim[o1->aread].correspID[i] == o1->bread)
+				break;
+		}
+		if (i == ctx->trim[o1->aread].curID)
+		{
+			ctx->trim[o1->aread].correspID[ctx->trim[o1->aread].curID] = o1->bread;
+			ctx->trim[o1->aread].curID++;
+		}
+
+		for (i = 0; i < ctx->trim[o1->bread].curID; i++)
+		{
+			if (ctx->trim[o1->bread].correspID[i] == o1->aread)
+				break;
+		}
+		if (i == ctx->trim[o1->bread].curID)
+		{
+			ctx->trim[o1->bread].correspID[ctx->trim[o1->bread].curID] = o1->aread;
+			ctx->trim[o1->bread].curID++;
+		}
 	}
 	else
 	{
-		int alen = DB_READ_LEN(ctx->db, ovl->aread);
+//		int alen = DB_READ_LEN(ctx->db, ovl->aread);
 		int blen = DB_READ_LEN(ctx->db, ovl->bread);
 
 		/*  trim A at the beginning
@@ -301,13 +491,27 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 			{
 				printf("   kept\n");
 			}
+
+			for (i = 0; i < ctx->trim[ovl->aread].curID; i++)
+			{
+				if (ctx->trim[ovl->aread].correspID[i] == ovl->bread)
+					break;
+			}
+			if (i == ctx->trim[ovl->aread].curID)
+			{
+				ctx->trim[ovl->aread].correspID[ctx->trim[o1->aread].curID] = ovl->bread;
+				ctx->trim[ovl->aread].curID++;
+			}
 		}
 		else
 		{
 			ctx->trim[ovl->aread].beg = trim_ab;
 			ctx->trim[ovl->aread].end = trim_ae;
 			ctx->trim[ovl->aread].status |= CONTIG_TRIM;
+			ctx->trim[ovl->aread].correspID[ctx->trim[ovl->aread].curID] = o1->bread;
+			ctx->trim[ovl->aread].curID++;
 		}
+
 		if (ctx->trim[ovl->bread].status & CONTIG_TRIM)
 		{
 			printf("   %d --> already trimmed: [%d,%d] ", ovl->bread, ctx->trim[ovl->bread].beg, ctx->trim[ovl->bread].end);
@@ -330,12 +534,24 @@ static int contig_handler(void* _ctx, Overlap* ovl, int novl)
 			{
 				printf("   kept\n");
 			}
+			for (i = 0; i < ctx->trim[ovl->bread].curID; i++)
+			{
+				if (ctx->trim[ovl->bread].correspID[i] == ovl->aread)
+					break;
+			}
+			if (i == ctx->trim[ovl->bread].curID)
+			{
+				ctx->trim[ovl->bread].correspID[ctx->trim[o1->bread].curID] = ovl->aread;
+				ctx->trim[ovl->bread].curID++;
+			}
 		}
 		else
 		{
 			ctx->trim[ovl->bread].beg = trim_bb;
 			ctx->trim[ovl->bread].end = trim_be;
 			ctx->trim[ovl->bread].status |= CONTIG_TRIM;
+			ctx->trim[ovl->bread].correspID[ctx->trim[ovl->bread].curID] = o1->aread;
+			ctx->trim[ovl->bread].curID++;
 		}
 	}
 	return 1;
@@ -347,7 +563,6 @@ int main(int argc, char* argv[])
 	TrimContigContext tctx;
 	PassContext* pctx;
 	FILE* fileOvlIn;
-	FILE* fileContigsOut;
 
 	bzero(&tctx, sizeof(TrimContigContext));
 
@@ -377,17 +592,11 @@ int main(int argc, char* argv[])
 
 	char* pcPathReadsIn = argv[optind++];
 	char* pcPathOverlapsIn = argv[optind++];
-	char* pcPathContigsOut = argv[optind++];
+	char* pcPrefixContigsOut = argv[optind++];
 
 	if ((fileOvlIn = fopen(pcPathOverlapsIn, "r")) == NULL)
 	{
 		fprintf(stderr, "could not open %s\n", pcPathOverlapsIn);
-		exit(1);
-	}
-
-	if ((fileContigsOut = fopen(pcPathContigsOut, "w")) == NULL)
-	{
-		fprintf(stderr, "could not open %s\n", pcPathContigsOut);
 		exit(1);
 	}
 
@@ -410,13 +619,12 @@ int main(int argc, char* argv[])
 
 	pass(pctx, contig_handler);
 
-	contig_post(&tctx);
+	contig_post(&tctx, pcPrefixContigsOut);
 
 	pass_free(pctx);
 
 	// cleanup
 	Close_DB(&db);
-	fclose(fileContigsOut);
 	fclose(fileOvlIn);
 
 	return 0;
