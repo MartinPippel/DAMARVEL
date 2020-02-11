@@ -246,12 +246,11 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 
 	// output some statistics
 
-	printf("IN ALL   contigs %6d (%3.2f) bases %12llu (%3.2f)\n", i, 100.0, inputBases, 100.0);
-
-	printf("OUT ALL  contigs %6d (%3.2f) bases %12llu (%3.2f)\n", trimmedContigs + originalContigs, (trimmedContigs + originalContigs)*100.0/i, trimmedBases+originalBases, (trimmedBases+originalBases)*100.0/inputBases);
-	printf("OUT ORIG contigs %6d (%3.2f) bases %12llu (%3.2f)\n", originalContigs, (originalContigs)*100.0/i, originalBases, (originalBases)*100.0/inputBases);
-	printf("OUT TRIM contigs %6d (%3.2f) bases %12llu (%3.2f)\n", trimmedContigs, (trimmedContigs)*100.0/i, trimmedBases, (trimmedBases)*100.0/inputBases);
-	printf("OUT CONT contigs %6d (%3.2f) bases %12llu (%3.2f) #should be moved to ALT set\n", containedContigs, (containedContigs)*100.0/i, containedBases, (containedBases)*100.0/inputBases);
+	printf("IN  ALL  contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%)\n", i, 100.0, inputBases, 100.0);
+	printf("OUT ALL  contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%)\n", trimmedContigs + originalContigs, (trimmedContigs + originalContigs)*100.0/i, trimmedBases+originalBases, (trimmedBases+originalBases)*100.0/inputBases);
+	printf("OUT ORIG contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%)\n", originalContigs, (originalContigs)*100.0/i, originalBases, (originalBases)*100.0/inputBases);
+	printf("OUT TRIM contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%)\n", trimmedContigs, (trimmedContigs)*100.0/i, trimmedBases, (trimmedBases)*100.0/inputBases);
+	printf("OUT CONT contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%) #should be moved to ALT set\n", containedContigs, (containedContigs)*100.0/i, containedBases, (containedBases)*100.0/inputBases);
 
 	fclose(statsFile);
 	fclose(fastaFile);
