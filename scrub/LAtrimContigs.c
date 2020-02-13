@@ -149,6 +149,7 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 	int upper = 1; // 2 upper case , 1 lower case, 0 int
 	int width = 100;
 	int fst, lst;
+	char *dbName = Root(ctx->db->path);
 	for (i = 0; i < DB_NREADS(ctx->db); i++)
 	{
 		int clen = DB_READ_LEN(ctx->db, i);
@@ -176,7 +177,7 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 			fprintf(statsFile, "\n");
 
 			// write out contained sequence
-			fprintf(contFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
+			fprintf(contFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", dbName, i, fst, lst, lst - fst, fst, clen - lst);
 			for (j = fst; j + width < lst; j += width)
 				fprintf(contFile, "%.*s\n", width, contig + j);
 			if (j < lst)
@@ -201,7 +202,7 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 				fprintf(statsFile, "\n");
 
 				// write trimmed contig sequence
-				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
+				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", dbName, i, fst, lst, lst - fst, fst, clen - lst);
 				for (j = fst; j + width < lst; j += width)
 					fprintf(fastaFile, "%.*s\n", width, contig + j);
 				if (j < lst)
@@ -210,20 +211,20 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 				if (fst > 0)
 				{
 					// write left-trimmed-off sequence
-					fprintf(trimFile, ">%s/%d/%d_%d len=%d\n", ctx->db->path, i, 0, fst, fst);
+					fprintf(trimFile, ">%s/%d/%d_%d len=%d\n", dbName, i, 0, fst, fst);
 					for (j = 0; j + width < fst; j += width)
 						fprintf(trimFile, "%.*s\n", width, contig + j);
 					if (j < fst)
-						fprintf(fastaFile, "%.*s\n", fst - j, contig + j);
+						fprintf(trimFile, "%.*s\n", fst - j, contig + j);
 				}
 				if (lst < clen)
 				{
 					// write left-trimmed-off sequence
-					fprintf(trimFile, ">%s/%d/%d_%d len=%d\n", ctx->db->path, i, lst, clen, clen-lst);
+					fprintf(trimFile, ">%s/%d/%d_%d len=%d\n", dbName, i, lst, clen, clen-lst);
 					for (j = lst; j + width < clen; j += width)
 						fprintf(trimFile, "%.*s\n", width, contig + j);
 					if (j < clen)
-						fprintf(fastaFile, "%.*s\n", clen - j, contig + j);
+						fprintf(trimFile, "%.*s\n", clen - j, contig + j);
 				}
 			}
 			else
@@ -235,7 +236,7 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 				fprintf(statsFile, "%d\tORIG\t%d\t%d\t%d\t%d\t-1\n", i, clen, clen - fst - (clen - lst), fst, clen - lst);
 
 				// write out original sequence
-				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", ctx->db->path, i, fst, lst, lst - fst, fst, clen - lst);
+				fprintf(fastaFile, ">%s/%d/%d_%d len=%d trimL=%d trimR=%d\n", dbName, i, fst, lst, lst - fst, fst, clen - lst);
 				for (j = fst; j + width < lst; j += width)
 					fprintf(fastaFile, "%.*s\n", width, contig + j);
 				if (j < lst)
@@ -252,6 +253,8 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 	printf("OUT TRIM contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%)\n", trimmedContigs, (trimmedContigs)*100.0/i, trimmedBases, (trimmedBases)*100.0/inputBases);
 	printf("OUT CONT contigs %6d (%5.2f%%)\tbases %12llu (%5.2f%%) #should be moved to ALT set\n", containedContigs, (containedContigs)*100.0/i, containedBases, (containedBases)*100.0/inputBases);
 
+	// clean up
+	free(dbName);
 	fclose(statsFile);
 	fclose(fastaFile);
 	fclose(trimFile);
