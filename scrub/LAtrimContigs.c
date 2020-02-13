@@ -149,7 +149,7 @@ static void contig_post(TrimContigContext* ctx, char *prefixOut)
 	int upper = 1; // 2 upper case , 1 lower case, 0 int
 	int width = 100;
 	int fst, lst;
-	char *dbName = Root(ctx->db->path);
+	char *dbName = Root(ctx->db->path, NULL);
 	for (i = 0; i < DB_NREADS(ctx->db); i++)
 	{
 		int clen = DB_READ_LEN(ctx->db, i);
