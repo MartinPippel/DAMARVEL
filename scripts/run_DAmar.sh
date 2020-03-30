@@ -2,11 +2,13 @@
 
 configFile=$1
 
-source ${configFile}
-source ${SUBMIT_SCRIPTS_PATH}/DAmar.cfg ${configFile}
+# shellcheck source=/dev/null
+source "${configFile}"
+# shellcheck source=/dev/null
+source "${SUBMIT_SCRIPTS_PATH}/DAmar.cfg" "${configFile}"
 
 ID="-1" ## by default run all IDs
-if [[ "x$2" != "x" && $(isNumber $2) ]]
+if [[ "x$2" != "x" && $(isNumber "$2") ]]
 then
   ID=$2
 fi
@@ -48,13 +50,13 @@ x=0
 while [[ $x -lt ${#RUN_DAMAR[@]} ]]
 do
 	## check pipelineName
-	pipelineIdx=$(pipelineNameToID ${RUN_DAMAR[${x}]})
+	pipelineIdx=$(pipelineNameToID "${RUN_DAMAR[${x}]}")
 	## check is pipeline type and steps are proper
-	if ! $(isNumber ${RUN_DAMAR[$((x+2))]})
+	if ! isNumber "${RUN_DAMAR[$((x+2))]}"
 	then
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline from_step \"${RUN_DAMAR[$((x+2))]}\" must be a positive number!!")
 		exit 1
-	elif ! $(isNumber ${RUN_DAMAR[$((x+3))]})
+	elif ! isNumber "${RUN_DAMAR[$((x+3))]}"
 	then
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline to_step \"${RUN_DAMAR[$((x+3))]}\" must be a positive number!!")
 		exit 1	
@@ -63,10 +65,10 @@ do
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline from_step \"${RUN_DAMAR[$((x+2))]}\" smaller or equal to pipelien to_step \"${RUN_DAMAR[$((x+3))]}\"!!")
 		exit 1
 	fi 
-	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]} > /dev/null ## check from 
-	getStepName ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+3))]} > /dev/null ## check to	
+	getStepName "${RUN_DAMAR[${x}]}" "${RUN_DAMAR[$((x+1))]}" "${RUN_DAMAR[$((x+2))]}" > /dev/null ## check from 
+	getStepName "${RUN_DAMAR[${x}]}" "${RUN_DAMAR[$((x+1))]}" "${RUN_DAMAR[$((x+3))]}" > /dev/null ## check to	
 	## check ID: must be a positive number 
-	if ! $(isNumber ${RUN_DAMAR[$((x+4))]}) 
+	if ! isNumber "${RUN_DAMAR[$((x+4))]}" 
 	then
 		(>&2 echo "[ERROR] run_DAmar.sh: pipeline ID \"${RUN_DAMAR[$((x+4))]}\" must be a positive number!! ${RUN_DAMAR[${x}]} ${RUN_DAMAR[$((x+1))]} ${RUN_DAMAR[$((x+2))]} ${RUN_DAMAR[$((x+3))]} ${RUN_DAMAR[$((x+4))]}.")
 		exit 1
@@ -82,15 +84,14 @@ x=0
 while [[ $x -lt ${#RUN_DAMAR[@]} ]]
 do
 	pipelineRunID=${RUN_DAMAR[$((x+4))]}
-	if [[ $ID -eq -1 || ${pipelineRunID} -eq ${ID} ]] && ! [[ " ${runIDs[@]} " =~ " ${pipelineRunID} " ]]
+	if [[ $ID -eq -1 || ${pipelineRunID} -eq ${ID} ]] && ! [[ " ${runIDs[*]} " = *" ${pipelineRunID} "* ]]
 	then
-		
 		pipelineIdx=$x
 		pipelineStep=${RUN_DAMAR[$((x+2))]}
 		
 		echo "[DEBUG] run_DAmar.sh: call ${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${pipelineRunID}"
-		${SUBMIT_SCRIPTS_PATH}/createAndSubmitSlurmJobs.sh ${realPathConfigFile} ${pipelineIdx} ${pipelineStep} ${pipelineRunID}
-		runIDs+=${pipelineRunID}
+		"${SUBMIT_SCRIPTS_PATH}"/createAndSubmitSlurmJobs.sh "${realPathConfigFile}" "${pipelineIdx}" "${pipelineStep}" "${pipelineRunID}"
+		runIDs+=("${pipelineRunID}")
 	fi
 	x=$((x+5))
 done
