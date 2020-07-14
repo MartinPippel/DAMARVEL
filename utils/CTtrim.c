@@ -85,17 +85,6 @@ void addBionanoGAPInfoToTrimEvidence(TrimContext *ctx, int contigA, int aPartBeg
 		return;
 	}
 
-	// adjust contig position to zero-based right open intervals
-	if (aPartBeg < aPartEnd)
-		aPartBeg--;
-	else
-		aPartEnd--;
-
-	if (bPartBeg < bPartEnd)
-		bPartBeg--;
-	else
-		bPartEnd--;
-
 	// check if the same gap feature is already present: it must be present;
 	int i;
 	BionanoGap *b;
@@ -1328,7 +1317,7 @@ void parseBionanoAGPfile(TrimContext *ctx, char *pathInBionanoAGP)
 				assert(gapLen > -1);
 
 				// add trim evidence symmetrically: i.e. contigA-gap-contigB and contigB-gap-contigA
-				addBionanoAGPInfoToTrimEvidence(ctx, contigA, fromA - 1, toA, contigB, fromB - 1, toB, gapLen);
+				addBionanoAGPInfoToTrimEvidence(ctx, contigA, fromA, toA, contigB, fromB, toB, gapLen);
 
 				contigA = contigB;
 				strcpy(contigNameA, contigNameB);
