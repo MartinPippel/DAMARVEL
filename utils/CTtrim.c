@@ -89,7 +89,7 @@ void addBionanoGAPInfoToTrimEvidence(TrimContext *ctx, int contigA, int aPartBeg
 	for (i = 0; i < ta->nBioNanoGaps; i++)
 	{
 		b = ta->gaps + i;
-
+		printBionanpGap(ctx, contigA, contigB, b);
 		if (((b->aBeg == aPartBeg && b->aEnd == aPartEnd) || (b->aBeg == aPartEnd && b->aEnd == aPartBeg)) && ((b->bBeg == bPartBeg && b->bEnd == bPartEnd) || (b->bBeg == bPartEnd && b->bEnd == bPartBeg)))
 		{
 			break;
@@ -1888,7 +1888,7 @@ void trim_contigs(TrimContext *ctx)
 	int i, j, k, l;
 
 	// split bionano gaps only
-	if (ctx->purgeOpt == 1)
+	if (ctx->purgeOpt == 0)
 	{
 		// do nothing, but cut at the given Bionano split coordinates
 
