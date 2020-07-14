@@ -1914,7 +1914,7 @@ void trim_contigs(TrimContext *ctx)
 				TrimEvidence *te = ctx->trimEvid + j + i;
 				for (l = 0; l < te->nBioNanoGaps; l++)
 				{
-					if (te->gaps[l].bionanoGapSize < ctx->minBionanoGapLen)
+					if (te->gaps[l].bionanoGapSize < 0)
 					{
 
 						// todo: remember min and max cut positions
@@ -2003,7 +2003,7 @@ void trim_contigs(TrimContext *ctx)
 								int m;
 								for (m = 0; m < ctx->trimCoord[ctx->trimEvid[j].contigA].maxCoordPairs; m++)
 								{
-									if (intersect(abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2]), abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3 + 1]), te->gaps[l].aEnd, te->gaps[l].aBeg))
+									if (intersect(abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3]), abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3 + 1]), te->gaps[l].aEnd, te->gaps[l].aBeg))
 									{
 										break;
 									}
