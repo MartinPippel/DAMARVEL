@@ -19,6 +19,8 @@
 #define TRIM_LASCHAIN_LEFTGAP       	(1 << 4)      //
 #define TRIM_LASCHAIN_RIGHTGAP       	(1 << 5)      //
 #define TRIM_DISCARD       						(1 << 6)      //
+#define TRIM_BIONANO									(1 << 7)      //
+#define TRIM_ORIGCONTIG								(1 << 8)      //
 
 typedef struct
 {

@@ -68,6 +68,8 @@ void ensureBionanoGapBuffer(TrimEvidence *t, int numNewElements)
 
 void addBionanoGAPInfoToTrimEvidence(TrimContext *ctx, int contigA, int aPartBeg, int aPartEnd, int contigB, int bPartBeg, int bPartEnd, int AdjustedGapLength)
 {
+	printf("addBionanoGAPInfoToTrimEvidence: %d, %d\n", contigA, contigB);
+
 	TrimEvidence *ta = find_TrimEvidence(ctx, contigA, contigB);
 	TrimEvidence *tb = find_TrimEvidence(ctx, contigB, contigA);
 
@@ -224,8 +226,8 @@ void addBionanoAGPInfoToTrimEvidence(TrimContext *ctx, int contigA, int fromA, i
 
 		if (intersect(b->aBeg, b->aEnd, toB, fromB) > 0 || intersect(b->bBeg, b->bEnd, toA, fromA) != 0)
 		{
-			printf("[ERROR] - 2: ambiguous Bioano gap for Contig %d and Contig %d: a[%d, %d] b[%d, %d] gapLen %d, "
-					"collides witrh existing gap: Contig %d and Contig %d: a[%d, %d] b[%d, %d] gapLen %d\n", contigB, contigA, toB, fromB, toA, fromA, gapLen, contigB, contigA, b->aBeg, b->aEnd, b->bBeg, b->bEnd, b->agpGapSize);
+			printf("[ERROR] - 2: ambiguous Bionano gap for Contig %d and Contig %d: a[%d, %d] b[%d, %d] gapLen %d, "
+					"collides with existing gap: Contig %d and Contig %d: a[%d, %d] b[%d, %d] gapLen %d\n", contigB, contigA, toB, fromB, toA, fromA, gapLen, contigB, contigA, b->aBeg, b->aEnd, b->bBeg, b->bEnd, b->agpGapSize);
 			exit(1); // todo remove later, for now check if this occurs
 		}
 	}
@@ -370,7 +372,7 @@ static void trim_pre(PassContext *pctx, TrimContext *tctx)
 		tc->coord = malloc(sizeof(int) * tc->numCoordPairs * 3);
 		tc->coord[0] = 0;
 		tc->coord[1] = DB_READ_LEN(tctx->db, i);
-		tc->coord[2] = 0;
+		tc->coord[2] = TRIM_ORIGCONTIG;
 	}
 }
 
@@ -1141,7 +1143,7 @@ void addBionanoContigCoordinates(TrimContext *ctx, int contig, int from, int to)
 		}
 		tc->coord[i * 3] = from;
 		tc->coord[i * 3 + 1] = to;
-		tc->coord[i * 3 + 2] = 0;
+		tc->coord[i * 3 + 2] = TRIM_BIONANO;
 		tc->numCoordPairs++;
 	}
 
@@ -1326,7 +1328,6 @@ void parseBionanoAGPfile(TrimContext *ctx, char *pathInBionanoAGP)
 				assert(gapLen > -1);
 
 				// add trim evidence symmetrically: i.e. contigA-gap-contigB and contigB-gap-contigA
-				// change coordinate system from 1-based [1, x] to 0-based [0,x)
 				addBionanoAGPInfoToTrimEvidence(ctx, contigA, fromA - 1, toA, contigB, fromB - 1, toB, gapLen);
 
 				contigA = contigB;
