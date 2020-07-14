@@ -1967,8 +1967,6 @@ void trim_contigs(TrimContext *ctx)
 			int n = k - j + 1;
 
 			int aLen = DB_READ_LEN(ctx->db, ctx->trimEvid[j].contigA);
-			int newStart = -1;
-			int newEnd = -aLen;
 			int tmp = 0;
 
 			// ensure that buffer for cut positions is always big enough
@@ -2005,14 +2003,14 @@ void trim_contigs(TrimContext *ctx)
 								int m;
 								for (m = 0; m < ctx->trimCoord[ctx->trimEvid[j].contigA].maxCoordPairs; m++)
 								{
-									if (intersect(abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2]), abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2 + 1]), te->gaps[l].aEnd, te->gaps[l].aBeg))
+									if (intersect(abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2]), abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3 + 1]), te->gaps[l].aEnd, te->gaps[l].aBeg))
 									{
 										break;
 									}
 								}
 								assert(m < ctx->trimCoord[ctx->trimEvid[j].contigA].maxCoordPairs);
-								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2] = tmp;
-								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2 + 1] = te->gaps[l].aBeg;
+								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3] = tmp;
+								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3 + 1] = te->gaps[l].aBeg;
 							}
 							else if (te->gaps[l].aEnd == aLen)
 							{
@@ -2021,14 +2019,14 @@ void trim_contigs(TrimContext *ctx)
 								int m;
 								for (m = 0; m < ctx->trimCoord[ctx->trimEvid[j].contigA].maxCoordPairs; m++)
 								{
-									if (intersect(abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2]), abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2 + 1]), te->gaps[l].aBeg, te->gaps[l].aEnd))
+									if (intersect(abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3]), abs(ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3 + 1]), te->gaps[l].aBeg, te->gaps[l].aEnd))
 									{
 										break;
 									}
 								}
 								assert(m < ctx->trimCoord[ctx->trimEvid[j].contigA].maxCoordPairs);
-								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2] = te->gaps[l].aBeg;
-								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 2 + 1] = tmp;
+								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3] = te->gaps[l].aBeg;
+								ctx->trimCoord[ctx->trimEvid[j].contigA].coord[m * 3 + 1] = tmp;
 							}
 							else // should not occur
 							{
@@ -2140,7 +2138,11 @@ void trim_contigs(TrimContext *ctx)
 
 			if (j + 1 < tc->numCoordPairs)
 			{
-				assert(tc->coord[index + 3] >= tc->coord[index + 1]);
+				if(tc->coord[index + 3] < tc->coord[index + 1])
+				{
+					printf("Invalid coordinates tc->coord[index + 3]=%d tc->coord[index + 1]=%d\n", tc->coord[index + 3], tc->coord[index + 1]);
+					exit(1);
+				}
 				ctx->statsRemovedContigPartBases += tc->coord[index + 3] - tc->coord[index + 1];
 				ctx->statsRemovedContigParts++;
 				fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index + 1], tc->coord[index + 3]);
