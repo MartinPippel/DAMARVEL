@@ -1132,7 +1132,7 @@ void addBionanoContigCoordinates(TrimContext *ctx, int contig, int from, int to)
 		}
 		tc->coord[i * 3] = from;
 		tc->coord[i * 3 + 1] = to;
-		tc->coord[i * 3 + 2] = TRIM_BIONANO;
+		tc->coord[i * 3 + 2] |= TRIM_BIONANO;
 		tc->numCoordPairs++;
 	}
 
@@ -2115,60 +2115,72 @@ void trim_contigs(TrimContext *ctx)
 		while (i >= ctx->findx[amap])
 			amap += 1;
 
-		// write out removed part a the beginning !!!
-		if (tc->coord[0] > 1)
+		if (ctx->db->reads[i].flags & CONTIG_DISCARD)
 		{
-			ctx->statsRemovedContigPartBases += tc->coord[0];
+			ctx->statsRemovedContigPartBases += aLen;
 			ctx->statsRemovedContigParts++;
-			fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], 1, tc->coord[0]);
-			for (k = 0; k + ctx->lineWidth < tc->coord[0]; k += ctx->lineWidth)
-				fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
-			if (k < tc->coord[0])
-				fprintf(removedContigParts, "%.*s\n", tc->coord[0] - k, read + k);
-		}
-
-		for (j = 0; j < tc->numCoordPairs; j++)
-		{
-			int index = j * 3;
-			ctx->statsTrimmedBases += tc->coord[index + 1] - tc->coord[index];
-			ctx->statsTrimmedContigs++;
-			fprintf(trimmedContigs, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index], tc->coord[index + 1]);
-			for (k = tc->coord[index]; k + ctx->lineWidth < tc->coord[index + 1]; k += ctx->lineWidth)
-				fprintf(trimmedContigs, "%.*s\n", ctx->lineWidth, read + k);
-			if (k < tc->coord[index + 1])
-				fprintf(trimmedContigs, "%.*s\n", tc->coord[index + 1] - k, read + k);
-
-			if (j + 1 < tc->numCoordPairs)
-			{
-				if(tc->coord[index + 3] < tc->coord[index + 1])
-				{
-					int z;
-					printf("Invalid coordinates tc->coord[%d + 3]=%d tc->coord[%d + 1]=%d tc->numCoordPairs %d\n", index, tc->coord[index + 3], index, tc->coord[index + 1], tc->numCoordPairs);
-					for (z=0; z<tc->numCoordPairs; z++)
-						printf("coord[%d]: [%d, %d, %d]\n", z, tc->coord[z*3], tc->coord[z*3+1], tc->coord[z*3+2]);
-					exit(1);
-				}
-				ctx->statsRemovedContigPartBases += tc->coord[index + 3] - tc->coord[index + 1];
-				ctx->statsRemovedContigParts++;
-				fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index + 1], tc->coord[index + 3]);
-				for (k = tc->coord[index + 1]; k + ctx->lineWidth < tc->coord[index + 3]; k += ctx->lineWidth)
-					fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
-				if (k < tc->coord[index + 3])
-					fprintf(removedContigParts, "%.*s\n", tc->coord[index + 3] - k, read + k);
-			}
-		}
-
-		// write out removed part at the end!!!
-		if (tc->coord[tc->numCoordPairs * 3 - 2] < aLen)
-		{
-			ctx->statsRemovedContigPartBases += aLen - tc->coord[tc->numCoordPairs * 3 - 2];
-			ctx->statsRemovedContigParts++;
-			fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[tc->numCoordPairs * 3 - 2], aLen);
-			for (k = tc->coord[tc->numCoordPairs * 3 - 2]; k + ctx->lineWidth < aLen; k += ctx->lineWidth)
+			fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], 0, aLen);
+			for (k = 0; k + ctx->lineWidth < aLen; k += ctx->lineWidth)
 				fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
 			if (k < aLen)
 				fprintf(removedContigParts, "%.*s\n", aLen - k, read + k);
+		}
+		else
+		{
+			// write out removed part a the beginning !!!
+			if (tc->coord[0] > 1)
+			{
+				ctx->statsRemovedContigPartBases += tc->coord[0];
+				ctx->statsRemovedContigParts++;
+				fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], 1, tc->coord[0]);
+				for (k = 0; k + ctx->lineWidth < tc->coord[0]; k += ctx->lineWidth)
+					fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
+				if (k < tc->coord[0])
+					fprintf(removedContigParts, "%.*s\n", tc->coord[0] - k, read + k);
+			}
 
+			for (j = 0; j < tc->numCoordPairs; j++)
+			{
+				int index = j * 3;
+				ctx->statsTrimmedBases += tc->coord[index + 1] - tc->coord[index];
+				ctx->statsTrimmedContigs++;
+				fprintf(trimmedContigs, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index], tc->coord[index + 1]);
+				for (k = tc->coord[index]; k + ctx->lineWidth < tc->coord[index + 1]; k += ctx->lineWidth)
+					fprintf(trimmedContigs, "%.*s\n", ctx->lineWidth, read + k);
+				if (k < tc->coord[index + 1])
+					fprintf(trimmedContigs, "%.*s\n", tc->coord[index + 1] - k, read + k);
+
+				if (j + 1 < tc->numCoordPairs)
+				{
+					if (tc->coord[index + 3] < tc->coord[index + 1])
+					{
+						int z;
+						printf("Invalid coordinates tc->coord[%d + 3]=%d tc->coord[%d + 1]=%d tc->numCoordPairs %d\n", index, tc->coord[index + 3], index, tc->coord[index + 1], tc->numCoordPairs);
+						for (z = 0; z < tc->numCoordPairs; z++)
+							printf("coord[%d]: [%d, %d, %d]\n", z, tc->coord[z * 3], tc->coord[z * 3 + 1], tc->coord[z * 3 + 2]);
+						exit(1);
+					}
+					ctx->statsRemovedContigPartBases += tc->coord[index + 3] - tc->coord[index + 1];
+					ctx->statsRemovedContigParts++;
+					fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index + 1], tc->coord[index + 3]);
+					for (k = tc->coord[index + 1]; k + ctx->lineWidth < tc->coord[index + 3]; k += ctx->lineWidth)
+						fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
+					if (k < tc->coord[index + 3])
+						fprintf(removedContigParts, "%.*s\n", tc->coord[index + 3] - k, read + k);
+				}
+			}
+
+			// write out removed part at the end!!!
+			if (tc->coord[tc->numCoordPairs * 3 - 2] < aLen)
+			{
+				ctx->statsRemovedContigPartBases += aLen - tc->coord[tc->numCoordPairs * 3 - 2];
+				ctx->statsRemovedContigParts++;
+				fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[tc->numCoordPairs * 3 - 2], aLen);
+				for (k = tc->coord[tc->numCoordPairs * 3 - 2]; k + ctx->lineWidth < aLen; k += ctx->lineWidth)
+					fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
+				if (k < aLen)
+					fprintf(removedContigParts, "%.*s\n", aLen - k, read + k);
+			}
 		}
 	}
 	fclose(trimmedContigs);
@@ -2179,7 +2191,7 @@ void trim_contigs(TrimContext *ctx)
 
 void usage()
 {
-	fprintf(stderr, "[-v] [-GTLOFwt <int>] [-ago <file>] [-dt <track>] <db> <contigs_out_prefix>\n");
+	fprintf(stderr, "[-v] [-GTLOFwt <int>] [-agoe <file>] [-dt <track>] <db> <contigs_out_prefix>\n");
 
 	fprintf(stderr, "options: -v        verbose\n");
 	fprintf(stderr, "         -d <trc>  low complexity track (e.g. dust)\n");
@@ -2191,6 +2203,7 @@ void usage()
 	fprintf(stderr, "         -G <int>  min Bionano gap size (default: %d)\n", MIN_BIONANO_GAP_SIZE);
 	fprintf(stderr, "         -T <int>  maximum trim length (default: -1)\n");
 	fprintf(stderr, "         -L <int>  maximum tandem repeat overlap fraction (in %%) (default: %d, valid range: [0,100])\n", MAX_TANDEMTRIM_PERC);
+	fprintf(stderr, "         -e <file> exclude contig IDs, one DB id per line\n");
 	fprintf(stderr, "         -O <int>  trim offset in bases (default %d), i.e. in best case (if we have single overlap between 2 contigs) a gap of size 2xtrim_offset is created )\n", TRIM_OFFSET);
 	fprintf(stderr, "                   in case a valid alignment chain consisting of multiple alignments is present (representing heterozygous variations). The first last and the last alignment are used, (- trimOffset and + trimOffset, accordingly) \n");
 	fprintf(stderr, "                   (- trimOffset and + trimOffset, accordingly) creates a larger gap size, but heopefully removes the heterozygous difference.\n");
@@ -2228,6 +2241,7 @@ int main(int argc, char *argv[])
 
 	char *pcPathReadsIn = NULL;
 	char *pcPathOverlapsIn = NULL;
+	char *pcPathExcludeContigs = NULL;
 
 	int c, tmp;
 
@@ -2239,7 +2253,7 @@ int main(int argc, char *argv[])
 	tctx.lineWidth = FASTA_LINEWIDTH;
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "vd:t:a:g:o:G:T:L:O:F:w:p:")) != -1)
+	while ((c = getopt(argc, argv, "vd:t:a:g:o:G:T:L:O:F:w:p:e:")) != -1)
 	{
 		switch (c)
 		{
@@ -2260,6 +2274,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'o':
 				pcPathOverlapsIn = optarg;
+				break;
+			case 'e':
+				pcPathExcludeContigs = optarg;
 				break;
 			case 'G':
 				tctx.minBionanoGapLen = atoi(optarg);
@@ -2401,6 +2418,44 @@ int main(int argc, char *argv[])
 
 	trim_pre(pctx, &tctx);
 
+	int i;
+	for (i = 0; i < DB_NREADS(&db); i++)
+	{
+		db.reads[i].flags = CONTIG_NONE;
+	}
+
+	if (pcPathExcludeContigs)
+	{
+		FILE *fileIn = fopen(pcPathExcludeContigs, "r");
+
+		if (fileIn == NULL)
+		{
+			fprintf(stderr, "could not open %s\n", pcPathExcludeContigs);
+			exit(1);
+		}
+
+		int *values;
+		int nvalues;
+
+		fread_integers(fileIn, &values, &nvalues);
+
+		printf("excluding %d reads\n", nvalues);
+		int i;
+		for (i = 0; i < nvalues; i++)
+		{
+			if (values[i] < 0 || values[i] >= DB_NREADS(&db))
+			{
+				fprintf(stderr, "[WARNING] CTtrim: excluding read %d not possible! Must be in range: [0, %d]", values[i], DB_NREADS(&db) - 1);
+				continue;
+			}
+			db.reads[values[i]].flags |= CONTIG_DISCARD;
+			printf("[INFO] Discard contig: %d [len: %d]\n", values[i], DB_READ_LEN(&db, values[i]));
+		}
+
+		free(values);
+		fclose(fileIn);
+	}
+
 	getDBFastaHeader(&tctx, pcPathReadsIn);
 
 	if (pathInBionanoAGP)
@@ -2446,7 +2501,6 @@ int main(int argc, char *argv[])
 
 	Close_DB(&db);
 
-	int i;
 	for (i = 0; i < tctx.nfiles; i++)
 	{
 		free(tctx.flist[i]);

@@ -22,6 +22,10 @@
 #define TRIM_BIONANO									(1 << 7)      //
 #define TRIM_ORIGCONTIG								(1 << 8)      //
 
+#define CONTIG_NONE 0x0
+#define CONTIG_DISCARD ( 0x1 << 0 )
+#define CONTIG_KEEP ( 0x1 << 1 )
+
 typedef struct
 {
 	int alnLen;
