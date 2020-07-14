@@ -2140,7 +2140,10 @@ void trim_contigs(TrimContext *ctx)
 			{
 				if(tc->coord[index + 3] < tc->coord[index + 1])
 				{
+					int z;
 					printf("Invalid coordinates tc->coord[%d + 3]=%d tc->coord[%d + 1]=%d tc->numCoordPairs %d\n", index, tc->coord[index + 3], index, tc->coord[index + 1], tc->numCoordPairs);
+					for (z=0; z<tc->numCoordPairs; z++)
+						printf("coord[%d]: [%d, %d, %d]\n", z, tc->coord[z*3], tc->coord[z*3+1], tc->coord[z*3+2]);
 					exit(1);
 				}
 				ctx->statsRemovedContigPartBases += tc->coord[index + 3] - tc->coord[index + 1];
