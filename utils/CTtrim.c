@@ -87,7 +87,7 @@ void addBionanoGAPInfoToTrimEvidence(TrimContext *ctx, int contigA, int aPartBeg
 
 	// check if the same gap feature is already present: it must be present;
 	int i;
-	BionanoGap *b;
+	BionanoGap *b = NULL;
 	for (i = 0; i < ta->nBioNanoGaps; i++)
 	{
 		b = ta->gaps + i;
@@ -1176,7 +1176,7 @@ void parseBionanoAGPfile(TrimContext *ctx, char *pathInBionanoAGP)
 	int oriB = 0;
 	int fromB, toB;
 	char contigNameB[MAX_NAME];
-
+	fromA = toA = fromB = toB = -1;
 	printf("[INFO] parseBionanoAGPfile: %s\n", pathInBionanoAGP);
 
 	int numInvalidLines = 0;
