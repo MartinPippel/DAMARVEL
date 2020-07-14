@@ -1914,7 +1914,6 @@ void trim_contigs(TrimContext *ctx)
 				TrimEvidence *te = ctx->trimEvid + j + i;
 				for (l = 0; l < te->nBioNanoGaps; l++)
 				{
-					printBionanpGap(ctx, te->contigA, te->contigB, te->gaps + l);
 					if (te->gaps[l].bionanoGapSize < 0)
 					{
 
@@ -1947,6 +1946,8 @@ void trim_contigs(TrimContext *ctx)
 				printf("CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, maxStart, minEnd);
 				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[0] = maxStart;
 				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = minEnd;
+				// quick and dirty: ignore all remaining trim coordinates if those are present
+				ctx->trimCoord[ctx->trimEvid[j].contigA].numCoordPairs = 1;
 			}
 			k++;
 			j = k;
