@@ -83,6 +83,17 @@ void addBionanoGAPInfoToTrimEvidence(TrimContext *ctx, int contigA, int aPartBeg
 		return;
 	}
 
+	// adjust contig position to zero-based right open intervals
+	if (aPartBeg < aPartEnd)
+		aPartBeg--;
+	else
+		aPartEnd--;
+
+	if (bPartBeg < bPartEnd)
+		bPartBeg--;
+	else
+		bPartEnd--;
+
 	// check if the same gap feature is already present: it must be present;
 	int i;
 	BionanoGap *b;
@@ -1088,8 +1099,7 @@ void addBionanoContigCoordinates(TrimContext *ctx, int contig, int from, int to)
 
 	printf("call addBionanoContigCoordinates(TrimContext *ctx, %d, %d, %d)\n", contig, from, to);
 	from--;
-	printf("change coordinate system from 1-based [%d, %d, x] to 0-based [%d,%d)", from+1, to, from ,to);
-
+	printf("change coordinate system from 1-based [%d, %d, x] to 0-based [%d,%d)", from + 1, to, from, to);
 
 	assert(ctx != NULL);
 	assert(contig >= 0);
@@ -1107,32 +1117,31 @@ void addBionanoContigCoordinates(TrimContext *ctx, int contig, int from, int to)
 		return;
 	}
 
-
 	// check if coordinates are already present
 	for (i = 0; i < tc->numCoordPairs; i++)
 	{
-		int its=intersect(tc->coord[i*3],tc->coord[i*3+1], from, to);
-		if(its)
+		int its = intersect(tc->coord[i * 3], tc->coord[i * 3 + 1], from, to);
+		if (its)
 		{
-			printf("replace trim coordinates at %d [%d, %d, %d] with [%d, %d, %d] overlap: %d\n", i, tc->coord[i*3], tc->coord[i*3+1], tc->coord[i*3+2], from, to, 0, its);
-			tc->coord[i*3] = from;
-			tc->coord[i*3+1] = to;
+			printf("replace trim coordinates at %d [%d, %d, %d] with [%d, %d, %d] overlap: %d\n", i, tc->coord[i * 3], tc->coord[i * 3 + 1], tc->coord[i * 3 + 2], from, to, 0, its);
+			tc->coord[i * 3] = from;
+			tc->coord[i * 3 + 1] = to;
 			break;
 		}
 	}
 
-	if(i==tc->numCoordPairs)
+	if (i == tc->numCoordPairs)
 	{
 		printf("append new trim Coordinates to position %d [%d, %d, %d]", i, from, to, 0);
 
-		if(tc->numCoordPairs + 1 >= tc->maxCoordPairs)
+		if (tc->numCoordPairs + 1 >= tc->maxCoordPairs)
 		{
 			tc->maxCoordPairs = tc->numCoordPairs + 1;
-			tc->coord = (int *) realloc(tc->coord, sizeof(int)*3*tc->maxCoordPairs);
+			tc->coord = (int*) realloc(tc->coord, sizeof(int) * 3 * tc->maxCoordPairs);
 		}
-		tc->coord[i*3] = from;
-		tc->coord[i*3+1] = to;
-		tc->coord[i*3+2] = 0;
+		tc->coord[i * 3] = from;
+		tc->coord[i * 3 + 1] = to;
+		tc->coord[i * 3 + 2] = 0;
 		tc->numCoordPairs++;
 	}
 
@@ -1318,7 +1327,7 @@ void parseBionanoAGPfile(TrimContext *ctx, char *pathInBionanoAGP)
 
 				// add trim evidence symmetrically: i.e. contigA-gap-contigB and contigB-gap-contigA
 				// change coordinate system from 1-based [1, x] to 0-based [0,x)
-				addBionanoAGPInfoToTrimEvidence(ctx, contigA, fromA-1, toA, contigB, fromB-1, toB, gapLen);
+				addBionanoAGPInfoToTrimEvidence(ctx, contigA, fromA - 1, toA, contigB, fromB - 1, toB, gapLen);
 
 				contigA = contigB;
 				strcpy(contigNameA, contigNameB);
@@ -2402,18 +2411,18 @@ int main(int argc, char *argv[])
 		parseBionanoAGPfile(&tctx, pathInBionanoAGP);
 
 		printf("------ OUTPUT CUT COORDINATES\n");
-		int i,j;
-		for (i=0; i<DB_NREADS(&db);i++)
+		int i, j;
+		for (i = 0; i < DB_NREADS(&db); i++)
 		{
-			printf("CONTIG %4d initial length [%10d]", i, DB_READ_LEN(&db,i));
-			for(j=0;j<tctx.trimCoord[i].numCoordPairs; j++)
-				printf(" [%d, %d, %d]", tctx.trimCoord[i].coord[j*3], tctx.trimCoord[i].coord[j*3+1], tctx.trimCoord[i].coord[j*3+2]);
+			printf("CONTIG %4d initial length [%10d]", i, DB_READ_LEN(&db, i));
+			for (j = 0; j < tctx.trimCoord[i].numCoordPairs; j++)
+				printf(" [%d, %d, %d]", tctx.trimCoord[i].coord[j * 3], tctx.trimCoord[i].coord[j * 3 + 1], tctx.trimCoord[i].coord[j * 3 + 2]);
 			printf("\n");
 			printf("sort coordinates\n");
-			qsort(tctx.trimCoord[i].coord, tctx.trimCoord[i].numCoordPairs, sizeof(int)*3, TrimCoordinates_cmp);
-			printf("CONTIG %4d initial length [%10d]", i, DB_READ_LEN(&db,i));
-			for(j=0;j<tctx.trimCoord[i].numCoordPairs; j++)
-				printf(" [%d, %d, %d]", tctx.trimCoord[i].coord[j*3], tctx.trimCoord[i].coord[j*3+1], tctx.trimCoord[i].coord[j*3+2]);
+			qsort(tctx.trimCoord[i].coord, tctx.trimCoord[i].numCoordPairs, sizeof(int) * 3, TrimCoordinates_cmp);
+			printf("CONTIG %4d initial length [%10d]", i, DB_READ_LEN(&db, i));
+			for (j = 0; j < tctx.trimCoord[i].numCoordPairs; j++)
+				printf(" [%d, %d, %d]", tctx.trimCoord[i].coord[j * 3], tctx.trimCoord[i].coord[j * 3 + 1], tctx.trimCoord[i].coord[j * 3 + 2]);
 			printf("\n");
 			printf("sort coordinates\n");
 		}
