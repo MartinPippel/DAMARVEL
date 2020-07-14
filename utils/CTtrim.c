@@ -2132,7 +2132,7 @@ void trim_contigs(TrimContext *ctx)
 			{
 				ctx->statsRemovedContigPartBases += tc->coord[0];
 				ctx->statsRemovedContigParts++;
-				fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], 1, tc->coord[0]);
+				fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j, 0, tc->coord[0]);
 				for (k = 0; k + ctx->lineWidth < tc->coord[0]; k += ctx->lineWidth)
 					fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
 				if (k < tc->coord[0])
@@ -2147,7 +2147,7 @@ void trim_contigs(TrimContext *ctx)
 				if(tc->coord[index] == 0 && tc->coord[index+1] == aLen)
 					fprintf(trimmedContigs, ">%s full=%d,%d\n", ctx->flist[amap], tc->coord[index], tc->coord[index + 1]);
 				else
-					fprintf(trimmedContigs, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index], tc->coord[index + 1]);
+					fprintf(trimmedContigs, ">%s_%d part=%d,%d\n", ctx->flist[amap], j, tc->coord[index], tc->coord[index + 1]);
 				for (k = tc->coord[index]; k + ctx->lineWidth < tc->coord[index + 1]; k += ctx->lineWidth)
 					fprintf(trimmedContigs, "%.*s\n", ctx->lineWidth, read + k);
 				if (k < tc->coord[index + 1])
@@ -2167,7 +2167,7 @@ void trim_contigs(TrimContext *ctx)
 					{
 						ctx->statsRemovedContigPartBases += tc->coord[index + 3] - tc->coord[index + 1];
 						ctx->statsRemovedContigParts++;
-						fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[index + 1], tc->coord[index + 3]);
+						fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j+1, tc->coord[index + 1], tc->coord[index + 3]);
 						for (k = tc->coord[index + 1]; k + ctx->lineWidth < tc->coord[index + 3]; k += ctx->lineWidth)
 							fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
 						if (k < tc->coord[index + 3])
@@ -2181,7 +2181,7 @@ void trim_contigs(TrimContext *ctx)
 			{
 				ctx->statsRemovedContigPartBases += aLen - tc->coord[tc->numCoordPairs * 3 - 2];
 				ctx->statsRemovedContigParts++;
-				fprintf(removedContigParts, ">%s part=%d,%d\n", ctx->flist[amap], tc->coord[tc->numCoordPairs * 3 - 2], aLen);
+				fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j+1, tc->coord[tc->numCoordPairs * 3 - 2], aLen);
 				for (k = tc->coord[tc->numCoordPairs * 3 - 2]; k + ctx->lineWidth < aLen; k += ctx->lineWidth)
 					fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
 				if (k < aLen)
