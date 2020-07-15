@@ -2148,7 +2148,7 @@ void trim_contigs(TrimContext *ctx)
 			}
 			else if ((LASchain_maxStart > 1) || (LASchain_minEnd < aLen))
 			{
-				printf("BIOANO(only) CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, Bionano_maxStart, Bionano_minEnd);
+				printf("LASchain(only) CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, Bionano_maxStart, Bionano_minEnd);
 				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[0] = LASchain_maxStart;
 				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = LASchain_minEnd;
 				// quick and dirty: ignore all remaining trim coordinates if those are present
