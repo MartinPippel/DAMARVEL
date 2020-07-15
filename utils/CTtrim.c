@@ -2127,7 +2127,8 @@ void trim_contigs(TrimContext *ctx)
 					if (te->chains[l].trimPos < 0) // trim at begin
 					{
 						tmp = abs(te->chains[l].trimPos);
-						if (tmp > LASchain_maxStart && (LASchain_maxStartID == -1 || LASchain_maxStartID != Bionano_maxStartID))
+						if ((tmp > LASchain_maxStart && (LASchain_maxStartID == -1 || LASchain_maxStartID != Bionano_maxStartID))
+								|| (tmp < LASchain_maxStart && Bionano_maxStartID == te->contigB))
 						{
 							LASchain_maxStart = tmp;
 							LASchain_maxStartID = te->contigB;
@@ -2135,7 +2136,10 @@ void trim_contigs(TrimContext *ctx)
 					}
 					else if (te->chains[l].trimPos > 0)
 					{
-						if (te->chains[l].trimPos < LASchain_minEnd && (LASchain_minEndID == -1 || LASchain_minEndID != Bionano_minEndID))
+						if ((te->chains[l].trimPos < LASchain_minEnd && (LASchain_minEndID == -1 || LASchain_minEndID != Bionano_minEndID))
+								||
+								(te->chains[l].trimPos > LASchain_minEnd && Bionano_minEndID == te->contigB)
+							)
 						{
 							LASchain_minEnd = te->chains[l].trimPos;
 							LASchain_minEndID = te->contigB;
