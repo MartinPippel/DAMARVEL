@@ -2197,7 +2197,7 @@ void trim_contigs(TrimContext *ctx)
 
 			if ((LASchain_minEnd < aLen) && (Bionano_minEnd < aLen))
 			{
-				printf("  + used END_BOTH (%d) -- take LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d diff(%d)\n", (Bionano_minEndID == LASchain_minEndID) ? 1 : 0, ctx->trimEvid[j].contigA, 0, aLen, LASchain_minEnd, Bionano_minEnd, abs(Bionano_minEnd - LASchain_minEndID));
+				printf("  + used END_BOTH (%d) -- take LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d diff(%d)\n", (Bionano_minEndID == LASchain_minEndID) ? 1 : 0, ctx->trimEvid[j].contigA, 0, aLen, LASchain_minEnd, Bionano_minEnd, abs(Bionano_minEnd - LASchain_minEnd));
 				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = LASchain_minEnd;
 				// quick and dirty: ignore all remaining trim coordinates if those are present
 				ctx->trimCoord[ctx->trimEvid[j].contigA].numCoordPairs = 1;
