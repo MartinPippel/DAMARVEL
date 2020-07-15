@@ -2059,6 +2059,115 @@ void trim_contigs(TrimContext *ctx)
 	else if (ctx->purgeOpt == 5)
 	{
 
+		j = k = 0;
+
+		while (j < ctx->numTrimEvidence)
+		{
+			while (k < ctx->numTrimEvidence - 1 && ctx->trimEvid[j].contigA == ctx->trimEvid[k + 1].contigA)
+			{
+				k++;
+			}
+
+			int n = k - j + 1;
+
+			int aLen = DB_READ_LEN(ctx->db, ctx->trimEvid[j].contigA);
+			int Bionano_maxStart = 1;
+			int Bionano_minEnd = aLen;
+			int tmp = 0;
+			int LASchain_maxStart = 1;
+			int LASchain_minEnd = aLen;
+			for (i = 0; i < n; i++)
+			{
+				TrimEvidence *te = ctx->trimEvid + j + i;
+				for (l = 0; l < te->nBioNanoGaps; l++)
+				{
+					if (te->gaps[l].bionanoGapSize < 0)
+					{
+
+						// todo: remember min and max cut positions
+						//trimmedContigs++;
+
+						printBionanpGap(ctx, te->contigA, te->contigB, te->gaps + l);
+						if (te->gaps[l].aEnd == 1)
+						{
+							tmp = (1 + abs(te->gaps[l].bionanoGapSize) / 2 + ctx->trimOffset);
+							if (tmp > Bionano_maxStart)
+							{
+								Bionano_maxStart = tmp;
+							}
+						}
+						else if (te->gaps[l].aEnd == aLen)
+						{
+							tmp = aLen - (1 + abs(te->gaps[l].bionanoGapSize) / 2 + ctx->trimOffset);
+							if (tmp < Bionano_minEnd)
+							{
+								Bionano_minEnd = tmp;
+							}
+						}
+
+					}
+				}
+				if (Bionano_maxStart > 1 || Bionano_minEnd < aLen)
+				{
+					printf("BIONANO CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, Bionano_maxStart, Bionano_minEnd);
+				}
+				for (l = 0; l < te->nLASchains; l++)
+				{
+					// todo: remember min and max cut positions
+					//trimmedContigs++;
+
+					printLASchain(ctx, te->contigA, te->contigB, te->chains + l);
+					if (te->chains[l].trimPos < 0) // trim at begin
+					{
+						tmp = abs(te->chains[l].trimPos);
+						if (tmp > LASchain_maxStart)
+						{
+							LASchain_maxStart = tmp;
+						}
+					}
+					else if (te->chains[l].trimPos > 0)
+					{
+						if (te->chains[l].trimPos < LASchain_minEnd)
+						{
+							LASchain_minEnd = te->chains[l].trimPos;
+						}
+					}
+				}
+				if (LASchain_maxStart > 1 || LASchain_minEnd < aLen)
+				{
+					printf("LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, LASchain_maxStart, LASchain_minEnd);
+				}
+			}
+			if ((LASchain_maxStart > 1 || LASchain_minEnd < aLen) && (Bionano_maxStart > 1 || Bionano_minEnd < aLen))
+			{
+				printf("BOTH use LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, LASchain_maxStart, LASchain_minEnd);
+				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[0] = LASchain_maxStart;
+				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = LASchain_minEnd;
+				// quick and dirty: ignore all remaining trim coordinates if those are present
+				ctx->trimCoord[ctx->trimEvid[j].contigA].numCoordPairs = 1;
+			}
+			else if ((LASchain_maxStart > 1) || (LASchain_minEnd < aLen))
+			{
+				printf("BIOANO(only) CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, Bionano_maxStart, Bionano_minEnd);
+				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[0] = LASchain_maxStart;
+				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = LASchain_minEnd;
+				// quick and dirty: ignore all remaining trim coordinates if those are present
+				ctx->trimCoord[ctx->trimEvid[j].contigA].numCoordPairs = 1;
+			}
+			else if ((Bionano_maxStart > 1 && Bionano_maxStart < 3000) || (Bionano_minEnd < aLen && aLen - Bionano_minEnd < 3000)) // only trust bionano for small negative gaps that are below the daligner minimum chaiun length
+			{
+				printf("BIOANO(only) CUT POSITIONS (%d - %d, %d): %d, %d\n", ctx->trimEvid[j].contigA, 0, aLen, Bionano_maxStart, Bionano_minEnd);
+				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[0] = Bionano_maxStart;
+				ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = Bionano_minEnd;
+				// quick and dirty: ignore all remaining trim coordinates if those are present
+				ctx->trimCoord[ctx->trimEvid[j].contigA].numCoordPairs = 1;
+			}
+
+			k++;
+			j = k;
+		}
+		printf("[INFO] num trim evidence: %d: \n", ctx->numTrimEvidence);
+
 	}
 	else if (ctx->purgeOpt == 6)
 	{
@@ -2144,7 +2253,7 @@ void trim_contigs(TrimContext *ctx)
 				int index = j * 3;
 				ctx->statsTrimmedBases += tc->coord[index + 1] - tc->coord[index];
 				ctx->statsTrimmedContigs++;
-				if(tc->coord[index] == 0 && tc->coord[index+1] == aLen)
+				if (tc->coord[index] == 0 && tc->coord[index + 1] == aLen)
 					fprintf(trimmedContigs, ">%s full=%d,%d\n", ctx->flist[amap], tc->coord[index], tc->coord[index + 1]);
 				else
 					fprintf(trimmedContigs, ">%s_%d part=%d,%d\n", ctx->flist[amap], j, tc->coord[index], tc->coord[index + 1]);
@@ -2167,7 +2276,7 @@ void trim_contigs(TrimContext *ctx)
 					{
 						ctx->statsRemovedContigPartBases += tc->coord[index + 3] - tc->coord[index + 1];
 						ctx->statsRemovedContigParts++;
-						fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j+1, tc->coord[index + 1], tc->coord[index + 3]);
+						fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j + 1, tc->coord[index + 1], tc->coord[index + 3]);
 						for (k = tc->coord[index + 1]; k + ctx->lineWidth < tc->coord[index + 3]; k += ctx->lineWidth)
 							fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
 						if (k < tc->coord[index + 3])
@@ -2181,7 +2290,7 @@ void trim_contigs(TrimContext *ctx)
 			{
 				ctx->statsRemovedContigPartBases += aLen - tc->coord[tc->numCoordPairs * 3 - 2];
 				ctx->statsRemovedContigParts++;
-				fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j+1, tc->coord[tc->numCoordPairs * 3 - 2], aLen);
+				fprintf(removedContigParts, ">%s_%d part=%d,%d\n", ctx->flist[amap], j + 1, tc->coord[tc->numCoordPairs * 3 - 2], aLen);
 				for (k = tc->coord[tc->numCoordPairs * 3 - 2]; k + ctx->lineWidth < aLen; k += ctx->lineWidth)
 					fprintf(removedContigParts, "%.*s\n", ctx->lineWidth, read + k);
 				if (k < aLen)
