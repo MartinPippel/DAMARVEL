@@ -654,7 +654,7 @@ static void readFastaFile( CreateContext* ctx, char* name )
     FILE* input;
     char *path, *core, *prolog;
     int nline, eof, rlen;
-
+    
     //  Open it: <path>/<core>.fasta, check that core is not too long,
     //           and checking that it is not already in flist.
 
@@ -681,7 +681,7 @@ static void readFastaFile( CreateContext* ctx, char* name )
         for ( j = 0; j < ctx->ofiles; j++ )
             if ( strcmp( core, ctx->flist[ j ] ) == 0 )
             {
-                fprintf( stderr, "File %s.fasta is already in database %s.db\n", core, Root( ctx->dbname, ".db" ) );
+                fprintf( stderr, "File %s.fasta is already in database %s.db at index %d: %s.\n", core, Root( ctx->dbname, ".db" ), j, ctx->flist[ j ] );
                 errorExit( ctx );
             }
     }
@@ -895,7 +895,7 @@ static void readFastaFile( CreateContext* ctx, char* name )
 
         fprintf( ctx->ostub, DB_FDATA, ctx->ureads, core, prolog );
     }
-
+    
     free( prolog );
     fclose( input );
 }
