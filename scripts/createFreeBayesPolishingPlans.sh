@@ -527,7 +527,7 @@ then
 		fi
 		echo "Using $mean_cov for mean coverage"
    		
-   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} '{print "freebayes --bam "bam" --region "$1":1-"$2" --skip-coverage $((${mean_cov}*12)) -f "ref" | bcftools view --no-version -Ou -o "out$1":1-"$2".bcf"}' ${ref}.fai)" > freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.plan
+   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} '{print "freebayes --bam "bam" --region "$1":1-"$2" --skip-coverage "$((${mean_cov}*12))" -f "ref" | bcftools view --no-version -Ou -o "out$1":1-"$2".bcf"}' ${ref}.fai)" > freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.plan
 
 		echo "freebayes $(${CONDA_FREEBAYES_ENV} && freebayes --version && conda deactivate)" > freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.version
 		echo "bcftools $(${CONDA_FREEBAYES_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.version   
