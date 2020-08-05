@@ -481,6 +481,10 @@ if [[ -n ${SLURM_ACCOUNT} ]]
 then
 	appAccount=" -A ${SLURM_ACCOUNT}"
 fi
+if [[ -n ${SLURM_PARTITION} ]]
+then 
+	appAccount="${appAccount} -p ${SLURM_PARTITION}"
+fi
 
 if [[ ${resumeIdx} -gt 0 ]]
 then 
