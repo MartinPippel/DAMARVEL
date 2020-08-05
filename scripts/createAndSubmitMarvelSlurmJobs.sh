@@ -41,6 +41,11 @@ function prependLeadingNull
 
 source ${configFile}
 
+if [[ -z ${SLURM_MAXARRAYSIZE} ]]
+then
+	SLURM_MAXARRAYSIZE=9999
+fi
+
 function getPhaseFilePrefix()
 {
     if [[ ${currentPhase} -eq -2 ]]
@@ -211,10 +216,10 @@ then
 	log_folder=log_${prefix}_${jname}_${db}
 	mkdir -p ${log_folder}
 	first=1
-	if [[ ${JOBS} -gt 9999 && ${jtype} == "block" ]]
+	if [[ ${JOBS} -gt ${SLURM_MAXARRAYSIZE} && ${jtype} == "block" ]]
 	then
 	    from=1
-	    to=9999
+	    to=${SLURM_MAXARRAYSIZE}
 	    d=1
 	    while [[ $from -lt ${JOBS} ]]
 	    do
@@ -290,16 +295,16 @@ done
 end=\$(date +%s)
 echo \"${file}.plan end \$end\"
 echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
-	        d=$(($d+1))
-	        from=$((${to}+1))
-	        to=$((${to}+9999))
+	        d=$((d+1))
+	        from=$((to+1))
+	        to=$((to+SLURM_MAXARRAYSIZE))
 	        if [[ $to -gt ${JOBS} ]]
 	        then
 	            to=${JOBS}
 	        fi
 	        sleep 5
 	    done
-	else ## less then 9999 jobs 
+	else ## less then ${SLURM_MAXARRAYSIZE} jobs 
 	    jobs=${JOBS}
 	    file=${prefix}_${cjobid}_${jname}_${jtype}_${db}.${slurmID}
 	    ### create slurm submit file
@@ -440,7 +445,7 @@ fi
 
 if [[ ${resumeIdx} -eq 0 ]]
 then
-	if [[ ${JOBS} -gt 9999 && ${jtype} == "block" ]]
+	if [[ ${JOBS} -gt ${SLURM_MAXARRAYSIZE} && ${jtype} == "block" ]]
 	then
 		resumeIdx=1
 		file=${prefix}_${cjobid}_${jname}_${jtype}_${db}.${slurmID}.${resumeIdx}
