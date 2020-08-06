@@ -251,6 +251,10 @@ then
             then
                 echo "#SBATCH -A ${SLURM_ACCOUNT}" >> ${file}.slurm
             fi
+            if [[ -n ${SLURM_CONSTRAINT} ]]
+			then
+				echo "#SBATCH --constraint=${SLURM_CONSTRAINT}" >> ${file}.slurm
+			fi
             if [[ -n ${SLURM_HIGH_CPUFREQ} ]]
             then
             	echo "#SBATCH --cpu-freq=high" >>  ${file}.slurm
@@ -333,7 +337,11 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
             if [[ -n ${SLURM_ACCOUNT} ]]
             then
                 echo "#SBATCH -A ${SLURM_ACCOUNT}" >> ${file}.slurm
-            fi	        
+            fi	
+            if [[ -n ${SLURM_CONSTRAINT} ]]
+			then
+				echo "#SBATCH --constraint=${SLURM_CONSTRAINT}" >> ${file}.slurm
+			fi        
             if [[ -n ${SLURM_HIGH_CPUFREQ} ]]
             then
             	echo "#SBATCH --cpu-freq=high" >>  ${file}.slurm
@@ -399,6 +407,10 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
             then
                 echo "#SBATCH -A ${SLURM_ACCOUNT}" >> ${file}.slurm
             fi
+            if [[ -n ${SLURM_CONSTRAINT} ]]
+			then
+				echo "#SBATCH --constraint=${SLURM_CONSTRAINT}" >> ${file}.slurm
+			fi
             if [[ -n ${SLURM_HIGH_CPUFREQ} ]]
             then
             	echo "#SBATCH --cpu-freq=high" >>  ${file}.slurm
@@ -485,6 +497,11 @@ appAccount=""
 if [[ -n ${SLURM_ACCOUNT} ]]
 then
 	appAccount=" -A ${SLURM_ACCOUNT}"
+fi
+### append containts to appAccount 
+if [[ -n ${SLURM_CONSTRAINT} ]]
+then
+	appAccount="${appAccount} --constraint=${SLURM_CONSTRAINT}"
 fi
 
 if [[ ${resumeIdx} -gt 0 ]]
