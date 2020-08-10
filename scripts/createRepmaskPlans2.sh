@@ -470,10 +470,20 @@ then
         done     
         ### find and set TANmask options 
         setTANmaskOptions
-        ### create TANmask commands
-        for x in $(seq 1 ${fixblocks})
+        
+        if [[ -z ${FIX_REPMASK_TANMASK_JOBS} ]]
+        then 
+        	FIX_REPMASK_TANMASK_JOBS=10
+        fi
+        
+        for x in $(seq 1 ${FIX_REPMASK_TANMASK_JOBS} ${fixblocks})
         do 
-            echo "cd ${FIX_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/TANmask${REPMASK_TANMASK_OPT} ${FIX_DAZZ_DB%.db} TAN.${FIX_DAZZ_DB%.db}.${x}.las && cd ${myCWD}" 
+        	y=$((x+FIX_REPMASK_TANMASK_JOBS-1))
+        	if [[ $y -gt ${fixblocks} ]]
+        	then 
+        		y=${fixblocks}
+        	fi      
+            echo "cd ${FIX_REPMASK_OUTDIR} && ${DAZZLER_PATH}/bin/TANmask${REPMASK_TANMASK_OPT} ${FIX_DAZZ_DB%.db} TAN.${FIX_DAZZ_DB%.db}.@${x}-${y} && cd ${myCWD}" 
     	done > mask_${sID}_TANmask_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER TANmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > mask_${sID}_TANmask_block_${FIX_DB%.db}.${slurmID}.version
     elif [[ ${currentStep} -eq 6 ]]
