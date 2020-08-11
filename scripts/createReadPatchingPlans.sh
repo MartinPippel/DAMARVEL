@@ -109,6 +109,10 @@ function setDalignerOptions()
     then
         FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -b"
     fi
+    if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
+    then
+        FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}"
+    fi
     if [[ -n ${RAW_FIX_DALIGNER_BRIDGE} && ${RAW_FIX_DALIGNER_BRIDGE} -eq 1 ]]
     then
         FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -B"

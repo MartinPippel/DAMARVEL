@@ -159,7 +159,11 @@ function setDaligerOptions()
     if [[ -n ${RAW_REPMASK_DALIGNER_HITS} ]]
     then
         REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -h${RAW_REPMASK_DALIGNER_HITS}"
-    fi        
+    fi 
+    if [[ -n ${RAW_REPMASK_DALIGNER_TMP} ]]
+    then
+        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${RAW_REPMASK_DALIGNER_TMP}"
+    fi       
     if [[ -n ${RAW_REPMASK_DALIGNER_T} ]]
     then
         REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -t${RAW_REPMASK_DALIGNER_T}"

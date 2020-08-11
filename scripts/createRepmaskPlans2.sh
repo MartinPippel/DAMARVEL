@@ -167,7 +167,11 @@ function setDalignerOptions()
     if [[ -n ${FIX_REPMASK_DALIGNER_MEM} && ${FIX_REPMASK_DALIGNER_MEM} -gt 0 ]]
     then
         REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -M${FIX_REPMASK_DALIGNER_MEM}"
-    fi    
+    fi  
+    if [[ -n ${FIX_REPMASK_DALIGNER_TMP} ]]
+    then
+        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${FIX_REPMASK_DALIGNER_TMP}"
+    fi             
     if [[ -n ${FIX_REPMASK_DALIGNER_HITS} ]]
     then
         REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -h${FIX_REPMASK_DALIGNER_HITS}"

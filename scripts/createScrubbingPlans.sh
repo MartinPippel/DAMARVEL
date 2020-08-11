@@ -233,7 +233,11 @@ function setDalignerOptions()
     if [[ -n ${FIX_SCRUB_DALIGNER_T} ]]
     then
         SCRUB_DALIGNER_OPT="${SCRUB_DALIGNER_OPT} -t${FIX_SCRUB_DALIGNER_T}"
-    fi  
+    fi
+    if [[ -n ${FIX_SCRUB_DALIGNER_TMP} ]]
+    then
+        SCRUB_DALIGNER_OPT="${SCRUB_DALIGNER_OPT} -P${FIX_SCRUB_DALIGNER_TMP}"
+    fi        
     if [[ -n ${FIX_SCRUB_DALIGNER_ASYMMETRIC} && ${FIX_SCRUB_DALIGNER_ASYMMETRIC} -ne 0 ]]
     then
         SCRUB_DALIGNER_OPT="${SCRUB_DALIGNER_OPT} -A"
