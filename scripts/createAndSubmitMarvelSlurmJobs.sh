@@ -211,10 +211,20 @@ then
 	then
 	    SLURM_PARTITION="${!TMP}"
 	fi
-	
+	TMP="LOGPATH_${jname}"
+	if [[ -n ${!TMP} ]]
+	then
+	    LOG_PATH="${!TMP}/"
+	elif [[ -n ${SLURM_LOGPATH} ]]
+	then
+		LOG_PATH="${SLURM_LOGPATH}/"
+	else 
+		LOG_PATH=""
+	fi	
+		
 	JOBS=$(wc -l ${prefix}_${cjobid}_${jname}_${jtype}_${db}.${slurmID}.plan | awk '{print $1}')
-	log_folder=log_${prefix}_${jname}_${db}
-	mkdir -p ${log_folder}
+	log_folder=${LOG_PATH}log_${prefix}_${jname}_${db}
+	mkdir -p ${log_folder} || { (>&2 echo "Cannot crate log folder ${log_folder}, aborting..."); exit 7 ; }
 	first=1
 	if [[ ${JOBS} -gt ${SLURM_MAXARRAYSIZE} && ${jtype} == "block" ]]
 	then
@@ -453,6 +463,16 @@ echo \"${file}.plan end \$end\"
 echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 	    fi
 	fi
+else
+	if [[ -n ${SLURM_LOGPATH} ]]
+	then
+		LOG_PATH="${SLURM_LOGPATH}/"
+	else 
+		LOG_PATH=""
+	fi	
+		
+	log_folder=${LOG_PATH}log_DAmar_pipeline
+	mkdir -p ${log_folder} || { (>&2 echo "Cannot crate log folder ${log_folder}, aborting..."); exit 7 ; } 
 fi
 
 if [[ ${resumeIdx} -eq 0 ]]
@@ -508,8 +528,8 @@ if [[ ${resumeIdx} -gt 0 ]]
 then 
 	if [[ -f ${prefix}_${cjobid}_${jname}_${jtype}_${db}.${slurmID}.$((${resumeIdx}+1)).slurm ]]
 	then
-		echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep+1} -o ${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.out -e ${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID $((${resumeIdx}+1))\"" 
-		sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep+1} -o ${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.out -e ${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID $((${resumeIdx}+1))"
+		echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep+1} -o ${log_folder}${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.out -e ${log_folder}${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID $((${resumeIdx}+1))\"" 
+		sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep+1} -o ${log_folder}${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.out -e ${log_folder}${prefix}_step${currentStep}_${RAW_DB%.db}_${slurmID}.${resumeIdx}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID $((${resumeIdx}+1))"
 		foundNext=1
 	fi	
 fi
@@ -518,8 +538,8 @@ if [[ ${currentPhase} -eq -2 ]]
 then
 	if [[ $((${currentStep}+1)) -le ${RAW_QC_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\""
-    	sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\""
+    	sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
 	else
 		### we have to create the coverage directory and change into that dir 
@@ -676,8 +696,8 @@ if [[ ${currentPhase} -eq -1 ]]
 then
 	if [[ $((${currentStep}+1)) -le ${RAW_MITO_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\""
-    	sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\""
+    	sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${db%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
 	else
 		### we have to create the coverage directory and change into that dir 
@@ -825,8 +845,8 @@ if [[ ${currentPhase} -eq 0 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -le ${RAW_DASCOVER_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=1
@@ -967,8 +987,8 @@ if [[ ${currentPhase} -eq 1  && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${RAW_REPMASK_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=2
@@ -980,8 +1000,8 @@ if [[ ${currentPhase} -eq 2 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${RAW_PATCH_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=3
@@ -1103,8 +1123,8 @@ if [[ ${currentPhase} -eq 3 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${FIX_REPMASK_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=4
@@ -1116,8 +1136,8 @@ if [[ ${currentPhase} -eq 4 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${FIX_SCRUB_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=5
@@ -1129,13 +1149,13 @@ if [[ ${currentPhase} -eq 5 && ${foundNext} -eq 0 ]]
 then 
     if [[ ${FIX_FILT_TYPE} -eq 0 && ${currentStep} -eq 2 && -n ${FIX_FILT_LAFILTER_RMSYMROUNDS} && ${FIX_FILT_LAFILTER_RMSYMROUNDS} -gt 0 && ! -f filt_02_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep} -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID\""                 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep} -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep} -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID\""                 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s${currentStep} -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} ${currentStep} $slurmID"
         foundNext=1
     elif [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${FIX_FILT_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=6
@@ -1147,8 +1167,8 @@ if [[ ${currentPhase} -eq 6 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${FIX_TOUR_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=7
@@ -1160,8 +1180,8 @@ if [[ ${currentPhase} -eq 7 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${FIX_CORR_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=8
@@ -1173,8 +1193,8 @@ if [[ ${currentPhase} -eq 8 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${COR_CONTIG_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${CONT_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
 	else 
         currentPhase=9
@@ -1186,8 +1206,8 @@ if [[ ${currentPhase} -eq 9 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${PB_ARROW_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${RAW_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
 	else 
         currentPhase=10
@@ -1199,8 +1219,8 @@ if [[ ${currentPhase} -eq 10 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${CT_PURGEHAPLOTIGS_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
 	else 
         currentPhase=11
@@ -1212,8 +1232,8 @@ if [[ ${currentPhase} -eq 11 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${CT_FREEBAYES_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\""
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\""
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
 	else 
         currentPhase=12
@@ -1225,8 +1245,8 @@ if [[ ${currentPhase} -eq 12 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${CT_PHASE_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=13
@@ -1238,8 +1258,8 @@ if [[ ${currentPhase} -eq 13 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${SC_10X_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=14
@@ -1251,8 +1271,8 @@ if [[ ${currentPhase} -eq 14 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${SC_BIONANO_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     else 
         currentPhase=15
@@ -1264,8 +1284,8 @@ if [[ ${currentPhase} -eq 15 && ${foundNext} -eq 0 ]]
 then 
     if [[ $((${currentStep}+1)) -gt 0 && $((${currentStep}+1)) -le ${SC_HIC_SUBMIT_SCRIPTS_TO} ]]
     then
-    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
-        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
+    	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap=\"bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID\"" 
+        sbatch${appAccount} --job-name=${PROJECT_ID}_p${currentPhase}s$((${currentStep+1})) -o ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.out -e ${log_folder}${prefix}_step$((${currentStep}+1))_${FIX_DB%.db}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=01:00:00 --mem-per-cpu=1g --dependency=afterok:${RET##* } --wrap="bash ${SUBMIT_SCRIPTS_PATH}/createAndSubmitMarvelSlurmJobs.sh ${configFile} ${currentPhase} $((${currentStep}+1)) $slurmID"
         foundNext=1
     fi
 fi                     
@@ -1274,6 +1294,6 @@ fi
 if [[ ${foundNext} -eq 0 ]]
 then
 	# submit a dummy job that waits until the last real jobs sucessfully finished
-	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.out -e ${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap=\"sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${prefix} ${currentPhase} ${currentStep} $slurmID ${configFile}\"\""
-	sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.out -e ${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${prefix} ${currentPhase} ${currentStep} $slurmID ${configFile}\""     
+	echo "sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${log_folder}${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.out -e ${log_folder}${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap=\"sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${prefix} ${currentPhase} ${currentStep} $slurmID ${configFile}\"\""
+	sbatch${appAccount} --job-name=${PROJECT_ID}_final -o ${log_folder}${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.out -e ${log_folder}${prefix}_final_step_${currentPhase}_${currentStep}_${slurmID}.err -n1 -c1 -p ${SLURM_PARTITION} --time=00:15:00 --mem=1g --dependency=afterok:${RET##* } --wrap="sleep 5 && echo \"finished - all selected jobs created and submitted. Last Step: ${prefix} ${currentPhase} ${currentStep} $slurmID ${configFile}\""     
 fi
