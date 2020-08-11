@@ -160,10 +160,6 @@ function setDaligerOptions()
     then
         REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -h${RAW_REPMASK_DALIGNER_HITS}"
     fi 
-    if [[ -n ${RAW_REPMASK_DALIGNER_TMP} ]]
-    then
-        REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${RAW_REPMASK_DALIGNER_TMP}"
-    fi       
     if [[ -n ${RAW_REPMASK_DALIGNER_T} ]]
     then
         REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -t${RAW_REPMASK_DALIGNER_T}"
@@ -450,8 +446,22 @@ then
             else
                 NUMACTL=""
             fi
-            echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
-            for y in $(seq ${x} $((${x}+${n}-1)))
+            
+            ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+            if [[ -n ${RAW_REPMASK_DALIGNER_TMP} ]]
+    		then
+    			
+    			cTMPDIR="mkdir ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+    		
+        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${RAW_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x}"
+        		dTMPDIR="rm -rf ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+        	else 
+        		cTMPDIR=""	
+        		dTMPDIR=""
+    		fi                   
+            
+            echo -n "cd ${RAW_REPMASK_OUTDIR} && ${cTMPDIR}PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
+            for y in $(seq ${x} $((x+n-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
                 then
@@ -460,7 +470,7 @@ then
                 echo -n " ${RAW_DAZZ_DB%.db}.${y}"
             done 
 
-			for y in $(seq ${x} $((${x}+${n}-1)))
+			for y in $(seq ${x} $((x+n-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
                 then
@@ -471,7 +481,7 @@ then
             
             n=$((${n}-1))
 
-            echo " && cd ${myCWD}"
+            echo " && ${dTMPDIR}cd ${myCWD}"
    		done > mask_07_daligner_block_${RAW_DB%.db}.${slurmID}.plan
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > mask_07_daligner_block_${RAW_DB%.db}.${slurmID}.version
     elif [[ ${currentStep} -eq 8 ]]
@@ -569,15 +579,28 @@ then
             else
                 NUMACTL=""
             fi
+            
+            ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+            if [[ -n ${RAW_REPMASK_DALIGNER_TMP} ]]
+    		then
+    			
+    			cTMPDIR="mkdir ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+    		
+        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${RAW_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x}"
+        		dTMPDIR="rm -rf ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+        	else 
+        		cTMPDIR=""	
+        		dTMPDIR=""
+    		fi
 
 			if [[ "x${DALIGNER_VERSION}" == "x2" ]]
 			then
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
 			else
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
 			fi			
 			
-            for y in $(seq ${x} $((${x}+${n}-1)))
+            for y in $(seq ${x} $((x+n-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
                 then
@@ -598,7 +621,7 @@ then
 				echo -n " && mv"
 			fi			
             
-            for y in $(seq ${x} $((${x}+${n}-1)))
+            for y in $(seq ${x} $((x+n-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
                 then
@@ -622,7 +645,7 @@ then
             	done
         	fi
  
-            echo " && cd ${myCWD}"
+            echo " && ${dTMPDIR}cd ${myCWD}"
             n=$((${n}-1))
     	done > mask_11_daligner_block_${RAW_DB%.db}.${slurmID}.plan 
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > mask_11_daligner_block_${RAW_DB%.db}.${slurmID}.version

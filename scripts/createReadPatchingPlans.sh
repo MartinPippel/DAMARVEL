@@ -109,10 +109,6 @@ function setDalignerOptions()
     then
         FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -b"
     fi
-    if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
-    then
-        FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}"
-    fi
     if [[ -n ${RAW_FIX_DALIGNER_BRIDGE} && ${RAW_FIX_DALIGNER_BRIDGE} -eq 1 ]]
     then
         FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -B"
@@ -805,13 +801,26 @@ then
             else
                 NUMACTL=""
             fi
-            	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
-            	then
-            		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
-		else
-        		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x}"
-		fi
-            cmdLine=$((${cmdLine}+1))
+            
+            ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+            if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
+    		then
+    			
+    			cTMPDIR="mkdir ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "    		
+        		FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x}"
+        		dTMPDIR="rm -rf ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+        	else 
+        		cTMPDIR=""	
+        		dTMPDIR=""
+    		fi            
+            	
+            if [[ "x${DALIGNER_VERSION}" == "x2" ]]
+            then
+            	echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
+			else
+        		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x}"
+			fi
+            cmdLine=$((cmdLine+1))
             count=0
 
             for y in $(seq ${x} ${nblocks})
@@ -823,11 +832,12 @@ then
                 else
                 	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then    
-                    	        echo -n "-$((y-1)) && mv"
+                  		echo -n "-$((y-1)) && mv"
                 	else
                 		echo -n " && mv"
                 	fi
-                    	z=${count}
+                    	
+                    z=${count}
 		    		while [[ $z -ge 1 ]]
 		    		do
 						echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
@@ -846,7 +856,7 @@ then
 		                    z=$((z-1)) 
 		            	done   
 				    fi
-				    echo " && cd ${myCWD}"
+				    echo " && ${dTMPDIR}cd ${myCWD}"
                     if [[ -n ${RAW_FIX_DALIGNER_NUMACTL} && ${RAW_FIX_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
                     then
                         if [[ $((${cmdLine} % 2)) -eq  0 ]]
@@ -858,44 +868,55 @@ then
                     else
                         NUMACTL=""
                     fi
+                    ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+		            if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
+		    		then
+		    			
+		    			cTMPDIR="mkdir ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "    		
+		        		FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$y}"
+		        		dTMPDIR="rm -rf ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+		        	else 
+		        		cTMPDIR=""	
+		        		dTMPDIR=""
+		    		fi
                     if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then
-                    		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${y}"
+                    	echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${y}"
                 	else
-                		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.${y}"
+                		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.${y}"
                 	fi
                     cmdLine=$((${cmdLine}+1))
                     count=1
                 fi
             done
-	    if [[ "x${DALIGNER_VERSION}" == "x2" ]]	
-	    then
+	    	if [[ "x${DALIGNER_VERSION}" == "x2" ]]	
+	    	then
             	echo -n "-${y} && mv"
-	    else
-		echo -n " && mv"
-	    fi
-            z=$((count-1))
-                    while [[ $z -ge 0 ]]
-                    do
-                        echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
-                        z=$((z-1))
-                    done
-                    echo -n " d${x}"
-                    if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
+	    	else
+				echo -n " && mv"
+	    	fi
+        	z=$((count-1))
+            while [[ $z -ge 0 ]]
+            do
+                echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
+                z=$((z-1))
+            done
+            echo -n " d${x}"
+            if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
+            then
+                z=$((count-1))
+                while [[ $z -ge 0 ]]
+                do
+                	if [[ ${x} -ne $((y-z)) ]]
                     then
-                        z=$((count-1))
-                        while [[ $z -ge 0 ]]
-                        do
-                                if [[ ${x} -ne $((y-z)) ]]
-                                then
-                                   echo -n " && mv ${RAW_DAZZ_DB%.db}.$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d$((y-z))"
-                                fi
-                                z=$((z-1))
-                        done
-                    fi
-                    echo " && cd ${myCWD}"
+                    	echo -n " && mv ${RAW_DAZZ_DB%.db}.$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d$((y-z))"
+                  	fi
+                   	z=$((z-1))
+                done
+            fi
+          	echo " && ${dTMPDIR}cd ${myCWD}"
     	done > fix_${sID}_daligner_block_${RAW_DB%.db}.${slurmID}.plan
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > fix_${sID}_daligner_block_${RAW_DB%.db}.${slurmID}.version
+       	echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > fix_${sID}_daligner_block_${RAW_DB%.db}.${slurmID}.version
     elif [[ ${currentStep} -eq 3 ]]
     then
         ### clean up plans 
