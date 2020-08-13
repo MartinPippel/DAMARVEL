@@ -806,9 +806,9 @@ then
             if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
     		then
     			
-    			cTMPDIR="mkdir ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "    		
-        		FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x}"
-        		dTMPDIR="rm -rf ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+    			cTMPDIR="mkdir ${RAW_FIX_DALIGNER_TMP}/daligner.b${x}.b${x} && "    		
+        		FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}/daligner.b${x}.b${x}"
+        		dTMPDIR="rm -rf ${RAW_FIX_DALIGNER_TMP}/daligner.b${x}.b${x} && "
         	else 
         		cTMPDIR=""	
         		dTMPDIR=""
@@ -872,9 +872,9 @@ then
 		            if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
 		    		then
 		    			
-		    			cTMPDIR="mkdir ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "    		
-		        		FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$y}"
-		        		dTMPDIR="rm -rf ${RAW_FIX_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+		    			cTMPDIR="mkdir ${RAW_FIX_DALIGNER_TMP}/daligner.b${x}.b${x} && "    		
+		        		FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -P${RAW_FIX_DALIGNER_TMP}/daligner.b${x}.b${$y}"
+		        		dTMPDIR="rm -rf ${RAW_FIX_DALIGNER_TMP}/daligner.b${x}.b${x} && "
 		        	else 
 		        		cTMPDIR=""	
 		        		dTMPDIR=""

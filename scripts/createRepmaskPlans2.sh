@@ -558,10 +558,10 @@ then
             if [[ -n ${FIX_REPMASK_DALIGNER_TMP} ]]
     		then
     			
-    			cTMPDIR="mkdir ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+    			cTMPDIR="mkdir ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
     		
-        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${FIX_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x}"
-        		dTMPDIR="rm -rf ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${FIX_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x}"
+        		dTMPDIR="rm -rf ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
         	else 
         		cTMPDIR=""	
         		dTMPDIR=""
@@ -688,10 +688,10 @@ then
             if [[ -n ${FIX_REPMASK_DALIGNER_TMP} ]]
     		then
     			
-    			cTMPDIR="mkdir ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+    			cTMPDIR="mkdir ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
     		
-        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${FIX_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x}"
-        		dTMPDIR="rm -rf ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${$x}.b${$x} && "
+        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${FIX_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x}"
+        		dTMPDIR="rm -rf ${FIX_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
         	else 
         		cTMPDIR=""	
         		dTMPDIR=""
