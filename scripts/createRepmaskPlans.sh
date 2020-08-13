@@ -452,15 +452,14 @@ then
     		then
     			
     			cTMPDIR="mkdir ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
-    		
-        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x}"
+    			TMPDIR="-P${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x}"
         		dTMPDIR="rm -rf ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
         	else 
         		cTMPDIR=""	
         		dTMPDIR=""
     		fi                   
             
-            echo -n "cd ${RAW_REPMASK_OUTDIR} && ${cTMPDIR}PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
+            echo -n "cd ${RAW_REPMASK_OUTDIR} && ${cTMPDIR}PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT}${TMPDIR} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
             for y in $(seq ${x} $((x+n-1)))
             do
                 if [[ ${y} -gt ${nblocks} ]]
@@ -584,20 +583,20 @@ then
             if [[ -n ${RAW_REPMASK_DALIGNER_TMP} ]]
     		then
     			
-    			cTMPDIR="mkdir ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
-    		
-        		REPMASK_DALIGNER_OPT="${REPMASK_DALIGNER_OPT} -P${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x}"
+    			cTMPDIR="mkdir ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "    		
+        		TMPDIR="-P${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x}"
         		dTMPDIR="rm -rf ${RAW_REPMASK_DALIGNER_TMP}/daligner.b${x}.b${x} && "
         	else 
-        		cTMPDIR=""	
+        		cTMPDIR=""
+        		TMPDIR=""
         		dTMPDIR=""
     		fi
 
 			if [[ "x${DALIGNER_VERSION}" == "x2" ]]
 			then
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT}${TMPDIR} ${REP} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
 			else
-				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
+				echo -n "cd ${RAW_REPMASK_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${REPMASK_DALIGNER_OPT}${TMPDIR} ${REP} ${RAW_DAZZ_DB%.db}.${x}"
 			fi			
 			
             for y in $(seq ${x} $((x+n-1)))
