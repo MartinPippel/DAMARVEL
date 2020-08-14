@@ -479,16 +479,6 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 	    fi
 	fi
 else
-	if [[ -n ${SLURM_LOGPATH} ]]
-	then
-		LOG_PATH="${SLURM_LOGPATH}/"
-	else 
-		LOG_PATH=""
-	fi	
-		
-	log_folder=${LOG_PATH}log_DAmar_pipeline
-	mkdir -p ${log_folder} || { (>&2 echo "Cannot crate log folder ${log_folder}, aborting..."); exit 7 ; }
-	
 	ADDCMD=""
 	if [[ -n ${SLURM_ADDCMD} ]]
 	then
@@ -544,6 +534,16 @@ if [[ -n ${SLURM_CONSTRAINT} ]]
 then
 	appAccount="${appAccount} --constraint=${SLURM_CONSTRAINT}"
 fi
+## all jobs that depend on the other jobs - need to get an own log directory
+if [[ -n ${SLURM_LOGPATH} ]]
+then
+	LOG_PATH="${SLURM_LOGPATH}/"
+else 
+	LOG_PATH=""
+fi	
+	
+log_folder="${LOG_PATH}log_DAmar_pipeline"
+mkdir -p ${log_folder} || { (>&2 echo "Cannot crate log folder ${log_folder}, aborting..."); exit 7 ; }
 
 if [[ ${resumeIdx} -gt 0 ]]
 then 
