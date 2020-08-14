@@ -838,11 +838,11 @@ then
                   		echo -n "-$((y-1))"
                 	fi
                 	
-                	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.\$((y-z)).las d${x}; z=\$((z-1)); done)"
+                	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
                     
 					if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
 				    then
-				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$((y-z)) ]]; then mv ${RAW_DAZZ_DB%.db}.\$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d\$((y-z)); fi; z=$((z-1)); done)"						   
+				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${RAW_DAZZ_DB%.db}.\$(($y-z)).${RAW_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
 				    fi
                     	
 #                    z=${count}
@@ -902,11 +902,11 @@ then
             	echo -n "-${y}"
 	    	fi
 	    	
-			echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.\$((y-z)).las d${x}; z=\$((z-1)); done)"
+			echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
                     
 			if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
 		    then
-		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$((y-z)) ]]; then mv ${RAW_DAZZ_DB%.db}.\$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d\$((y-z)); fi; z=$((z-1)); done)"						   
+		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${RAW_DAZZ_DB%.db}.\$(($y-z)).${RAW_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
 		    fi
 			    	
 #        	z=$((count-1))
