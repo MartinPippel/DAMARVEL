@@ -128,7 +128,12 @@ function setDalignerOptions()
     if [[ -n ${RAW_FIX_DALIGNER_T} ]]
     then
         FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -t${RAW_FIX_DALIGNER_T}"
+    fi
+    if [[ -n ${RAW_FIX_DALIGNER_MEM} ]]
+    then
+        FIX_DALIGNER_OPT="${FIX_DALIGNER_OPT} -M${RAW_FIX_DALIGNER_MEM}"
     fi  
+      
     if [[ -n ${RAW_FIX_DALIGNER_MASK} ]]
     then
         for x in ${RAW_FIX_DALIGNER_MASK}
