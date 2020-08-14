@@ -828,34 +828,42 @@ then
                 if [[ $count -lt ${RAW_FIX_DALIGNER_DAL} ]]
                 then
                     count=$((${count}+1))
-                    echo -n " ${RAW_DAZZ_DB%.db}.${y}"
+                    if [[ "x${DALIGNER_VERSION}" != "x2" ]]
+            		then
+                    	echo -n " ${RAW_DAZZ_DB%.db}.${y}"
+                    fi
                 else
                 	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then    
-                  		echo -n "-$((y-1)) && mv"
-                	else
-                		echo -n " && mv"
+                  		echo -n "-$((y-1))"
                 	fi
-                    	
-                    z=${count}
-		    		while [[ $z -ge 1 ]]
-		    		do
-						echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
-						z=$((z-1))
-		    		done
-		    		echo -n " d${x}"
-				    if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
+                	
+                	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.\$((y-z)).las d${x}; z=\$((z-1)); done)"
+                    
+					if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
 				    then
-						z=${count}
-			            while [[ $z -ge 1 ]]
-		        	    do
-							if [[ ${x} -ne $((y-z)) ]]
-							then
-		                    	echo -n " && mv ${RAW_DAZZ_DB%.db}.$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d$((y-z))"
-							fi
-		                    z=$((z-1)) 
-		            	done   
+				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$((y-z)) ]]; then mv ${RAW_DAZZ_DB%.db}.\$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d\$((y-z)); fi; z=$((z-1)); done)"						   
 				    fi
+                    	
+#                    z=${count}
+#		    		while [[ $z -ge 1 ]]
+#		    		do
+#						echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
+#						z=$((z-1))
+#		    		done
+#		    		echo -n " d${x}"
+#				    if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
+#				    then
+#						z=${count}
+#			            while [[ $z -ge 1 ]]
+#		        	    do
+#							if [[ ${x} -ne $((y-z)) ]]
+#							then
+#		                    	echo -n " && mv ${RAW_DAZZ_DB%.db}.$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d$((y-z))"
+#							fi
+#		                    z=$((z-1)) 
+#		            	done   
+#				    fi
 				    echo " && ${dTMPDIR}cd ${myCWD}"
                     if [[ -n ${RAW_FIX_DALIGNER_NUMACTL} && ${RAW_FIX_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
                     then
@@ -891,29 +899,35 @@ then
             done
 	    	if [[ "x${DALIGNER_VERSION}" == "x2" ]]	
 	    	then
-            	echo -n "-${y} && mv"
-	    	else
-				echo -n " && mv"
+            	echo -n "-${y}"
 	    	fi
-        	z=$((count-1))
-            while [[ $z -ge 0 ]]
-            do
-                echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
-                z=$((z-1))
-            done
-            echo -n " d${x}"
-            if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
-            then
-                z=$((count-1))
-                while [[ $z -ge 0 ]]
-                do
-                	if [[ ${x} -ne $((y-z)) ]]
-                    then
-                    	echo -n " && mv ${RAW_DAZZ_DB%.db}.$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d$((y-z))"
-                  	fi
-                   	z=$((z-1))
-                done
-            fi
+	    	
+			echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.\$((y-z)).las d${x}; z=\$((z-1)); done)"
+                    
+			if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
+		    then
+		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$((y-z)) ]]; then mv ${RAW_DAZZ_DB%.db}.\$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d\$((y-z)); fi; z=$((z-1)); done)"						   
+		    fi
+			    	
+#        	z=$((count-1))
+#            while [[ $z -ge 0 ]]
+#            do
+#                echo -n " ${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.$((y-z)).las"
+#                z=$((z-1))
+#            done
+#            echo -n " d${x}"
+#            if [[ -z "${RAW_FIX_DALIGNER_ASYMMETRIC}" ]]
+#            then
+#                z=$((count-1))
+#                while [[ $z -ge 0 ]]
+#                do
+#                	if [[ ${x} -ne $((y-z)) ]]
+#                    then
+#                   	echo -n " && mv ${RAW_DAZZ_DB%.db}.$((y-z)).${RAW_DAZZ_DB%.db}.${x}.las d$((y-z))"
+#                  	fi
+#                   	z=$((z-1))
+#                done
+#            fi
           	echo " && ${dTMPDIR}cd ${myCWD}"
     	done > fix_${sID}_daligner_block_${RAW_DB%.db}.${slurmID}.plan
        	echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > fix_${sID}_daligner_block_${RAW_DB%.db}.${slurmID}.version
