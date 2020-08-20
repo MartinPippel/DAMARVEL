@@ -2228,14 +2228,14 @@ void trim_contigs(TrimContext *ctx)
 
 				if (aLen > 150000 && DB_READ_LEN(ctx->db, ctx->trimEvid[j].contigB) < 150000 && largeBioanoGap  > 0.9 * DB_READ_LEN(ctx->db, ctx->trimEvid[j].contigB) ) //
 				{
-					printf("  + SKIP END_CHAIN (%d) -- take LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d\n", 0, ctx->trimEvid[j].contigA, 0, aLen, LASchain_minEnd, -1, -1);
-				}
-				else
-				{
 					printf("  + used END_CHAIN (%d) -- take LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d\n", 0, ctx->trimEvid[j].contigA, 0, aLen, LASchain_minEnd, -1, -1);
 					ctx->trimCoord[ctx->trimEvid[j].contigA].coord[1] = LASchain_minEnd;
 					// quick and dirty: ignore all remaining trim coordinates if those are present
 					ctx->trimCoord[ctx->trimEvid[j].contigA].numCoordPairs = 1;
+				}
+				else
+				{
+					printf("  + SKIP END_CHAIN (%d) -- take LASCHAIN CUT POSITIONS (%d - %d, %d): %d, %d\n", 0, ctx->trimEvid[j].contigA, 0, aLen, LASchain_minEnd, -1, -1);
 				}
 			}
 			else if ((Bionano_minEnd < aLen) && aLen - Bionano_minEnd < 3000)
