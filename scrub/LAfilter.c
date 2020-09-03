@@ -434,6 +434,11 @@ static void removeOvls(FilterContext *fctx, Overlap* ovls, int novls, int rmFlag
 			if(ovls[j].path.diffs == 0 && ((ovls[j].path.abpos == 0 && ovls[j].path.aepos == alen) || (ovls[j].path.bbpos == 0 && ovls[j].path.bepos == blen)))
 			{
 				ovls[j].flags |= OVL_DISCARD;
+				fctx->nFilteredDiffs++;
+				if (fctx->nVerbose)
+				{
+					printf("remove \"perfect\" overlap: %d vs %d a[%d,%d] equals b[%d,%d] diffs %d\n", ovls[j].aread, ovls[j].bread, ovls[j].path.abpos, ovls[j].path.aepos, ovls[j].path.bbpos, ovls[j].path.bepos, ovls[j].path.diffs);
+				}
 			}
 		}
 	}
