@@ -53,6 +53,7 @@
 #define REMOVE_SPECREP_OVL ( 1 << 4 )
 #define REMOVE_ID_OVL ( 1 << 5 )
 #define REMOVE_CONT_OVL ( 1 << 6 )
+#define REMOVE_PERF_OVL ( 1 << 7 )
 
 #define ANCHOR_INVALID 	(1 << 0)
 #define ANCHOR_TRIM 		(1 << 1)
@@ -106,6 +107,7 @@ typedef struct
 	//  																					   B -----E|B				B     E|B-----    B   E|B---E|B		  B ------------------
 	// 1 << 5 .. identity overlaps,
 	// 1 << 6 .. contained overlaps (this includes duplicates)
+	// 1 << 7 .. perfect overlaps, i.e. front to end mappers and 100% identity
 	int includeReadFlag;
 
 	int removeLowCoverageOverlaps;
@@ -419,6 +421,23 @@ static void removeOvls(FilterContext *fctx, Overlap* ovls, int novls, int rmFlag
 			j = k + 1;
 		}
 	}
+
+	if ((rmFlag & REMOVE_PERF_OVL))
+	{
+		printf("REMOVE_PERF_OVL\n");
+		int alen = DB_READ_LEN(fctx->db, ovls->aread);
+		int j;
+		for(j=0; j < novls; j++)
+		{
+			int blen = DB_READ_LEN(fctx->db, ovls[j].bread);
+
+			if(ovls[j].path.diffs == 0 && ((ovls[j].path.abpos == 0 && ovls[j].path.aepos == alen) || (ovls[j].path.bbpos == 0 && ovls[j].path.bepos == blen)))
+			{
+				ovls[j].flags |= OVL_DISCARD;
+			}
+		}
+	}
+
 }
 
 static void trimOffLeadingIndels(Overlap *ovl, ovl_header_twidth twidth)
@@ -2836,6 +2855,7 @@ static void usage()
 	fprintf(stderr, "                4 remove B-read repeat overlaps, if a proper overlap between A and B exists \n");
 	fprintf(stderr, "                5 identity overlaps\n");
 	fprintf(stderr, "                6 contained overlaps (includes duplicates)\n");
+	fprintf(stderr, "                7 perfect overlaps, i.e. front to end mappers with 100%% identity\n");
 	fprintf(stderr, "         -L ... two pass processing with read caching\n");
 	fprintf(stderr, "experimental features:\n");
 	fprintf(stderr, "         -f ... percentage of overlaps to keep (downsampling)\n");
@@ -3034,7 +3054,7 @@ int main(int argc, char* argv[])
 			case 'R':
 			{
 				int flag = atoi(optarg);
-				if (flag < 0 || flag > 6)
+				if (flag < 0 || flag > 7)
 				{
 					fprintf(stderr, "[ERROR]: Unsupported -R [%d] option.\n", flag);
 					usage();
