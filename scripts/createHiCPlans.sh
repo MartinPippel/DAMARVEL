@@ -551,11 +551,14 @@ then
        	bed=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed
        	echo "export PATH=${SALSA_PATH}:\$PATH && run_pipeline.py -a ${ref} -l ${ref}.fai -b ${bed} -e ${SC_HIC_ENZYME_SEQ} -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out ${SALSA_OPT}" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
        	
-       	echo "export PATH=${SALSA_PATH}:\$PATH && bash ${SALSA_PATH}/convert.sh ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out ${SC_HIC_SORT_THREADS}" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
-       	echo -n "${CONDA_HIC_ENV} && HDF5_USE_FILE_LOCKING=FALSE hic2cool convert ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.hic ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.cool -r 5000 -p 2" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
-       	echo -n " && HDF5_USE_FILE_LOCKING=FALSE cooler balance ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.cool" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
-       	echo -n " && HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.cool" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
-       	echo -e " && conda deactivate" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan 
+       	if [[ -v ${SC_HIC_CONVERTTOCOOLER} && ${SC_HIC_CONVERTTOCOOLER} -ne 0 ]]
+       	then 
+       		echo "export PATH=${SALSA_PATH}:\$PATH && bash ${SALSA_PATH}/convert.sh ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out ${SC_HIC_SORT_THREADS}" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
+       		echo -n "${CONDA_HIC_ENV} && HDF5_USE_FILE_LOCKING=FALSE hic2cool convert ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.hic ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.cool -r 5000 -p 2" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
+       		echo -n " && HDF5_USE_FILE_LOCKING=FALSE cooler balance ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.cool" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
+       		echo -n " && HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/out/salsa_scaffolds.cool" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
+       		echo -e " && conda deactivate" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.plan
+       	fi 
        	
        	echo "SALSA $(git --git-dir=${SALSA_PATH}/.git rev-parse --short HEAD)" > hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.version
        	echo "${CONDA_HIC_ENV} && bedtools --version && conda deactivate" >> hic_06_HICsalsaSalsa_single_${CONT_DB}.${slurmID}.version
