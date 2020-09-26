@@ -118,45 +118,50 @@ typedef struct
 	int rm_merge;
 	int rm_mode;
 
-	track_data* rm_repeat;
+	track_data *rm_repeat;
 	unsigned int rm_maxrepeat;
 
-	uint64_t* rm_bins;
+	uint64_t *rm_bins;
 	int rm_maxbins;
 
 	int trimIndels;
 
 	// repeat modules - result track
 
-	track_anno* rm_anno;
-	track_data* rm_data;
+	track_anno *rm_anno;
+	track_data *rm_data;
 	track_anno rm_ndata;
 	track_anno rm_maxdata;
 
 	// local ends
-	int* le_lbins;
-	int* le_rbins;
+	int *le_lbins;
+	int *le_rbins;
 	int le_maxbins;
 
-	FILE* fileSpanningReads;
+	FILE *fileSpanningReads;
 
-	HITS_DB* db;
-	HITS_TRACK* trackRepeat;
-	HITS_TRACK* trackTrim;
-	HITS_TRACK* trackDust;
+	HITS_DB *db;
+	HITS_TRACK *trackRepeat;
+	HITS_TRACK *trackTrim;
+	HITS_TRACK *trackDust;
 
-	int* r2bin;
+	// tracks used for phasing: TODO clean up (merging?)
+	HITS_TRACK *track_phaseSC;
+	HITS_TRACK *track_phaseHP;
+	HITS_TRACK *track_phasePS;
+
+	int *r2bin;
 	int max_r2bin;
 
 	int useRLoader;
-	TRIM* trim;
-	Read_Loader* rl;
+	TRIM *trim;
+	Read_Loader *rl;
 
 	ovl_header_twidth twidth;
 
-	FILE* fileOutDiscardedOverlaps;
-	int ** discardedAreadList;
-	int * discardedBreads;
+	FILE *fileOutDiscardedOverlaps;
+	int **discardedAreadList;
+	int *discardedBreads;
 
 	// experimental keep track of unique read intervals
 	int numIntervals;
@@ -169,15 +174,18 @@ typedef struct
 	int maxSegmentErrorRate;
 	int chimerCoverage;
 	int chimerAnchorBases;
+
+	int phase_Type;
+	int *phase_ScaffWhiteList;
 } FilterContext;
 
-extern char* optarg;
+extern char *optarg;
 extern int optind, opterr, optopt;
 
-static int loader_handler(void* _ctx, Overlap* ovl, int novl)
+static int loader_handler(void *_ctx, Overlap *ovl, int novl)
 {
-	FilterContext* ctx = (FilterContext*) _ctx;
-	Read_Loader* rl = ctx->rl;
+	FilterContext *ctx = (FilterContext*) _ctx;
+	Read_Loader *rl = ctx->rl;
 
 	static int firstCall = 1;
 
@@ -271,7 +279,7 @@ static int duplicated(int ab, int ae, int bb, int be)
 	return 0;
 }
 
-static void removeOvls(FilterContext *fctx, Overlap* ovls, int novls, int rmFlag)
+static void removeOvls(FilterContext *fctx, Overlap *ovls, int novls, int rmFlag)
 {
 	int i;
 
@@ -427,11 +435,11 @@ static void removeOvls(FilterContext *fctx, Overlap* ovls, int novls, int rmFlag
 		printf("REMOVE_PERF_OVL\n");
 		int alen = DB_READ_LEN(fctx->db, ovls->aread);
 		int j;
-		for(j=0; j < novls; j++)
+		for (j = 0; j < novls; j++)
 		{
 			int blen = DB_READ_LEN(fctx->db, ovls[j].bread);
 
-			if(ovls[j].path.diffs == 0 && ((ovls[j].path.abpos == 0 && ovls[j].path.aepos == alen) || (ovls[j].path.bbpos == 0 && ovls[j].path.bepos == blen)))
+			if (ovls[j].path.diffs == 0 && ((ovls[j].path.abpos == 0 && ovls[j].path.aepos == alen) || (ovls[j].path.bbpos == 0 && ovls[j].path.bepos == blen)))
 			{
 				ovls[j].flags |= OVL_DISCARD;
 				fctx->nFilteredDiffs++;
@@ -447,7 +455,7 @@ static void removeOvls(FilterContext *fctx, Overlap* ovls, int novls, int rmFlag
 
 static void trimOffLeadingIndels(Overlap *ovl, ovl_header_twidth twidth)
 {
-	ovl_trace* trace = ovl->path.trace;
+	ovl_trace *trace = ovl->path.trace;
 
 	int trim_a_left, trim_a_right;
 	int tlen = ovl->path.tlen;
@@ -494,7 +502,7 @@ static void trimOffLeadingIndels(Overlap *ovl, ovl_header_twidth twidth)
 
 static int filterMaxSegmentErrorRate(Overlap *ovl, int maxSegmentErrorRate)
 {
-	ovl_trace* trace = ovl->path.trace;
+	ovl_trace *trace = ovl->path.trace;
 	int tlen = ovl->path.tlen;
 
 	//	printf("o[%d, %d] %c a[%d, %d] b[%d, %d]", ovl->aread, ovl->bread, ovl->flags & OVL_COMP ? 'C' : 'N', ovl->path.abpos, ovl->path.aepos, ovl->path.bbpos, ovl->path.bepos);
@@ -513,7 +521,7 @@ static int filterMaxSegmentErrorRate(Overlap *ovl, int maxSegmentErrorRate)
 	return 0;
 }
 
-static int stitch(Overlap* ovls, int n, int fuzz, int aggressive)
+static int stitch(Overlap *ovls, int n, int fuzz, int aggressive)
 {
 	int stitched = 0;
 
@@ -530,7 +538,7 @@ static int stitch(Overlap* ovls, int n, int fuzz, int aggressive)
 
 	for (i = 0; i < n; i++)
 	{
-		Overlap* ovli = ovls + i;
+		Overlap *ovli = ovls + i;
 
 		if (ovli->flags & ignore_mask)
 		{
@@ -552,7 +560,7 @@ static int stitch(Overlap* ovls, int n, int fuzz, int aggressive)
 
 			for (k = i + 1; k < n && ovls[k].bread <= b; k++)
 			{
-				Overlap* ovlk = ovls + k;
+				Overlap *ovlk = ovls + k;
 
 				if ((ovlk->flags & ignore_mask) || (ovli->flags & OVL_COMP) != (ovlk->flags & OVL_COMP))
 				{
@@ -582,7 +590,7 @@ static int stitch(Overlap* ovls, int n, int fuzz, int aggressive)
 
 			if (found)
 			{
-				Overlap* ovlk = ovls + maxk;
+				Overlap *ovlk = ovls + maxk;
 
 				ab2 = ovlk->path.abpos;
 				ae2 = ovlk->path.aepos;
@@ -633,7 +641,7 @@ static int stitch(Overlap* ovls, int n, int fuzz, int aggressive)
 	return stitched;
 }
 
-static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
+static int find_repeat_modules(FilterContext *ctx, Overlap *ovls, int novl)
 {
 	int a = ovls->aread;
 	int trim_ab, trim_ae;
@@ -666,7 +674,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 	for (i = 0; i < novl; i++)
 	{
-		Overlap* ovl = ovls + i;
+		Overlap *ovl = ovls + i;
 		int abpos = ovl->path.abpos;
 		int aepos = ovl->path.aepos;
 		int flags = ovl->flags;
@@ -718,8 +726,8 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 		return 1;
 	}
 
-	track_anno* ranno = (track_anno*) (ctx->trackRepeat->anno);
-	track_data* rdata = (track_data*) (ctx->trackRepeat->data);
+	track_anno *ranno = (track_anno*) (ctx->trackRepeat->anno);
+	track_data *rdata = (track_data*) (ctx->trackRepeat->data);
 
 	track_anno ob = ranno[a];
 	track_anno oe = ranno[a + 1];
@@ -777,7 +785,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 	for (i = 0; i < novl; i++)
 	{
-		Overlap* ovl = ovls + i;
+		Overlap *ovl = ovls + i;
 
 		if (ovl->flags & ( OVL_STITCH | OVL_TRIM))
 		{
@@ -817,7 +825,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 		for (j = 0; j < novl; j++)
 		{
-			Overlap* ovl = ovls + j;
+			Overlap *ovl = ovls + j;
 
 			if ((ovl->flags & OVL_DISCARD))
 			{
@@ -901,7 +909,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 		for (i = 0; i < novl; i++)
 		{
-			Overlap* ovl = ovls + i;
+			Overlap *ovl = ovls + i;
 
 			if (ovl->path.abpos + 100 < b && ovl->path.aepos - 100 > e)
 			{
@@ -919,7 +927,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 		for (i = 0; i < novl; i++)
 		{
-			Overlap* ovl = ovls + i;
+			Overlap *ovl = ovls + i;
 
 			if (!(ovl->flags & OVL_REPEAT) || (ovl->flags & exclude_mask))
 			{
@@ -1028,7 +1036,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 	for (i = 0; i < novl; i++)
 	{
-		Overlap* ovl = ovls + i;
+		Overlap *ovl = ovls + i;
 		int trim_bb, trim_be;
 		int b = ovl->bread;
 
@@ -1144,7 +1152,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 	{
 		for (i = 0; i < novl; i++)
 		{
-			Overlap* ovl = ovls + i;
+			Overlap *ovl = ovls + i;
 
 			if (ovl->flags & OVL_TEMP)
 			{
@@ -1177,7 +1185,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 	for (i = 0; i < novl; i++)
 	{
-		Overlap* ovl = ovls + i;
+		Overlap *ovl = ovls + i;
 		int b = ovl->bread;
 
 		if ((ovl->flags & exclude_mask) || (left == 0 && ovl->path.abpos != trim_ab) || (right == 0 && ovl->path.aepos != trim_ae))
@@ -1200,7 +1208,7 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 
 		for (i = 0; i < novl; i++)
 		{
-			Overlap* ovl = ovls + i;
+			Overlap *ovl = ovls + i;
 			int b = ovl->bread;
 			int len = ovl->path.aepos - ovl->path.abpos;
 
@@ -1245,10 +1253,10 @@ static int find_repeat_modules(FilterContext* ctx, Overlap* ovls, int novl)
 	return 1;
 }
 
-static void getRepeatBasesFromInterval(HITS_TRACK* repeat, int readID, int beg, int end, int *cumBases, int *largest)
+static void getRepeatBasesFromInterval(HITS_TRACK *repeat, int readID, int beg, int end, int *cumBases, int *largest)
 {
-	track_anno* rep_anno = repeat->anno;
-	track_data* rep_data = repeat->data;
+	track_anno *rep_anno = repeat->anno;
+	track_data *rep_data = repeat->data;
 
 	track_anno rb, re;
 
@@ -1278,7 +1286,7 @@ static void getRepeatBasesFromInterval(HITS_TRACK* repeat, int readID, int beg, 
 	}
 }
 
-static int filter(FilterContext* ctx, Overlap* ovl)
+static int filter(FilterContext *ctx, Overlap *ovl)
 {
 	int nLen = ovl->path.aepos - ovl->path.abpos;
 	int nLenB = ovl->path.bepos - ovl->path.bbpos;
@@ -1434,8 +1442,8 @@ static int filter(FilterContext* ctx, Overlap* ovl)
 		{
 			int b, e, rb, re, ovllen, repeat;
 
-			track_anno* repeats_anno = ctx->trackRepeat->anno;
-			track_data* repeats_data = ctx->trackRepeat->data;
+			track_anno *repeats_anno = ctx->trackRepeat->anno;
+			track_data *repeats_data = ctx->trackRepeat->data;
 
 			int rp_mergeTip_ab = trim_ab;
 			int rp_mergeTip_ae = trim_ae;
@@ -1681,7 +1689,7 @@ static int filter(FilterContext* ctx, Overlap* ovl)
 	// check tracepoints
 	if (!(ovl->flags & OVL_DISCARD) && (ctx->removeFlags & REMOVE_TP))
 	{
-		ovl_trace* trace = (ovl_trace*) ovl->path.trace;
+		ovl_trace *trace = (ovl_trace*) ovl->path.trace;
 
 		int bpos = ovl->path.bbpos;
 
@@ -1706,13 +1714,13 @@ static int filter(FilterContext* ctx, Overlap* ovl)
 	return ret;
 }
 
-static void write_spanning_reads(FilterContext* ctx, int aread)
+static void write_spanning_reads(FilterContext *ctx, int aread)
 {
 	int b, e, rb, re;
 	int trim_ab, trim_ae;
 
-	track_anno* repeats_anno = ctx->trackRepeat->anno;
-	track_data* repeats_data = ctx->trackRepeat->data;
+	track_anno *repeats_anno = ctx->trackRepeat->anno;
+	track_data *repeats_data = ctx->trackRepeat->data;
 
 	if (ctx->trackTrim)
 	{
@@ -1743,7 +1751,7 @@ static void write_spanning_reads(FilterContext* ctx, int aread)
 	}
 }
 
-static void filter_pre(PassContext* pctx, FilterContext* fctx)
+static void filter_pre(PassContext *pctx, FilterContext *fctx)
 {
 #ifdef VERBOSE
 	printf( ANSI_COLOR_GREEN "PASS filtering\n" ANSI_COLOR_RESET);
@@ -1783,7 +1791,7 @@ static void filter_pre(PassContext* pctx, FilterContext* fctx)
 	}
 }
 
-static void filter_post(FilterContext* ctx)
+static void filter_post(FilterContext *ctx)
 {
 #ifdef VERBOSE
 	if (ctx->trim)
@@ -1885,15 +1893,15 @@ static void filter_post(FilterContext* ctx)
 		free(ctx->uniqIntervals);
 }
 
-static int cmp_ovls_qual(const void* a, const void* b)
+static int cmp_ovls_qual(const void *a, const void *b)
 {
-	Overlap* o1 = *(Overlap**) a;
-	Overlap* o2 = *(Overlap**) b;
+	Overlap *o1 = *(Overlap**) a;
+	Overlap *o2 = *(Overlap**) b;
 
 	return ((100 - (o1->path.diffs * 100.0 / (o1->path.aepos - o1->path.abpos))) * 10 - (100 - (o2->path.diffs * 100.0 / (o2->path.aepos - o2->path.abpos))) * 10);
 }
 
-static void removeChimerOvls(FilterContext* ctx, Overlap *ovl, int novl)
+static void removeChimerOvls(FilterContext *ctx, Overlap *ovl, int novl)
 {
 #ifdef DEBUG_CHIMER
 	printf("CHIMER: a[%d] minCov %d minAnchor: %d\n", ovl->aread, ctx->chimerCoverage, ctx->chimerAnchorBases);
@@ -1967,23 +1975,23 @@ static void removeChimerOvls(FilterContext* ctx, Overlap *ovl, int novl)
 		return;
 	}
 
-	if(numMostLeftLAS < ctx->chimerCoverage || numMostRightLAS < ctx->chimerCoverage)
+	if (numMostLeftLAS < ctx->chimerCoverage || numMostRightLAS < ctx->chimerCoverage)
 	{
 #ifdef DEBUG_CHIMER
 		printf("CHIMER: Number of entering/leaving overlaps of trim interval is lower than non-chimeric minimum number of overlaps L(%d) || R (%d) < %d\n", numMostLeftLAS, numMostRightLAS, ctx->chimerCoverage);
 #endif
 		for (i = 0; i < novl; i++)
-				{
-					ovl[i].flags |= OVL_DISCARD;
-		#ifdef DEBUG_CHIMER
-					printf("CHIMER: discard %d vs %d a[%d, %d] %c b[%d, %d]\n", ovl[i].aread, ovl[i].bread, ovl[i].path.abpos, ovl[i].path.aepos, (ovl[i].flags & OVL_COMP) ? 'c' : 'n', ovl[i].path.bbpos, ovl[i].path.bepos);
-		#endif
-				}
+		{
+			ovl[i].flags |= OVL_DISCARD;
+#ifdef DEBUG_CHIMER
+			printf("CHIMER: discard %d vs %d a[%d, %d] %c b[%d, %d]\n", ovl[i].aread, ovl[i].bread, ovl[i].path.abpos, ovl[i].path.aepos, (ovl[i].flags & OVL_COMP) ? 'c' : 'n', ovl[i].path.bbpos, ovl[i].path.bepos);
+#endif
+		}
 		return;
 	}
 
-	Overlap * o1 = ovl + j;
-	Overlap * o3 = ovl + j;
+	Overlap *o1 = ovl + j;
+	Overlap *o3 = ovl + j;
 
 	while (o1->path.aepos < right)
 	{
@@ -1991,7 +1999,7 @@ static void removeChimerOvls(FilterContext* ctx, Overlap *ovl, int novl)
 
 		for (i = 0; i < novl; i++)
 		{
-			Overlap * o2 = ovl + i;
+			Overlap *o2 = ovl + i;
 
 			if (o2->flags == OVL_DISCARD)
 				continue;
@@ -2061,10 +2069,10 @@ static void removeChimerOvls(FilterContext* ctx, Overlap *ovl, int novl)
 
 }
 
-static void removeWorstAlignments(FilterContext* ctx, Overlap* ovl, int novl)
+static void removeWorstAlignments(FilterContext *ctx, Overlap *ovl, int novl)
 {
 	int i;
-	Overlap** ovl_sort = (Overlap**) malloc(sizeof(Overlap*) * novl);
+	Overlap **ovl_sort = (Overlap**) malloc(sizeof(Overlap*) * novl);
 
 	int numIncomingReads, numLeavingReads;
 	int cumOverallBases;
@@ -2113,7 +2121,7 @@ static void removeWorstAlignments(FilterContext* ctx, Overlap* ovl, int novl)
 
 	for (i = 0; i < novl; i++)
 	{
-		Overlap* so = ovl_sort[i];
+		Overlap *so = ovl_sort[i];
 		if (so->flags & OVL_DISCARD)
 			continue;
 
@@ -2154,8 +2162,8 @@ static void removeWorstAlignments(FilterContext* ctx, Overlap* ovl, int novl)
 
 static int cmp_aIvl(const void *a, const void *b)
 {
-	anchorItv * a1 = (anchorItv*) a;
-	anchorItv * a2 = (anchorItv*) b;
+	anchorItv *a1 = (anchorItv*) a;
+	anchorItv *a2 = (anchorItv*) b;
 
 	if (a1->flag & ANCHOR_INVALID)
 	{
@@ -2195,8 +2203,8 @@ static void analyzeRepeatIntervals(FilterContext *ctx, int aread)
 	int MAXMERGE = ctx->mergeRepeatsMaxLen;
 	int i, b, e;
 
-	track_anno* repeats_anno = ctx->trackRepeat->anno;
-	track_data* repeats_data = ctx->trackRepeat->data;
+	track_anno *repeats_anno = ctx->trackRepeat->anno;
+	track_data *repeats_data = ctx->trackRepeat->data;
 
 	b = repeats_anno[aread] / sizeof(track_data);
 	e = repeats_anno[aread + 1] / sizeof(track_data);
@@ -2571,9 +2579,185 @@ static void analyzeRepeatIntervals(FilterContext *ctx, int aread)
 	printf(" sum n%d b%d\n", i, anchorbases);
 }
 
-static int filter_handler(void* _ctx, Overlap* ovl, int novl)
+/*
+ *
+ * Assumption:
+ * 1. all pacbio reads were phased, based on chromosome scale primary assembly
+ *  	scaffolds Ids representing chromosomes, are white listed others not
+ *
+ * 		phasing info is recorded in 3 tracks: ScaffIdx, HP, PS
+ *
+ * 		e.g. Read i, ScaffIdx=1, HP 1, PS 304	--> read was uniquely mapped to scaffold 1, haplotype 1 and phase set 304
+ * 								 ScaffIdx=1, HP 2, PS 304	--> read was uniquely mapped to scaffold 1, haplotype 2 and phase set 304
+ * 								 ScaffIdx=1								--> read was uniquely mapped to scaffold 1, but could not be phased,
+ * 								 															this can be caused to homozygous regions, or not enough SNVs within the PacBio read
+ *
+ *
+ * 								ScaffIdx=26 and 26 is not white listed, means that the read was mapped to a small scaffold that could not be integrated into a chromosome
+ * 														 							--> in such cases the phasing may not very reliable, and the phasing eill bbe ignored
+ *
+ * 2. the filtering is dependent on the selected phase type
+ * 2a) PhaseType=1 - for read patching	--> as stringent as possible
+ * 2b) PhaseType=2 - for assembly
+ * 		-
+ * 		---- if phasing info is available for A-Read:
+ * 		-						ScaffIdx		HP			PS
+ * 		-	read A				2				1				304
+ *
+ * 		-	read B				2				1				304			OK
+ * 		-	read B				2				-				-				OK
+ * 		-	read B				2				1				1230		OK (PhaseType=2)	FAIL (PhaseType=1)
+ * 		-	read B				2				2				304			FAIL
+ * 		-	read B				9				1				1299		FAIL
+ * 		-	read B				26			*				*				OK (PhaseType=2)	FAIL (PhaseType=1) AND 26 is not a chromosome (i.e. on blacklist)
+ * 		-	read B				26			-				-				OK
+ * 		- read B				-				-				-				OK (PhaseType=2)	FAIL (PhaseType=1) in this case the read was not mapped to any scaffold of the primary asm
+ *
+ * 		---- if phasing info is available for A-Read, but a-read is on ScaffIdx blacklist:
+ *		-						ScaffIdx		HP			PS
+ * 		-	read A				26			1				304
+ *
+ * 		-	read B				26			1				304			OK
+ * 		-	read B				26			2				304			OK (PhaseType=2)	FAIL (PhaseType=1)
+ * 		-	read B				26			-				-				OK
+ * 		-	read B				2				*				*				OK (PhaseType=2)	FAIL (PhaseType=1)
+ * 		-	read B				-				-				-				OK (PhaseType=2)	FAIL (PhaseType=1)
+ *
+ * 		---- if phasing info is NOT available for A-read:
+ * 		-						ScaffIdx		HP			PS
+ * 		-	read A				2				-				-
+ *
+ * 		-	read B				2				-				-				OK
+ * 		-	read B				2				*				*				OK (PhaseType=2)	FAIL (PhaseType=1)
+ * 		-	read B				9				*				*				FAIL
+ * 		-	read B				26			*				*				OK (PhaseType=2)	FAIL (PhaseType=1) AND 26 is not a chromosome (i.e. on blacklist)
+ * 		-	read B				-				-				-				OK (PhaseType=2)	FAIL (PhaseType=1) AND 26 is not a chromosome (i.e. on blacklist)
+ *
+ */
+static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 {
-	FilterContext* ctx = (FilterContext*) _ctx;
+	// get phase info for A-read
+
+	int phaseSCa, phaseHPa, phasePSa;
+	int phaseSCb, phaseHPb, phasePSb;
+
+	track_anno *phaseSCanno = ctx->track_phaseSC->anno;
+	track_data *phaseSCdata = ctx->track_phaseSC->data;
+
+	if (phaseSCanno[ovl->aread] >= phaseSCanno[ovl->aread + 1])
+		phaseSCa = -1;
+	else
+		phaseSCa = phaseSCdata[phaseSCanno[ovl->aread] / sizeof(track_data)];
+
+	track_anno *phaseHPanno = ctx->track_phaseHP->anno;
+	track_data *phaseHPdata = ctx->track_phaseHP->data;
+
+	if (phaseHPanno[ovl->aread] >= phaseHPanno[ovl->aread + 1])
+		phaseHPa = -1;
+	else
+		phaseHPa = phaseHPdata[phaseHPanno[ovl->aread] / sizeof(track_data)];
+
+	track_anno *phasePSanno = ctx->track_phasePS->anno;
+	track_data *phasePSdata = ctx->track_phasePS->data;
+
+	if (phasePSanno[ovl->aread] >= phasePSanno[ovl->aread + 1])
+		phasePSa = -1;
+	else
+		phasePSa = phasePSdata[phasePSanno[ovl->aread] / sizeof(track_data)];
+
+	// ignore Phasing of A-read
+	int ignorePhaseA, ignorePhaseB;
+
+	if (phaseHPa < 0)
+		ignorePhaseA = 1;
+	else
+		ignorePhaseA = (ctx->phase_ScaffWhiteList[phaseSCa] == 0) ? 1 : 0;
+
+	int i;
+	int prevB = -1;
+	for (i = 0; i < novl; i++)
+	{
+		Overlap *o = ovl + i;
+
+		if (o->flags & OVL_DISCARD)
+			continue;
+
+		// get phase info for B-read
+		if (prevB != o->bread)
+		{
+			if (phaseSCanno[o->bread] >= phaseSCanno[o->bread + 1])
+				phaseSCb = -1;
+			else
+				phaseSCb = phaseSCdata[phaseSCanno[o->bread] / sizeof(track_data)];
+
+			track_anno *phaseHPanno = ctx->track_phaseHP->anno;
+			track_data *phaseHPdata = ctx->track_phaseHP->data;
+
+			if (phaseHPanno[o->bread] >= phaseHPanno[o->bread + 1])
+				phaseHPb = -1;
+			else
+				phaseHPb = phaseHPdata[phaseHPanno[o->bread] / sizeof(track_data)];
+
+			track_anno *phasePSanno = ctx->track_phasePS->anno;
+			track_data *phasePSdata = ctx->track_phasePS->data;
+
+			if (phasePSanno[o->bread] >= phasePSanno[o->bread + 1])
+				phasePSb = -1;
+			else
+				phasePSb = phasePSdata[phasePSanno[o->bread] / sizeof(track_data)];
+
+			if (phaseHPb < 0)
+				ignorePhaseB = 1;
+			else
+				ignorePhaseB = (ctx->phase_ScaffWhiteList[phaseSCb] == 0) ? 1 : 0;
+		}
+		prevB = o->bread;
+		if (ctx->phase_Type == 1) // patching
+		{
+				/*
+				 * 		---- if phasing info is available:
+				 * 		-						ScaffIdx		HP			PS
+				 * 		-	read A				2				1				304
+				 *
+				 * 		-	read B				2				1				304			OK
+				 * 		-	read B				2				-				-				OK
+				 * 		-	read B				2				1				1230		OK (PhaseType=2)	FAIL (PhaseType=1)
+				 * 		-	read B				2				2				304			FAIL
+				 * 		-	read B				9				1				1299		FAIL
+				 * 		-	read B				26			*				*				OK (PhaseType=2)	FAIL (PhaseType=1) AND 26 is not a chromosome (i.e. on blacklist)
+				 * 		- read B				-				-				-				OK (PhaseType=2)	FAIL (PhaseType=1) in this case the read was not mapped to any scaffold of the primary asm
+				 *
+				 */
+				if(phaseSCa == phaseSCb)
+				{
+					if(phaseHPa == phaseHPb && phasePSa == phasePSb)	// A_2_1_304 B_2_1_304
+					{
+						continue;
+					}
+					else if(phaseHPb == -1)	// A_2_1_304 B_2_-1_-1 || A_2_-1_-1 B_2_-1_-1
+					{
+						continue;
+					}
+					o->flags |= OVL_DISCARD;		// A_2_1_304 B_2_2_304 || A_2_1_304 B_2_1_9999 || A_2_-1_-1 B_2_1|2_*
+					continue;
+				}
+				else
+				{
+					o->flags |= OVL_DISCARD;		// A_2_*_* B_3_*_*
+					continue;
+				}
+		}
+		else// todo
+		{
+
+		}
+	}
+
+}
+
+static int filter_handler(void *_ctx, Overlap *ovl, int novl)
+{
+	FilterContext *ctx = (FilterContext*) _ctx;
 	int j;
 
 	if (ctx->downsample)
@@ -2582,7 +2766,7 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 
 		for (j = 0; j < novl; j++)
 		{
-			Overlap* o = ovl + j;
+			Overlap *o = ovl + j;
 			if (o->aread > max_rid || o->bread > max_rid)
 			{
 				o->flags |= OVL_DISCARD;
@@ -2636,6 +2820,12 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 	if (ctx->trackDust)
 	{
 		analyzeRepeatIntervals(ctx, ovl->aread);
+	}
+
+	// analyze phasing information , and filter them
+	if (ctx->phase_Type > 0)
+	{
+		filterByPhaseInfo(ctx, ovl, novl);
 	}
 
 	// set filter flags
@@ -2726,12 +2916,12 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 			int leavecov = 0;
 			int bases = 0;
 
-			char * cov_read_active = malloc(DB_READ_MAXLEN(ctx->db));
+			char *cov_read_active = malloc(DB_READ_MAXLEN(ctx->db));
 			bzero(cov_read_active, DB_READ_MAXLEN(ctx->db));
 
 			for (j = 0; j < novl; j++)
 			{
-				Overlap* ovl_j = ovl + j;
+				Overlap *ovl_j = ovl + j;
 
 				if (ovl_j->flags & OVL_DISCARD)
 					continue;
@@ -2756,7 +2946,7 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 			{
 				for (j = 0; j < novl; j++)
 				{
-					Overlap* ovl_j = ovl + j;
+					Overlap *ovl_j = ovl + j;
 
 					if (ovl_j->flags & OVL_DISCARD)
 						continue;
@@ -2786,7 +2976,7 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 
 	// filter by read flags
 	int aread = ovl->aread;
-	HITS_READ* reads = ctx->db->reads;
+	HITS_READ *reads = ctx->db->reads;
 
 	if (reads[aread].flags & READ_DISCARD)
 	{
@@ -2838,7 +3028,7 @@ static int filter_handler(void* _ctx, Overlap* ovl, int novl)
 
 static void usage()
 {
-	fprintf(stderr, "[-vpLqTwZj] [-dnolRsSumMfyYzZVWb <int>] [-rtD <track>] [-xPIaA <file>] [-c<int,int>] <db> <overlaps_in> <overlaps_out>\n");
+	fprintf(stderr, "[-vpLqTwZj] [-dnolRsSumMfyYzZVWbH <int>] [-rtD <track>] [-xPIaAh <file>] [-c<int,int>] <db> <overlaps_in> <overlaps_out>\n");
 
 	fprintf(stderr, "options: -v ... verbose\n");
 	fprintf(stderr, "         -d ... max divergence allowed [0,100]\n");
@@ -2883,18 +3073,20 @@ static void usage()
 	fprintf(stderr, "                or at -W bases at the tips of the neighboring repeat. Those can cause a fragmented repeat mask. (default: 600)\n");
 	fprintf(stderr, "         -b ... remove alignments which have segments error rates above -b <int>%% (default: not set)\n");
 	fprintf(stderr, "         -c <inta,intb> remove overlaps from chimeric reads (Chimer detection: locations that have less then <inta> coverage and less then in <intb> anchor bases around that location)\n");
+	fprintf(stderr, "         -H <int>  filter by phase information, reads must be haplotagged and following tracks must be available: ScaffIdx, HP, and PS. Phasing type <int> \n");
+	fprintf(stderr, "         -h <file>	scaffold white list (based on ScaffIdx track), that should be considered for filtering. The remaining ScaffIdx are considered as unphased.\n");
 	fprintf(stderr, "OBSOLETE - will be removed in future\n");
 	fprintf(stderr, "         -j ... trim off unaligned bases (indels) from start/end of alignments\n");
 
 }
 
-static int opt_repeat_count(int argc, char** argv, char opt)
+static int opt_repeat_count(int argc, char **argv, char opt)
 {
 	int i;
 	int count = 0;
 	for (i = 1; i < argc; i++)
 	{
-		char* arg = argv[i];
+		char *arg = argv[i];
 
 		if (*arg == '-')
 		{
@@ -2917,13 +3109,13 @@ static int opt_repeat_count(int argc, char** argv, char opt)
 	return count;
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
 	HITS_DB db;
 	FilterContext fctx;
-	PassContext* pctx;
-	FILE* fileOvlIn;
-	FILE* fileOvlOut;
+	PassContext *pctx;
+	FILE *fileOvlIn;
+	FILE *fileOvlOut;
 
 	bzero(&fctx, sizeof(FilterContext));
 
@@ -2931,14 +3123,15 @@ int main(int argc, char* argv[])
 
 	// args
 
-	char* pathSpanningReads = NULL;
-	char* pathExcludeReads = NULL;
-	char* pathIncludeReads = NULL;
-	char* pathOutDiscardedOvls = NULL;
-	char* pathInDiscardedOvls = NULL;
-	char* pcTrackRepeats = DEF_ARG_R;
-	char* arg_trimTrack = DEF_ARG_T;
-	char* arg_dustTrack = NULL;
+	char *pathSpanningReads = NULL;
+	char *pathExcludeReads = NULL;
+	char *pathIncludeReads = NULL;
+	char *pathOutDiscardedOvls = NULL;
+	char *pathInDiscardedOvls = NULL;
+	char *pcTrackRepeats = DEF_ARG_R;
+	char *arg_trimTrack = DEF_ARG_T;
+	char *arg_dustTrack = NULL;
+	char *pathInPhaseScaffWhitelist = NULL;
 
 	int arg_purge = 0;
 
@@ -2973,7 +3166,8 @@ int main(int argc, char* argv[])
 
 	fctx.mergeRepeatsWindow = 600;
 	fctx.mergeRepeatsMaxLen = 2400;
-
+	fctx.phase_Type = -1;
+	fctx.phase_ScaffWhiteList = NULL;
 	int c;
 
 	fctx.rm_mode = opt_repeat_count(argc, argv, 'm');
@@ -2983,7 +3177,7 @@ int main(int argc, char* argv[])
 	}
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:jc:")) != -1)
+	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:jc:H:h:")) != -1)
 	{
 		switch (c)
 		{
@@ -3126,9 +3320,25 @@ int main(int argc, char* argv[])
 				fctx.mergeRepeatsMaxLen = atoi(optarg);
 				break;
 
+			case 'H':
+			{
+				int phase_Type = atoi(optarg);
+				if (phase_Type < 0)
+				{
+					fprintf(stderr, "[ERROR]: Unsupported phase type -H [%d]!.\n", phase_Type);
+					usage();
+					exit(1);
+				}
+				fctx.phase_Type = phase_Type;
+			}
+				break;
+			case 'h':
+				pathInPhaseScaffWhitelist = optarg;
+				break;
+
 			case 'c':
 			{
-				char * pch;
+				char *pch;
 				pch = strchr(optarg, ',');
 				if (pch == NULL)
 				{
@@ -3155,9 +3365,9 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 
-	char* pcPathReadsIn = argv[optind++];
-	char* pcPathOverlapsIn = argv[optind++];
-	char* pcPathOverlapsOut = argv[optind++];
+	char *pcPathReadsIn = argv[optind++];
+	char *pcPathOverlapsIn = argv[optind++];
+	char *pcPathOverlapsOut = argv[optind++];
 
 	if ((fileOvlIn = fopen(pcPathOverlapsIn, "r")) == NULL)
 	{
@@ -3241,7 +3451,7 @@ int main(int argc, char* argv[])
 
 	if (pathExcludeReads)
 	{
-		FILE* fileIn = fopen(pathExcludeReads, "r");
+		FILE *fileIn = fopen(pathExcludeReads, "r");
 
 		if (fileIn == NULL)
 		{
@@ -3249,7 +3459,7 @@ int main(int argc, char* argv[])
 			exit(1);
 		}
 
-		int* values;
+		int *values;
 		int nvalues;
 
 		fread_integers(fileIn, &values, &nvalues);
@@ -3271,7 +3481,7 @@ int main(int argc, char* argv[])
 	}
 	if (pathIncludeReads)
 	{
-		FILE* fileIn = fopen(pathIncludeReads, "r");
+		FILE *fileIn = fopen(pathIncludeReads, "r");
 
 		if (fileIn == NULL)
 		{
@@ -3279,7 +3489,7 @@ int main(int argc, char* argv[])
 			exit(1);
 		}
 
-		int* values;
+		int *values;
 		int nvalues;
 
 		fread_integers(fileIn, &values, &nvalues);
@@ -3303,7 +3513,7 @@ int main(int argc, char* argv[])
 
 	if (pathOutDiscardedOvls)
 	{
-		FILE* fileOut = fopen(pathOutDiscardedOvls, "w");
+		FILE *fileOut = fopen(pathOutDiscardedOvls, "w");
 
 		if (fileOut == NULL)
 		{
@@ -3315,7 +3525,7 @@ int main(int argc, char* argv[])
 
 	if (pathInDiscardedOvls)
 	{
-		FILE* fileIn = fopen(pathInDiscardedOvls, "r");
+		FILE *fileIn = fopen(pathInDiscardedOvls, "r");
 
 		if (fileIn == NULL)
 		{
@@ -3324,7 +3534,7 @@ int main(int argc, char* argv[])
 		}
 
 		// todo check if memory consumption is reasonable for larger projects
-		int ** discardedAreadList = (int **) calloc((DB_NREADS(fctx.db) + 1), sizeof(int *));
+		int **discardedAreadList = (int**) calloc((DB_NREADS(fctx.db) + 1), sizeof(int*));
 		assert(discardedAreadList);
 
 		int aread, bread;
@@ -3367,7 +3577,7 @@ int main(int argc, char* argv[])
 		//		printf("#areads: %6d, #breads %6d\n", numAreads, numBreads);
 		fseek(fileIn, 0L, SEEK_SET);
 
-		int * discardedBreads = (int*) malloc(sizeof(int) * (numBreads + numAreads + 10));
+		int *discardedBreads = (int*) malloc(sizeof(int) * (numBreads + numAreads + 10));
 		assert(discardedBreads);
 
 		prevAread = -2;
@@ -3416,7 +3626,100 @@ int main(int argc, char* argv[])
 		fclose(fileIn);
 	}
 
-	if (fctx.maxSegmentErrorRate < -1 && fctx.maxSegmentErrorRate > 100)
+	if (fctx.phase_Type > 0)
+	{
+		// check if required tracks are available
+		fctx.track_phaseSC = track_load(&db, "ScaffIdx");
+
+		if (!fctx.track_phaseSC)
+		{
+			fprintf(stderr, "[ERROR]: Could not load track %s, which is required for phase filtering!\n", "ScaffIdx");
+			exit(1);
+		}
+		fctx.track_phaseHP = track_load(&db, "HP");
+
+		if (!fctx.track_phaseHP)
+		{
+			fprintf(stderr, "[ERROR]: Could not load track %s, which is required for phase filtering!\n", "HP");
+			exit(1);
+		}
+
+		fctx.track_phasePS = track_load(&db, "PS");
+
+		if (!fctx.track_phasePS)
+		{
+			fprintf(stderr, "[ERROR]: Could not load track %s, which is required for phase filtering!\n", "PS");
+			exit(1);
+		}
+
+		int maxScaffs = 0;
+
+		track_anno *scaff_anno = fctx.track_phaseSC->anno;
+		track_data *scaff_data = fctx.track_phaseSC->data;
+
+		for (i = 0; i < DB_NREADS(&db); i++)
+		{
+			if (scaff_anno[i] >= scaff_anno[i + 1])
+				continue;
+
+			int tmp = scaff_data[scaff_anno[i] / sizeof(track_data)];
+			if (tmp > maxScaffs)
+				maxScaffs = tmp;
+		}
+		maxScaffs++;
+
+		fctx.phase_ScaffWhiteList = (int*) malloc(sizeof(int) * maxScaffs);
+
+		if (fctx.phase_ScaffWhiteList != NULL)
+		{
+			bzero(fctx.phase_ScaffWhiteList, sizeof(int) * maxScaffs);
+			// read ints from file
+			FILE *fileIn = fopen(pathInPhaseScaffWhitelist, "r");
+
+			if (fileIn == NULL)
+			{
+				fprintf(stderr, "could not open %s\n", pathInPhaseScaffWhitelist);
+				exit(1);
+			}
+
+			int *values;
+			int nvalues;
+
+			fread_integers(fileIn, &values, &nvalues);
+
+			printf("including %d sacffolds\n", nvalues);
+
+			for (i = 0; i < nvalues; i++)
+			{
+				if (values[i] < 1 || values[i] >= maxScaffs)
+				{
+					fprintf(stderr, "[WARNING] LAfilter: including ScaffIdx %d not possible! Must be in range: [1, %d]", values[i], maxScaffs - 1);
+					free(values);
+					fclose(fileIn);
+					exit(1);
+				}
+				fctx.phase_ScaffWhiteList[values[1]] = 1;
+			}
+			free(values);
+			fclose(fileIn);
+		}
+		else
+		{
+			for (i = 0; i < maxScaffs; i++)
+			{
+				fctx.phase_ScaffWhiteList[i] = 1;
+			}
+		}
+	}
+	else
+	{
+		if (pathInPhaseScaffWhitelist != NULL)
+		{
+			fprintf(stderr, "[WARNING]: Ignore phasing scaffold white list %s, as phasing option is not set (-h <int>)!\n", pathInPhaseScaffWhitelist);
+		}
+	}
+
+	if (fctx.maxSegmentErrorRate < -1 || fctx.maxSegmentErrorRate > 100)
 	{
 		printf("[ERROR]: invalid maxSegmentErrorRate %d! Must be within [0,100]\n", fctx.maxSegmentErrorRate);
 		usage();
