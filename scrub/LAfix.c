@@ -2335,19 +2335,19 @@ static int fix_process(void* _ctx, Overlap* ovl, int novl)
 				track_data *phase_data = fctx->phaseSC_track->data;
 
 				if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
-					fprintf(fctx->fileFastaOut, "ScaffIdx=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+					fprintf(fctx->fileFastaOut, " ScaffIdx=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
 
 				phase_anno = fctx->phaseHP_track->anno;
 				phase_data = fctx->phaseHP_track->data;
 
 				if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
-					fprintf(fctx->fileFastaOut, "HP=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+					fprintf(fctx->fileFastaOut, " HP=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
 
 				phase_anno = fctx->phasePS_track->anno;
 				phase_data = fctx->phasePS_track->data;
 
 				if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
-					fprintf(fctx->fileFastaOut, "PS=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+					fprintf(fctx->fileFastaOut, " PS=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
 			}
 
 			for (i = 0; i < fctx->curctracks; i++)
@@ -2603,19 +2603,19 @@ static int fix_process(void* _ctx, Overlap* ovl, int novl)
 			track_data *phase_data = fctx->phaseSC_track->data;
 
 			if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
-				fprintf(fctx->fileFastaOut, "ScaffIdx=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+				fprintf(fctx->fileFastaOut, " ScaffIdx=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
 
 			phase_anno = fctx->phaseHP_track->anno;
 			phase_data = fctx->phaseHP_track->data;
 
 			if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
-				fprintf(fctx->fileFastaOut, "HP=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+				fprintf(fctx->fileFastaOut, " HP=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
 
 			phase_anno = fctx->phasePS_track->anno;
 			phase_data = fctx->phasePS_track->data;
 
 			if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
-				fprintf(fctx->fileFastaOut, "PS=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+				fprintf(fctx->fileFastaOut, " PS=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
 		}
 
 #ifdef DEBUG_INTERVAL_ADJUSTMENT
