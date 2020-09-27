@@ -88,6 +88,7 @@ typedef struct
 	int minChimerBorderCov;
 	int fuzzyChain;
 	int repeatPerc;
+	int addPhaseTracks;
 
 	char *qName;
 	HITS_TRACK* qtrack;
@@ -95,6 +96,10 @@ typedef struct
 	HITS_TRACK* trimtrack;
 	char *repeatName;
 	HITS_TRACK* repeattrack;
+
+	HITS_TRACK* phaseSC_track;
+	HITS_TRACK* phaseHP_track;
+	HITS_TRACK* phasePS_track;
 
 	HITS_TRACK** convertTracks;
 	int curctracks;
@@ -1156,7 +1161,7 @@ static int spanningChain(FixContext*ctx, Overlap *ovls, int n, int chimerBeg, in
 			int j;
 			for (i = 0; i < ctx->curChains && valid; i++)
 			{
-				if ((chain->ovls[0]->flags & OVL_COMP) == (ctx->ovlChains[i].ovls[0]->flags && OVL_COMP))
+				if ((chain->ovls[0]->flags & OVL_COMP) == (ctx->ovlChains[i].ovls[0]->flags & OVL_COMP))
 				{
 					for (j = 0; j < chain->novl; j++)
 					{
@@ -2323,6 +2328,28 @@ static int fix_process(void* _ctx, Overlap* ovl, int novl)
 		{
 			fprintf(fctx->fileFastaOut, ">trimmed_%d source=%d", ovl->aread, ovl->aread);
 
+			// add phasing info
+			if(fctx->addPhaseTracks)
+			{
+				track_anno *phase_anno = fctx->phaseSC_track->anno;
+				track_data *phase_data = fctx->phaseSC_track->data;
+
+				if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
+					fprintf(fctx->fileFastaOut, "ScaffIdx=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+
+				phase_anno = fctx->phaseHP_track->anno;
+				phase_data = fctx->phaseHP_track->data;
+
+				if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
+					fprintf(fctx->fileFastaOut, "HP=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+
+				phase_anno = fctx->phasePS_track->anno;
+				phase_data = fctx->phasePS_track->data;
+
+				if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
+					fprintf(fctx->fileFastaOut, "PS=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+			}
+
 			for (i = 0; i < fctx->curctracks; i++)
 			{
 				track_anno* anno = fctx->convertTracks[i]->anno;
@@ -2569,6 +2596,28 @@ static int fix_process(void* _ctx, Overlap* ovl, int novl)
 	{
 		fprintf(fctx->fileFastaOut, ">fixed_%d source=%d", ovl->aread, ovl->aread);
 
+		// add phasing info
+		if(fctx->addPhaseTracks)
+		{
+			track_anno *phase_anno = fctx->phaseSC_track->anno;
+			track_data *phase_data = fctx->phaseSC_track->data;
+
+			if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
+				fprintf(fctx->fileFastaOut, "ScaffIdx=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+
+			phase_anno = fctx->phaseHP_track->anno;
+			phase_data = fctx->phaseHP_track->data;
+
+			if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
+				fprintf(fctx->fileFastaOut, "HP=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+
+			phase_anno = fctx->phasePS_track->anno;
+			phase_data = fctx->phasePS_track->data;
+
+			if (phase_anno[ovl->aread] < phase_anno[ovl->aread + 1])
+				fprintf(fctx->fileFastaOut, "PS=%d", phase_data[phase_anno[ovl->aread] / sizeof(track_data)]);
+		}
+
 #ifdef DEBUG_INTERVAL_ADJUSTMENT
 		printf("\n\n");
 		for (i = 0; i < napatches; i += 3)
@@ -2702,7 +2751,7 @@ static int fix_process(void* _ctx, Overlap* ovl, int novl)
 
 static void usage()
 {
-	printf("usage: [-ladX] [-bCxQgFR <int>] [-ctqr <track>] [-f <patched.quiva>] [-T <file>] <db> <in.las> <patched.fasta>\n");
+	printf("usage: [-ladXp] [-bCxQgFR <int>] [-ctqr <track>] [-f <patched.quiva>] [-T <file>] <db> <in.las> <patched.fasta>\n");
 	printf("       -c ... convert track intervals (multiple -c possible)\n");
 	printf("       -f ... patch quality streams\n");
 	printf("       -x ... min length for fixed sequences (%d)\n", DEF_ARG_X);
@@ -2711,6 +2760,7 @@ static void usage()
 	printf("       -t ... trim reads based on a track\n");
 	printf("       -q ... quality track (default: %s)\n", TRACK_Q);
 	printf("       -l ... low coverage mode\n");
+	printf("       -p ... add phase tracks (ScaffIdx, HP, PS) to fasta header\n");
 	printf("EXPERIMENTAL OPTIONS\n");
 	printf("       -X ... fix chimeric reads in repeat regions\n");
 	printf("       -r ... repeat track\n");
@@ -2750,7 +2800,7 @@ int main(int argc, char* argv[])
 	int lowc = 0;
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "dlXx:f:c:Q:g:t:q:r:b:C:T:F:R:")) != -1)
+	while ((c = getopt(argc, argv, "dlXx:f:c:Q:g:t:q:r:b:C:T:F:R:p")) != -1)
 	{
 		switch (c)
 		{
@@ -2826,6 +2876,10 @@ int main(int argc, char* argv[])
 				fctx.convertTracks[fctx.curctracks] = (HITS_TRACK*) optarg;
 				fctx.curctracks++;
 
+				break;
+
+			case 'p':
+				fctx.addPhaseTracks = 1;
 				break;
 
 			default:
@@ -2908,6 +2962,35 @@ int main(int argc, char* argv[])
 	{
 		fctx.maxspanners = 7;       // 10
 		fctx.minsupport = 4;        // 5
+	}
+
+	// load phase tracks
+
+	if (fctx.addPhaseTracks)
+	{
+		// check if required tracks are available
+		fctx.phaseSC_track = track_load(&db, "ScaffIdx");
+
+		if (!fctx.phaseSC_track)
+		{
+			fprintf(stderr, "[ERROR]: Could not load track %s!\n", "ScaffIdx");
+			exit(1);
+		}
+		fctx.phaseHP_track = track_load(&db, "HP");
+
+		if (!fctx.phaseHP_track)
+		{
+			fprintf(stderr, "[ERROR]: Could not load track %s!\n", "HP");
+			exit(1);
+		}
+
+		fctx.phasePS_track = track_load(&db, "PS");
+
+		if (!fctx.phasePS_track)
+		{
+			fprintf(stderr, "[ERROR]: Could not load track %s!\n", "PS");
+			exit(1);
+		}
 	}
 
 	// pass
