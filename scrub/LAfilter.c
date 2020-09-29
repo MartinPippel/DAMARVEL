@@ -2674,21 +2674,13 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 	else
 		phasePSa = phasePSdata[phasePSanno[ovl->aread] / sizeof(track_data)];
 
-	// ignore Phasing of A-read
-	int ignorePhaseA, ignorePhaseB;
-
-	if (phaseHPa < 0)
-		ignorePhaseA = 1;
-	else
-		ignorePhaseA = (ctx->phaseContext[phaseSCa].whitelist == 0) ? 1 : 0;
-
 	int discAllOvls = 0;
 	int i, j;
-	if (ctx->phase_Type == 2) // assembly
+	if (ctx->phase_Type == 2 && phaseSCa > 0) // assembly
 	{
-		PhaseContext *pc_a = ctx->phaseContext + ovl->aread;
+		PhaseContext *pc_a = ctx->phaseContext + phaseSCa;
 
-		if (pc_a->whitelist == 0)
+		if (pc_a && pc_a->whitelist == 0)
 		{
 			for (j = 0; j < pc_a->numPhaseSets; j++)
 			{
@@ -2738,11 +2730,6 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 				phasePSb = -1;
 			else
 				phasePSb = phasePSdata[phasePSanno[o->bread] / sizeof(track_data)];
-
-			if (phaseHPb < 0)
-				ignorePhaseB = 1;
-			else
-				ignorePhaseB = (ctx->phaseContext[phaseSCb].whitelist == 0) ? 1 : 0;
 		}
 		prevB = o->bread;
 		if (ctx->phase_Type == 1) // patching
@@ -2780,11 +2767,11 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 				continue;
 			}
 		}
-		else if (ctx->phase_Type == 2) // assembly
+		else if (ctx->phase_Type == 2 && phaseSCb > 0) // assembly
 		{
-			PhaseContext *pc_b = ctx->phaseContext + o->bread;
+			PhaseContext *pc_b = ctx->phaseContext + phaseSCb;
 
-			if (pc_b->whitelist == 0)
+			if (pc_b && pc_b->whitelist == 0)
 			{
 				for (j = 0; j < pc_b->numPhaseSets; j++)
 				{
