@@ -2783,11 +2783,6 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 				}
 			}
 		}
-		else
-		{
-			fprintf(stderr, "[ERROR] unsuported phasetype: %d\n", ctx->phase_Type);
-			exit(1);
-		}
 	}
 
 }
