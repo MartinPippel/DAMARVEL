@@ -2703,10 +2703,9 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 
 		if (discAllOvls)
 		{
-			if(VERBOSE)
-			{
+#ifdef VERBOSE
 				printf("disc ovl %d vs %d: [%d, %d] [%d, %d]\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos);
-			}
+#endif
 			o->flags |= OVL_DISCARD;
 			continue;
 		}
@@ -2781,10 +2780,9 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 				{
 					if (phaseHPb == pc_b->haplotag[j] && phasePSb == pc_b->phaseSet[j])
 					{
-						if(VERBOSE)
-						{
+#ifdef VERBOSE
 							printf("disc ovl %d vs %d: [%d, %d] [%d, %d]\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos);
-						}
+#endif
 						o->flags |= OVL_DISCARD;
 						break;
 					}
