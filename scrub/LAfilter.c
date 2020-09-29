@@ -71,6 +71,15 @@ typedef struct
 
 typedef struct
 {
+	int whitelist; 		// if 1 its a whitelist if 0 its a blacklist
+
+	int numPhaseSets;
+	int *haplotag;			// 1 or 2 or 0
+	int *phaseSet;
+} PhaseContext;
+
+typedef struct
+{
 	// stats counters
 	int nFilteredDiffs;
 	int nFilteredDiffsSegments;
@@ -176,7 +185,7 @@ typedef struct
 	int chimerAnchorBases;
 
 	int phase_Type;
-	int *phase_ScaffWhiteList;
+	PhaseContext *phaseContect;
 } FilterContext;
 
 extern char *optarg;
@@ -2671,9 +2680,24 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 	if (phaseHPa < 0)
 		ignorePhaseA = 1;
 	else
-		ignorePhaseA = (ctx->phase_ScaffWhiteList[phaseSCa] == 0) ? 1 : 0;
+		ignorePhaseA = (ctx->phaseContect[phaseSCa].whitelist == 0) ? 1 : 0;
 
-	int i;
+	int discAllOvls = 0;
+	int i, j;
+	if (ctx->phase_Type == 2) // assembly
+	{
+		PhaseContext *pc_a = ctx->phaseContect + ovl->aread;
+
+		for (j=0; j < pc_a->numPhaseSets; j++)
+		{
+			if(phaseHPa == pc_a->haplotag[j] && phasePSa == pc_a->phaseSet[j])
+			{
+				discAllOvls = 1;
+				break;
+			}
+		}
+	}
+
 	int prevB = -1;
 	for (i = 0; i < novl; i++)
 	{
@@ -2681,6 +2705,12 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 
 		if (o->flags & OVL_DISCARD)
 			continue;
+
+		if(discAllOvls)
+		{
+			o->flags |= OVL_DISCARD;
+			continue;
+		}
 
 		// get phase info for B-read
 		if (prevB != o->bread)
@@ -2709,47 +2739,61 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 			if (phaseHPb < 0)
 				ignorePhaseB = 1;
 			else
-				ignorePhaseB = (ctx->phase_ScaffWhiteList[phaseSCb] == 0) ? 1 : 0;
+				ignorePhaseB = (ctx->phaseContect[phaseSCb].whitelist == 0) ? 1 : 0;
 		}
 		prevB = o->bread;
 		if (ctx->phase_Type == 1) // patching
 		{
-				/*
-				 * 		---- if phasing info is available:
-				 * 		-						ScaffIdx		HP			PS
-				 * 		-	read A				2				1				304
-				 *
-				 * 		-	read B				2				1				304			OK
-				 * 		-	read B				2				-				-				OK
-				 * 		-	read B				2				1				1230		OK (PhaseType=2)	FAIL (PhaseType=1)
-				 * 		-	read B				2				2				304			FAIL
-				 * 		-	read B				9				1				1299		FAIL
-				 * 		-	read B				26			*				*				OK (PhaseType=2)	FAIL (PhaseType=1) AND 26 is not a chromosome (i.e. on blacklist)
-				 * 		- read B				-				-				-				OK (PhaseType=2)	FAIL (PhaseType=1) in this case the read was not mapped to any scaffold of the primary asm
-				 *
-				 */
-				if(phaseSCa == phaseSCb)
+			/*
+			 * 		---- if phasing info is available:
+			 * 		-						ScaffIdx		HP			PS
+			 * 		-	read A				2				1				304
+			 *
+			 * 		-	read B				2				1				304			OK
+			 * 		-	read B				2				-				-				OK
+			 * 		-	read B				2				1				1230		OK (PhaseType=2)	FAIL (PhaseType=1)
+			 * 		-	read B				2				2				304			FAIL
+			 * 		-	read B				9				1				1299		FAIL
+			 * 		-	read B				26			*				*				OK (PhaseType=2)	FAIL (PhaseType=1) AND 26 is not a chromosome (i.e. on blacklist)
+			 * 		- read B				-				-				-				OK (PhaseType=2)	FAIL (PhaseType=1) in this case the read was not mapped to any scaffold of the primary asm
+			 *
+			 */
+			if (phaseSCa == phaseSCb)
+			{
+				if (phaseHPa == phaseHPb && phasePSa == phasePSb)	// A_2_1_304 B_2_1_304
 				{
-					if(phaseHPa == phaseHPb && phasePSa == phasePSb)	// A_2_1_304 B_2_1_304
-					{
-						continue;
-					}
-					else if(phaseHPb == -1)	// A_2_1_304 B_2_-1_-1 || A_2_-1_-1 B_2_-1_-1
-					{
-						continue;
-					}
-					o->flags |= OVL_DISCARD;		// A_2_1_304 B_2_2_304 || A_2_1_304 B_2_1_9999 || A_2_-1_-1 B_2_1|2_*
 					continue;
 				}
-				else
+				else if (phaseHPb == -1)	// A_2_1_304 B_2_-1_-1 || A_2_-1_-1 B_2_-1_-1
 				{
-					o->flags |= OVL_DISCARD;		// A_2_*_* B_3_*_*
 					continue;
 				}
+				o->flags |= OVL_DISCARD;		// A_2_1_304 B_2_2_304 || A_2_1_304 B_2_1_9999 || A_2_-1_-1 B_2_1|2_*
+				continue;
+			}
+			else
+			{
+				o->flags |= OVL_DISCARD;		// A_2_*_* B_3_*_*
+				continue;
+			}
 		}
-		else// todo
+		else if (ctx->phase_Type == 2) // assembly
 		{
+			PhaseContext *pc_b = ctx->phaseContect + o->bread;
 
+			for (j=0; j < pc_b->numPhaseSets; j++)
+			{
+				if(phaseHPb == pc_b->haplotag[j] && phasePSb == pc_b->phaseSet[j])
+				{
+					o->flags |= OVL_DISCARD;
+					break;
+				}
+			}
+		}
+		else
+		{
+			fprintf(stderr, "[ERROR] unsuported phasetype: %d\n", ctx->phase_Type);
+			exit(1);
 		}
 	}
 
@@ -3028,7 +3072,7 @@ static int filter_handler(void *_ctx, Overlap *ovl, int novl)
 
 static void usage()
 {
-	fprintf(stderr, "[-vpLqTwZj] [-dnolRsSumMfyYzZVWbH <int>] [-rtD <track>] [-xPIaAh <file>] [-c<int,int>] <db> <overlaps_in> <overlaps_out>\n");
+	fprintf(stderr, "[-vpLTwZj] [-dnolRsSumMfyYzZVWbH <int>] [-rtD <track>] [-xPIaAh <file>] [-c<int,int>] <db> <overlaps_in> <overlaps_out>\n");
 
 	fprintf(stderr, "options: -v ... verbose\n");
 	fprintf(stderr, "         -d ... max divergence allowed [0,100]\n");
@@ -3074,7 +3118,8 @@ static void usage()
 	fprintf(stderr, "         -b ... remove alignments which have segments error rates above -b <int>%% (default: not set)\n");
 	fprintf(stderr, "         -c <inta,intb> remove overlaps from chimeric reads (Chimer detection: locations that have less then <inta> coverage and less then in <intb> anchor bases around that location)\n");
 	fprintf(stderr, "         -H <int>  filter by phase information, reads must be haplotagged and following tracks must be available: ScaffIdx, HP, and PS. Phasing type <int> \n");
-	fprintf(stderr, "         -h <file>	scaffold white list (based on ScaffIdx track), that should be considered for filtering. The remaining ScaffIdx are considered as unphased.\n");
+	fprintf(stderr, "         -h <file>	scaffold white list for read patching (based on ScaffIdx track), that should be considered for filtering. The remaining ScaffIdx are considered as unphased.\n");
+	fprintf(stderr, "         -q <file>	scaffold blacklist list for assembly (based on ScaffIdx-,HP-,and PS-track). Black list file has following line format: ScaffIdx Haplotype(1|2) PhasesSet.\n");
 	fprintf(stderr, "OBSOLETE - will be removed in future\n");
 	fprintf(stderr, "         -j ... trim off unaligned bases (indels) from start/end of alignments\n");
 
@@ -3132,6 +3177,7 @@ int main(int argc, char *argv[])
 	char *arg_trimTrack = DEF_ARG_T;
 	char *arg_dustTrack = NULL;
 	char *pathInPhaseScaffWhitelist = NULL;
+	char *pathInPhaseScaffBlacklist = NULL;
 
 	int arg_purge = 0;
 
@@ -3167,7 +3213,7 @@ int main(int argc, char *argv[])
 	fctx.mergeRepeatsWindow = 600;
 	fctx.mergeRepeatsMaxLen = 2400;
 	fctx.phase_Type = -1;
-	fctx.phase_ScaffWhiteList = NULL;
+	fctx.phaseContect = NULL;
 	int c;
 
 	fctx.rm_mode = opt_repeat_count(argc, argv, 'm');
@@ -3177,7 +3223,7 @@ int main(int argc, char *argv[])
 	}
 
 	opterr = 0;
-	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:jc:H:h:")) != -1)
+	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:jc:H:h:q:")) != -1)
 	{
 		switch (c)
 		{
@@ -3332,8 +3378,13 @@ int main(int argc, char *argv[])
 				fctx.phase_Type = phase_Type;
 			}
 				break;
+
 			case 'h':
 				pathInPhaseScaffWhitelist = optarg;
+				break;
+
+			case 'q':
+				pathInPhaseScaffBlacklist = optarg;
 				break;
 
 			case 'c':
@@ -3668,47 +3719,135 @@ int main(int argc, char *argv[])
 		}
 		maxScaffs++;
 
-		fctx.phase_ScaffWhiteList = (int*) malloc(sizeof(int) * maxScaffs);
-
-		if (fctx.phase_ScaffWhiteList != NULL)
+		/*
+		 * if phase type is 1, we need to parse a white list file which contains only one column of ScaffIdx
+		 */
+		if (fctx.phase_Type == 1)
 		{
-			bzero(fctx.phase_ScaffWhiteList, sizeof(int) * maxScaffs);
-			// read ints from file
-			FILE *fileIn = fopen(pathInPhaseScaffWhitelist, "r");
+			fctx.phaseContect = (PhaseContext*) malloc(sizeof(PhaseContext) * maxScaffs);
+			for (i = 0; i < maxScaffs; i++)
+			{
+				fctx.phaseContect[i].whitelist = 0;
+				fctx.phaseContect[i].numPhaseSets = 0;	// ignore phaseSet in whitelist	(for now)
+				fctx.phaseContect[i].phaseSet = NULL;
+				fctx.phaseContect[i].haplotag = NULL;				// ignore haplotag in whitelist (for now)
+			}
+
+			if (fctx.phaseContect != NULL)
+			{
+				// read ints from file
+				FILE *fileIn = fopen(pathInPhaseScaffWhitelist, "r");
+
+				if (fileIn == NULL)
+				{
+					fprintf(stderr, "could not open %s\n", pathInPhaseScaffWhitelist);
+					exit(1);
+				}
+
+				int *values;
+				int nvalues;
+
+				fread_integers(fileIn, &values, &nvalues);
+
+				printf("including %d sacffolds\n", nvalues);
+
+				for (i = 0; i < nvalues; i++)
+				{
+					if (values[i] < 1 || values[i] >= maxScaffs)
+					{
+						fprintf(stderr, "[ERROR] LAfilter: including ScaffIdx %d not possible! Must be in range: [1, %d]", values[i], maxScaffs - 1);
+						free(values);
+						fclose(fileIn);
+						exit(1);
+					}
+					fctx.phaseContect[values[1]].whitelist = 1;
+				}
+				free(values);
+				fclose(fileIn);
+			}
+			else
+			{
+				for (i = 0; i < maxScaffs; i++)
+				{
+					fctx.phaseContect[i].whitelist = 1;
+				}
+			}
+		}
+		else if (fctx.phase_Type == 2)
+		{
+			int scaffIDx;
+			int HP;
+			int PS;
+			int nlines = 0;
+
+			FILE *fileIn = fopen(pathInPhaseScaffBlacklist, "r");
 
 			if (fileIn == NULL)
 			{
-				fprintf(stderr, "could not open %s\n", pathInPhaseScaffWhitelist);
+				fprintf(stderr, "could not open %s\n", pathInPhaseScaffBlacklist);
 				exit(1);
 			}
 
-			int *values;
-			int nvalues;
-
-			fread_integers(fileIn, &values, &nvalues);
-
-			printf("including %d sacffolds\n", nvalues);
-
-			for (i = 0; i < nvalues; i++)
+			while (fscanf(fileIn, "%d %d %d\n", &scaffIDx, &HP, &PS) == 3)
 			{
-				if (values[i] < 1 || values[i] >= maxScaffs)
+				if (scaffIDx < 1 || scaffIDx >= maxScaffs)
 				{
-					fprintf(stderr, "[WARNING] LAfilter: including ScaffIdx %d not possible! Must be in range: [1, %d]", values[i], maxScaffs - 1);
-					free(values);
+					fprintf(stderr, "[ERROR] LAfilter: black list ScaffIdx %d not possible! Must be in range: [1, %d]", scaffIDx, maxScaffs - 1);
 					fclose(fileIn);
 					exit(1);
 				}
-				fctx.phase_ScaffWhiteList[values[1]] = 1;
+				if (HP < 0 || HP > 2)
+				{
+					fprintf(stderr, "[WARNING] LAfilter: black list haplotype: %d is not supported. HP should be [0,1,2] for diploid species!", HP);
+					fclose(fileIn);
+					exit(1);
+				}
+
+				PhaseContext *pc = fctx.phaseContect + scaffIDx;
+				assert(pc != NULL);
+
+				if (pc->numPhaseSets == 0)
+				{
+					pc->numPhaseSets = 1;
+					pc->haplotag = (int*) malloc(sizeof(int));
+					pc->phaseSet = (int*) malloc(sizeof(int));
+
+					pc->phaseSet[0] = PS;
+					pc->haplotag[0] = HP;
+				}
+				else
+				{
+					// check if phase set is already available
+					for (i = 0; i < pc->numPhaseSets; i++)
+					{
+						if (pc->phaseSet[i] == PS && pc->haplotag[i])
+						{
+							fprintf(stderr, "[WARNING] LAfilter: black list haplotype: Ignore duplicated entry on line %d: [%d %d %d]!", ++nlines, scaffIDx, HP, PS);
+							continue;
+						}
+						if (pc->phaseSet[i] == PS)
+						{
+							fprintf(stderr, "[WARNING] LAfilter: black list haplotype: Found same phase set %d and scaffIdx %d. Is this intended? [%d %d %d ] vs [%d %d %d]!", PS, scaffIDx, scaffIDx, HP, PS, scaffIDx, pc->haplotag[i], pc->phaseSet[i]);
+						}
+
+						pc->haplotag = (int*) realloc(pc->haplotag, (pc->numPhaseSets + 1) * sizeof(int));
+						pc->phaseSet = (int*) realloc(pc->phaseSet, (pc->numPhaseSets + 1) * sizeof(int));
+
+						pc->phaseSet[pc->numPhaseSets] = PS;
+						pc->haplotag[pc->numPhaseSets] = HP;
+						pc->numPhaseSets += 1;
+					}
+				}
+				nlines += 1;
 			}
-			free(values);
+			printf("parsed %d lines from file: %s\n", nlines, pathInPhaseScaffBlacklist);
+
 			fclose(fileIn);
 		}
 		else
 		{
-			for (i = 0; i < maxScaffs; i++)
-			{
-				fctx.phase_ScaffWhiteList[i] = 1;
-			}
+			fprintf(stderr, "[ERROR] LAfilter: Phase type: %d not supported. Possible values: 1 - read patching and 2 - assembly \n", fctx.phase_Type);
+			exit(1);
 		}
 	}
 	else
