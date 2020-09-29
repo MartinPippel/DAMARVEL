@@ -2704,7 +2704,7 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 		if (discAllOvls)
 		{
 #ifdef VERBOSE
-				printf("disc ovl %d vs %d: [%d, %d] [%d, %d]\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos);
+				printf("disc ovl %d vs %d: [%d, %d] [%d, %d] phasea: scaffIdx: %d, HP: %d PS: %d\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos, phaseSCa, phaseHPa, phasePSa);
 #endif
 			o->flags |= OVL_DISCARD;
 			continue;
@@ -2781,7 +2781,7 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 					if (phaseHPb == pc_b->haplotag[j] && phasePSb == pc_b->phaseSet[j])
 					{
 #ifdef VERBOSE
-							printf("disc ovl %d vs %d: [%d, %d] [%d, %d]\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos);
+							printf("disc ovl %d vs %d: [%d, %d] [%d, %d] phasea: scaffIdx: %d, HP: %d PS: %d phaseb: scaffIdx: %d, HP: %d PS: %d\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos, phaseSCa, phaseHPa, phasePSa, phaseSCb, phaseHPb, phasePSb);
 #endif
 						o->flags |= OVL_DISCARD;
 						break;
