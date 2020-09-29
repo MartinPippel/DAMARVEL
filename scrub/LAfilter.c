@@ -185,7 +185,7 @@ typedef struct
 	int chimerAnchorBases;
 
 	int phase_Type;
-	PhaseContext *phaseContect;
+	PhaseContext *phaseContext;
 } FilterContext;
 
 extern char *optarg;
@@ -2680,20 +2680,23 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 	if (phaseHPa < 0)
 		ignorePhaseA = 1;
 	else
-		ignorePhaseA = (ctx->phaseContect[phaseSCa].whitelist == 0) ? 1 : 0;
+		ignorePhaseA = (ctx->phaseContext[phaseSCa].whitelist == 0) ? 1 : 0;
 
 	int discAllOvls = 0;
 	int i, j;
 	if (ctx->phase_Type == 2) // assembly
 	{
-		PhaseContext *pc_a = ctx->phaseContect + ovl->aread;
+		PhaseContext *pc_a = ctx->phaseContext + ovl->aread;
 
-		for (j=0; j < pc_a->numPhaseSets; j++)
+		if (pc_a->whitelist == 0)
 		{
-			if(phaseHPa == pc_a->haplotag[j] && phasePSa == pc_a->phaseSet[j])
+			for (j = 0; j < pc_a->numPhaseSets; j++)
 			{
-				discAllOvls = 1;
-				break;
+				if (phaseHPa == pc_a->haplotag[j] && phasePSa == pc_a->phaseSet[j])
+				{
+					discAllOvls = 1;
+					break;
+				}
 			}
 		}
 	}
@@ -2706,7 +2709,7 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 		if (o->flags & OVL_DISCARD)
 			continue;
 
-		if(discAllOvls)
+		if (discAllOvls)
 		{
 			o->flags |= OVL_DISCARD;
 			continue;
@@ -2739,7 +2742,7 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 			if (phaseHPb < 0)
 				ignorePhaseB = 1;
 			else
-				ignorePhaseB = (ctx->phaseContect[phaseSCb].whitelist == 0) ? 1 : 0;
+				ignorePhaseB = (ctx->phaseContext[phaseSCb].whitelist == 0) ? 1 : 0;
 		}
 		prevB = o->bread;
 		if (ctx->phase_Type == 1) // patching
@@ -2779,14 +2782,17 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl)
 		}
 		else if (ctx->phase_Type == 2) // assembly
 		{
-			PhaseContext *pc_b = ctx->phaseContect + o->bread;
+			PhaseContext *pc_b = ctx->phaseContext + o->bread;
 
-			for (j=0; j < pc_b->numPhaseSets; j++)
+			if (pc_b->whitelist == 0)
 			{
-				if(phaseHPb == pc_b->haplotag[j] && phasePSb == pc_b->phaseSet[j])
+				for (j = 0; j < pc_b->numPhaseSets; j++)
 				{
-					o->flags |= OVL_DISCARD;
-					break;
+					if (phaseHPb == pc_b->haplotag[j] && phasePSb == pc_b->phaseSet[j])
+					{
+						o->flags |= OVL_DISCARD;
+						break;
+					}
 				}
 			}
 		}
@@ -3213,7 +3219,7 @@ int main(int argc, char *argv[])
 	fctx.mergeRepeatsWindow = 600;
 	fctx.mergeRepeatsMaxLen = 2400;
 	fctx.phase_Type = -1;
-	fctx.phaseContect = NULL;
+	fctx.phaseContext = NULL;
 	int c;
 
 	fctx.rm_mode = opt_repeat_count(argc, argv, 'm');
@@ -3724,16 +3730,16 @@ int main(int argc, char *argv[])
 		 */
 		if (fctx.phase_Type == 1)
 		{
-			fctx.phaseContect = (PhaseContext*) malloc(sizeof(PhaseContext) * maxScaffs);
+			fctx.phaseContext = (PhaseContext*) malloc(sizeof(PhaseContext) * maxScaffs);
 			for (i = 0; i < maxScaffs; i++)
 			{
-				fctx.phaseContect[i].whitelist = 0;
-				fctx.phaseContect[i].numPhaseSets = 0;	// ignore phaseSet in whitelist	(for now)
-				fctx.phaseContect[i].phaseSet = NULL;
-				fctx.phaseContect[i].haplotag = NULL;				// ignore haplotag in whitelist (for now)
+				fctx.phaseContext[i].whitelist = 0;
+				fctx.phaseContext[i].numPhaseSets = 0;	// ignore phaseSet in whitelist	(for now)
+				fctx.phaseContext[i].phaseSet = NULL;
+				fctx.phaseContext[i].haplotag = NULL;				// ignore haplotag in whitelist (for now)
 			}
 
-			if (fctx.phaseContect != NULL)
+			if (fctx.phaseContext != NULL)
 			{
 				// read ints from file
 				FILE *fileIn = fopen(pathInPhaseScaffWhitelist, "r");
@@ -3760,7 +3766,7 @@ int main(int argc, char *argv[])
 						fclose(fileIn);
 						exit(1);
 					}
-					fctx.phaseContect[values[1]].whitelist = 1;
+					fctx.phaseContext[values[1]].whitelist = 1;
 				}
 				free(values);
 				fclose(fileIn);
@@ -3769,12 +3775,21 @@ int main(int argc, char *argv[])
 			{
 				for (i = 0; i < maxScaffs; i++)
 				{
-					fctx.phaseContect[i].whitelist = 1;
+					fctx.phaseContext[i].whitelist = 1;
 				}
 			}
 		}
 		else if (fctx.phase_Type == 2)
 		{
+			fctx.phaseContext = (PhaseContext*) malloc(sizeof(PhaseContext) * maxScaffs);
+			for (i = 0; i < maxScaffs; i++)
+			{
+				fctx.phaseContext[i].whitelist = 1;
+				fctx.phaseContext[i].numPhaseSets = 0;	// ignore phaseSet in whitelist	(for now)
+				fctx.phaseContext[i].phaseSet = NULL;
+				fctx.phaseContext[i].haplotag = NULL;				// ignore haplotag in whitelist (for now)
+			}
+
 			int scaffIDx;
 			int HP;
 			int PS;
@@ -3803,8 +3818,10 @@ int main(int argc, char *argv[])
 					exit(1);
 				}
 
-				PhaseContext *pc = fctx.phaseContect + scaffIDx;
+				PhaseContext *pc = fctx.phaseContext + scaffIDx;
 				assert(pc != NULL);
+
+				pc->whitelist = 0;
 
 				if (pc->numPhaseSets == 0)
 				{
