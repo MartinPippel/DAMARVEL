@@ -280,6 +280,10 @@ then
             then
             	echo "#SBATCH --cpu-freq=high" >>  ${file}.slurm
             fi
+            if [[ -n ${SLURM_EXCLUDE_NODES} ]]
+            then 
+            	echo "#SBATCH --exclude=${SLURM_EXCLUDE_NODES}" >>  ${file}.slurm
+            fi
 			if [[ ${prefix} == "arrow" || ${prefix} == "qc" ]]
 			then
 				echo -e "\n${CONDA_BASE_ENV}" >> ${file}.slurm
@@ -368,6 +372,10 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
             if [[ -n ${SLURM_HIGH_CPUFREQ} ]]
             then
             	echo "#SBATCH --cpu-freq=high" >>  ${file}.slurm
+            fi
+            if [[ -n ${SLURM_EXCLUDE_NODES} ]]
+            then 
+            	echo "#SBATCH --exclude=${SLURM_EXCLUDE_NODES}" >>  ${file}.slurm
             fi	        
 			if [[ ${prefix} == "arrow" || ${prefix} == "qc" ]]
 			then
@@ -440,7 +448,10 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
             then
             	echo "#SBATCH --cpu-freq=high" >>  ${file}.slurm
             fi
-            
+            if [[ -n ${SLURM_EXCLUDE_NODES} ]]
+            then 
+            	echo "#SBATCH --exclude=${SLURM_EXCLUDE_NODES}" >>  ${file}.slurm
+            fi
 			if [[ ${prefix} == "arrow" || ${prefix} == "qc" ]]
 			then
 				echo -e "\n${CONDA_BASE_ENV}" >> ${file}.slurm
