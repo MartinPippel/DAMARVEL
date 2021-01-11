@@ -437,7 +437,7 @@ function setDalignerOptions()
     then 
         CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -T${THREADS_daligner}"
     fi
-    if [ ! -n ${COR_CONTIG_DALIGNER_DAL} ]
+    if [ -z ${COR_CONTIG_DALIGNER_DAL} ]
     then
         COR_CONTIG_DALIGNER_DAL=8
     fi 
@@ -648,14 +648,12 @@ then
         done 
         ### find and set daligner options 
         setDalignerOptions
-        cmdLine=1
         ### create daligner commands
         for x in $(seq 1 ${contigblocks})
         do 
         
         	echo -n "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.@${x}"
         	
-            cmdLine=$((${cmdLine}+1))
             count=0
             for y in $(seq ${x} ${contigblocks})
             do  
@@ -663,17 +661,14 @@ then
                 then
                     count=$((count+1))                    
                 else
-                	echo -n "-$((y+count-1))"  
+                	echo -n "-$((y-1))"  
                 	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
                     echo " && cd ${myCWD}"
 					echo -n "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.@${y}"
-                    echo "${cmd} && cd $d"
-                    cmd="cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && ${MARVEL_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.${y}"
-                    cmdLine=$((${cmdLine}+1))
                     count=1
                 fi
             done 
-            echo -n "-$((y+count))"
+            echo -n "-${y}"
             echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
             echo " && cd ${myCWD}"            
 		done > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.plan
