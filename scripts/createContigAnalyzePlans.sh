@@ -672,7 +672,6 @@ then
             echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
             echo " && cd ${myCWD}"            
 		done > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.plan
-		exit 1
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.version
     #### LAmerge
     elif [[ ${currentStep} -eq 8 ]]
