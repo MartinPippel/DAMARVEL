@@ -434,62 +434,71 @@ function setCTanalyzeOptions()
 function setDalignerOptions()
 {
     CONTIG_DALIGNER_OPT=""
-    if [[ -n ${COR_CONTIG_DALIGNER_IDENTITY_OVLS} && ${COR_CONTIG_DALIGNER_IDENTITY_OVLS} -gt 0 ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_IDENTITY_OVLS} && ${FIX_SCRUB_DALIGNER_IDENTITY_OVLS} -gt 0 ]]
     then
         CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -I"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_KMER} && ${COR_CONTIG_DALIGNER_KMER} -gt 0 ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_KMER} && ${FIX_SCRUB_DALIGNER_KMER} -gt 0 ]]
     then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -k ${COR_CONTIG_DALIGNER_KMER}"
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -k${FIX_SCRUB_DALIGNER_KMER}"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_ERR} ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_BRIDGE} && ${FIX_SCRUB_DALIGNER_BRIDGE} -eq 1 ]]
     then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -e ${COR_CONTIG_DALIGNER_ERR}"
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -B"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_BIAS} && ${COR_CONTIG_DALIGNER_BIAS} -eq 1 ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_ERR} ]]
+    then
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -e${FIX_SCRUB_DALIGNER_ERR}"
+    fi
+    if [[ -n ${FIX_SCRUB_DALIGNER_BIAS} && ${FIX_SCRUB_DALIGNER_BIAS} -eq 1 ]]
     then
         CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -b"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_VERBOSE} && ${COR_CONTIG_DALIGNER_VERBOSE} -ne 0 ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_OLEN} && ${FIX_SCRUB_DALIGNER_OLEN} -ne 0 ]]
+    then
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -l${FIX_SCRUB_DALIGNER_OLEN}"
+    fi
+    if [[ -n ${FIX_SCRUB_DALIGNER_VERBOSE} && ${FIX_SCRUB_DALIGNER_VERBOSE} -ne 0 ]]
     then
         CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -v"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_TRACESPACE} && ${COR_CONTIG_DALIGNER_TRACESPACE} -gt 0 ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_TRACESPACE} && ${FIX_SCRUB_DALIGNER_TRACESPACE} -gt 0 ]]
     then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -s ${COR_CONTIG_DALIGNER_TRACESPACE}"
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -s${FIX_SCRUB_DALIGNER_TRACESPACE}"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_RUNID} ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_T} ]]
     then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -r ${COR_CONTIG_DALIGNER_RUNID}"
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -t${FIX_SCRUB_DALIGNER_T}"
     fi
-    if [[ -n ${COR_CONTIG_DALIGNER_T} ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_TMP} ]]
     then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -t ${COR_CONTIG_DALIGNER_T}"
-    fi  
-    if [[ -n ${COR_CONTIG_DALIGNER_ASYMMETRIC} && ${COR_CONTIG_DALIGNER_ASYMMETRIC} -ne 0 ]]
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -P${FIX_SCRUB_DALIGNER_TMP}"
+    fi        
+    if [[ -n ${FIX_SCRUB_DALIGNER_ASYMMETRIC} && ${FIX_SCRUB_DALIGNER_ASYMMETRIC} -ne 0 ]]
     then
         CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -A"
     fi    
-    if [[ -n ${COR_CONTIG_DALIGNER_MEM} && ${COR_CONTIG_DALIGNER_MEM} -ne 0 ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_MEM} && ${FIX_SCRUB_DALIGNER_MEM} -ne 0 ]]
     then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -M ${COR_CONTIG_DALIGNER_MEM}"
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -M${FIX_SCRUB_DALIGNER_MEM}"
     fi    
-    if [[ -n ${COR_CONTIG_DALIGNER_MASK} ]]
+    if [[ -n ${FIX_SCRUB_DALIGNER_MASK} ]]
     then
-        for x in ${COR_CONTIG_DALIGNER_MASK}
+        for x in ${FIX_SCRUB_DALIGNER_MASK}
         do 
-            CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -m ${x}"
+            CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -m${x}"
         done
     fi
     if [[ -n ${THREADS_daligner} ]]
     then 
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -j ${THREADS_daligner}"
+        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -T${THREADS_daligner}"
     fi
-    if [ ! -n ${COR_CONTIG_DALIGNER_DAL} ]
+    if [ ! -n ${FIX_SCRUB_DALIGNER_DAL} ]
     then
-        COR_CONTIG_DALIGNER_DAL=8
+        FIX_SCRUB_DALIGNER_DAL=8
     fi 
 }
+
 
 if [[ -z ${COR_DIR} ]]
 then 
@@ -531,6 +540,7 @@ then
     (>&2 echo "ERROR - You have to set DACCORD_SOURCE_PATH. Used to report git version.")
     exit 1
 fi
+myCWD=$(pwd)
 
 myTypes=("1-createCorrectedContigDB, 2-DBdust, 3-Catrack, 4-datander, 5-TANmask, 6-Catrack, 7-daligner, 08_LAmerge, 09_LArepeat, 10_TKmerge, 11_TKcombine, 12_LAfilter, 13_LAmerge, 14_CTanalyze, 15_CTstatistics")
 #type-0 steps: 01_createCorrectedContigDB, 02_DBdust, 03_Catrack, 04_datander, 05_TANmask, 06_Catrack, 07_daligner, 08_LAmerge, 09_LArepeat, 10_TKmerge, 11_TKcombine, 12_LAfilter, 13_LAmerge, 14_CTanalyze, 15_CTstatistics
@@ -646,11 +656,10 @@ then
         done     
         ### find and set datander options 
         setDatanderOptions
-        d=$(pwd)
         ### create datander commands
         for x in $(seq 1 ${contigblocks})
         do 
-            echo "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && ${MARVEL_PATH}/bin/datander${CONTIG_DATANDER_OPT} ${CONT_DB%.db}.${x} && cd ${d}"
+            echo "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && ${MARVEL_PATH}/bin/datander${CONTIG_DATANDER_OPT} ${CONT_DB%.db}.${x} && cd ${myCWD}"
 		done > cont_04_datander_block_${CONT_DB%.db}.${slurmID}.plan
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > cont_04_datander_block_${CONT_DB%.db}.${slurmID}.version
 	### TANmask
@@ -696,49 +705,33 @@ then
         ### find and set daligner options 
         setDalignerOptions
         cmdLine=1
-        d=$(pwd)
         ### create daligner commands
         for x in $(seq 1 ${contigblocks})
         do 
-            if [[ -n ${COR_CONTIG_DALIGNER_NUMACTL} && ${COR_CONTIG_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
-            cmd="cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && ${NUMACTL}${MARVEL_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DB%.db}.${x}"
+        
+        	echo -n "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.@${x}"
+        	
             cmdLine=$((${cmdLine}+1))
             count=0
             for y in $(seq ${x} ${contigblocks})
             do  
-            	if [[ $count -lt ${COR_CONTIG_DALIGNER_DAL} || ${count} -lt 4 ]]
+            	if [[ $count -lt ${COR_CONTIG_DALIGNER_DAL} ]]
                 then
-                    cmd="${cmd} ${CONT_DB%.db}.${y}"
-                    count=$((${count}+1))
-                else    
+                    count=$((${count}+1))                    
+                else
+                	echo -n "-$((y-1))"  
+                	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+                    echo " && cd ${myCWD}"
+					echo -n "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.@${y}"
                     echo "${cmd} && cd $d"
-                    if [[ -n ${COR_CONTIG_DALIGNER_NUMACTL} && ${COR_CONTIG_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    cmd="cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && ${NUMACTL}${MARVEL_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DB%.db}.${x} ${CONT_DB%.db}.${y}"
+                    cmd="cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && ${MARVEL_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.${y}"
                     cmdLine=$((${cmdLine}+1))
                     count=1
                 fi
-            done
-            echo "${cmd} && cd ${d}"
+            done 
+            echo -n "-${y}"
+            echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+            echo " && cd ${myCWD}"            
 		done > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.plan
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.version
     #### LAmerge
