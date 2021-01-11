@@ -659,11 +659,11 @@ then
             count=0
             for y in $(seq ${x} ${contigblocks})
             do  
-            	if [[ $count -lt ${COR_CONTIG_DALIGNER_DAL} ]]
+            	if [[ $count -lt ${COR_CONTIG_DALIGNER_DAL} && $count -lt ${contigblocks} ]]
                 then
-                    count=$((${count}+1))                    
+                    count=$((count+1))                    
                 else
-                	echo -n "-$((y-1))"  
+                	echo -n "-$((y+count-1))"  
                 	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
                     echo " && cd ${myCWD}"
 					echo -n "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.@${y}"
@@ -673,10 +673,11 @@ then
                     count=1
                 fi
             done 
-            echo -n "-${y}"
+            echo -n "-$((y+count))"
             echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
             echo " && cd ${myCWD}"            
 		done > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.plan
+		exit 1
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.version
     #### LAmerge
     elif [[ ${currentStep} -eq 8 ]]
