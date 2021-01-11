@@ -237,62 +237,6 @@ function setTANmaskOptions()
     fi
 }
 
-function setDaligerOptions()
-{
-    CONTIG_DALIGNER_OPT=""
-    if [[ -n ${COR_CONTIG_DALIGNER_IDENTITY_OVLS} && ${COR_CONTIG_DALIGNER_IDENTITY_OVLS} -gt 0 ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -I"
-    fi
-    if [[ -n ${COR_CONTIG_DALIGNER_KMER} && ${COR_CONTIG_DALIGNER_KMER} -gt 0 ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -k ${COR_CONTIG_DALIGNER_KMER}"
-    fi
-    if [[ -n ${COR_CONTIG_DALIGNER_ERR} ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -e ${COR_CONTIG_DALIGNER_ERR}"
-    fi
-    if [[ -n ${COR_CONTIG_DALIGNER_BIAS} && ${COR_CONTIG_DALIGNER_BIAS} -eq 1 ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -b"
-    fi
-    if [[ -n ${COR_CONTIG_DALIGNER_RUNID} ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -r ${COR_CONTIG_DALIGNER_RUNID}"
-    fi
-    if [[ -n ${COR_CONTIG_DALIGNER_OLEN} ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -l ${COR_CONTIG_DALIGNER_OLEN}"
-    fi    
-    if [[ -n ${COR_CONTIG_DALIGNER_MEM} && ${COR_CONTIG_DALIGNER_MEM} -gt 0 ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -M ${COR_CONTIG_DALIGNER_MEM}"
-    fi    
-    if [[ -n ${COR_CONTIG_DALIGNER_HITS} ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -h ${COR_CONTIG_DALIGNER_HITS}"
-    fi        
-    if [[ -n ${COR_CONTIG_DALIGNER_T} ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -t ${COR_CONTIG_DALIGNER_T}"
-    fi  
-    if [[ -n ${COR_CONTIG_DALIGNER_MASK} ]]
-    then
-        for x in ${COR_CONTIG_DALIGNER_MASK}
-        do 
-            CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -m ${x}"
-        done
-    fi
-    if [[ -n ${COR_CONTIG_DALIGNER_TRACESPACE} && ${COR_CONTIG_DALIGNER_TRACESPACE} -gt 0 ]]
-    then
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -s ${COR_CONTIG_DALIGNER_TRACESPACE}"
-    fi
-    if [[ -n ${THREADS_daligner} ]]
-    then 
-        CONTIG_DALIGNER_OPT="${CONTIG_DALIGNER_OPT} -j ${THREADS_daligner}"
-    fi
-}
-
 function setLAmergeOptions()
 {
     CONTIG_LAMERGE_OPT=""
