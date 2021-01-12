@@ -514,6 +514,11 @@ then
         echo "ln -s -r ${FIX_FILT_OUTDIR}/${COR_DIR}/.${COR_DB%db}.* ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%db}.db ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
 		echo "ln -s -r .${RAW_DB%db}.* ${RAW_DB%db}.db ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
 		
+		for x in $(seq 1 ${contigblocks})
+	    do
+			echo "mkdir -p ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/d${x}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
+		done
+		
 		first=1
 		for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.fasta
 		do 
@@ -663,6 +668,11 @@ then
                 else
                 	echo -n "-$((y-1))"  
                 	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+                	if [[ -z "${COR_CONTIG_DALIGNER_ASYMMETRIC}" ]]
+				    then
+				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${CONT_DAZZ_DB%.db}.\$(($y-z)).${CONT_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
+				    fi
+                	
                     echo " && cd ${myCWD}"
 					echo -n "cd ${FIX_FILT_OUTDIR}/${ANALYZE_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${CONTIG_DALIGNER_OPT} ${CONT_DAZZ_DB%.db}.${x} ${CONT_DAZZ_DB%.db}.@${y}"
                     count=1
@@ -670,6 +680,11 @@ then
             done 
             echo -n "-${y}"
             echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${CONT_DAZZ_DB%.db}.${x}.${CONT_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+            if [[ -z "${COR_CONTIG_DALIGNER_ASYMMETRIC}" ]]
+		    then
+		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${CONT_DAZZ_DB%.db}.\$(($y-z)).${CONT_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
+		    fi
+            
             echo " && cd ${myCWD}"            
 		done > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.plan
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > cont_07_daligner_block_${CONT_DB%.db}.${slurmID}.version
