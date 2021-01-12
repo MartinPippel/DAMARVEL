@@ -1564,7 +1564,7 @@ then
    	 	OPT="${OPT} -e${RAW_FILT_LASFILTERALIGNMENTSBORDERREPEATS_ERATE}"
    	 	for x in $(seq 1 ${nblocks})
         do
-    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasfilteralignmentsborderrepeats ${OPT} ${RAW_DAZZ_DB%.db}.${fsuffix}SortFilt2.${x}.las ${RAW_DAZZ_DB%.db}.db ${RAW_DAZZ_DB%.db}.rep.data ${RAW_DAZZ_DB%.db}.${fsuffix}SortFilt1.${x}.las && cd ${mxCWD}" 
+    		echo "cd ${RAW_DACCORD_OUTDIR}_${RAW_DACCORD_INDIR} && ${DACCORD_PATH}/bin/lasfilteralignmentsborderrepeats ${OPT} ${RAW_DAZZ_DB%.db}.${fsuffix}SortFilt2.${x}.las ${RAW_DAZZ_DB%.db}.db ${RAW_DAZZ_DB%.db}.rep.data ${RAW_DAZZ_DB%.db}.${fsuffix}SortFilt1.${x}.las && cd ${myCWD}" 
 		done > fix_10_lasfilteralignmentsborderrepeats_block_${RAW_DB%.db}.${slurmID}.plan
       	echo "DACCORD lasfilteralignmentsborderrepeats $(git --git-dir=${DACCORD_SOURCE_PATH}/.git rev-parse --short HEAD)" > fix_10_lasfilteralignmentsborderrepeats_block_${RAW_DB%.db}.${slurmID}.version
   	### 11_mergesym2
