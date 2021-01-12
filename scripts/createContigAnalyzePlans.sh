@@ -702,7 +702,7 @@ then
         ### create LAmerge commands
         for x in $(seq 1 ${contigblocks}); 
         do  
-            echo "${MARVEL_PATH}/bin/LAmerge${CONTIG_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db} ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.${x}.las ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/$(getSubDirName ${COR_CONTIG_DALIGNER_RUNID} ${x})"
+            echo "${MARVEL_PATH}/bin/LAmerge${CONTIG_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db} ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.${x}.las ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${x}"
 		done > cont_08_LAmerge_block_${CONT_DB%.db}.${slurmID}.plan
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > cont_08_LAmerge_block_${CONT_DB%.db}.${slurmID}.version   
     #### LArepeat
