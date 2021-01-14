@@ -791,22 +791,9 @@ then
         ### find and set daligner options 
         setDalignerOptions
         ### create daligner commands
-        cmdLine=1
+        
         for x in $(seq 1 ${nblocks})
         do 
-
-            if [[ -n ${RAW_FIX_DALIGNER_NUMACTL} && ${RAW_FIX_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
-            
             ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
             if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
     		then
@@ -821,11 +808,10 @@ then
             	
             if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             then
-            	echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
+            	echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${x}"
 			else
-        		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x}"
+        		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x}"
 			fi
-            cmdLine=$((cmdLine+1))
             count=0
 
             for y in $(seq ${x} ${nblocks})
@@ -870,17 +856,6 @@ then
 #		            	done   
 #				    fi
 				    echo " && ${dTMPDIR}cd ${myCWD}"
-                    if [[ -n ${RAW_FIX_DALIGNER_NUMACTL} && ${RAW_FIX_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
                     ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
 		            if [[ -n ${RAW_FIX_DALIGNER_TMP} ]]
 		    		then
@@ -894,11 +869,10 @@ then
 		    		fi
                     if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then
-                    	echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${y}"
+                    	echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.@${y}"
                 	else
-                		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${NUMACTL}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.${y}"
-                	fi
-                    cmdLine=$((${cmdLine}+1))
+                		echo -n "cd ${RAW_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${cTMPDIR}${DAZZLER_PATH}/bin/daligner${FIX_DALIGNER_OPT} ${RAW_DAZZ_DB%.db}.${x} ${RAW_DAZZ_DB%.db}.${y}"
+                	fi                    
                     count=1
                 fi
             done
@@ -1154,7 +1128,6 @@ then
         ### find and set repcomp options 
         setRepcompOptions
 
-        cmdLine=1
         for x in $(seq 1 ${nblocks}); 
         do 
             srcDir=${RAW_REPCOMP_OUTDIR}/d${x}_ForRepComp
@@ -1171,19 +1144,7 @@ then
                 movDir=${RAW_REPCOMP_OUTDIR}/r${y}
                 if [[ -f ${srcDir}/${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las ]]
                 then 
-                    if [[ -n ${RAW_FIX_REPCOMP_NUMACTL} && ${RAW_FIX_REPCOMP_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    echo -n "${NUMACTL}${REPCOMP_PATH}/bin/repcomp${FIX_REPCOMP_OPT} -T/tmp/${RAW_DAZZ_DB%.db}.${x}.${y} ${desDir}/${RAW_DAZZ_DB%.db}.repcomp.${x}.${y} ${RAW_DAZZ_DB%.db} ${srcDir}/${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las"
-                    cmdLine=$((${cmdLine}+1))
+                    echo -n "${REPCOMP_PATH}/bin/repcomp${FIX_REPCOMP_OPT} -T/tmp/${RAW_DAZZ_DB%.db}.${x}.${y} ${desDir}/${RAW_DAZZ_DB%.db}.repcomp.${x}.${y} ${RAW_DAZZ_DB%.db} ${srcDir}/${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las"
                     if [[ $x -eq $y ]]
                     then
                         echo ""
@@ -1828,7 +1789,6 @@ then
         ### find and set repcomp options 
         setRepcompOptions
 
-        cmdLine=1
         for x in $(seq 1 ${nblocks}); 
         do 
             srcDir=${RAW_DALIGN_OUTDIR}/d${x}
@@ -1845,8 +1805,7 @@ then
                 movDir=${RAW_REPCOMP_OUTDIR}/r${y}
                 if [[ -f ${srcDir}/${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las ]]
                 then 
-                    echo -n "${NUMACTL}${REPCOMP_PATH}/bin/repcomp${FIX_REPCOMP_OPT} -T/tmp/${RAW_DAZZ_DB%.db}.${x}.${y} ${desDir}/${RAW_DAZZ_DB%.db}.repcomp.${x}.${y} ${RAW_DAZZ_DB%.db} ${srcDir}/${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las"
-                    cmdLine=$((${cmdLine}+1))
+                    echo -n "${REPCOMP_PATH}/bin/repcomp${FIX_REPCOMP_OPT} -T/tmp/${RAW_DAZZ_DB%.db}.${x}.${y} ${desDir}/${RAW_DAZZ_DB%.db}.repcomp.${x}.${y} ${RAW_DAZZ_DB%.db} ${srcDir}/${RAW_DAZZ_DB%.db}.${x}.${RAW_DAZZ_DB%.db}.${y}.las"                    
                     if [[ $x -eq $y ]]
                     then
                         echo ""
