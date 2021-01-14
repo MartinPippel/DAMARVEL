@@ -733,28 +733,28 @@ then
         ### find and set daligner options 
         setDalignerOptions
         ### create daligner commands
-        cmdLine=1
+        
     	for x in $(seq 1 ${fixblocks})
         do 
-
-            if [[ -n ${FIX_SCRUB_DALIGNER_NUMACTL} && ${FIX_SCRUB_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
-            	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
-            	then
-            		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x} ${FIX_DAZZ_DB%.db}.@${x}"
+        	### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+            if [[ -n ${FIX_SCRUB_DALIGNER_TMP} ]]
+    		then
+    			
+    			cTMPDIR="mkdir ${FIX_SCRUB_DALIGNER_TMP}/daligner.b${x}.b${x} && "    		
+        		SCRUB_DALIGNER_OPT="${SCRUB_DALIGNER_OPT} -P${FIX_SCRUB_DALIGNER_TMP}/daligner.b${x}.b${x}"
+        		dTMPDIR="rm -rf ${FIX_SCRUB_DALIGNER_TMP}/daligner.b${x}.b${x} && "
+        	else 
+        		cTMPDIR=""	
+        		dTMPDIR=""
+    		fi            
+        	
+            
+        	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
+        	then
+        		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x} ${FIX_DAZZ_DB%.db}.@${x}"
 			else
-	        		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x}"
+        		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x}"
 			fi
-            cmdLine=$((${cmdLine}+1))
             count=0
 
             for y in $(seq ${x} ${fixblocks})
@@ -762,81 +762,95 @@ then
                 if [[ $count -lt ${FIX_SCRUB_DALIGNER_DAL} ]]
                 then
                     count=$((${count}+1))
-                    echo -n " ${FIX_DAZZ_DB%.db}.${y}"
+                    if [[ "x${DALIGNER_VERSION}" != "x2" ]]
+            		then
+                    	echo -n " ${FIX_DAZZ_DB%.db}.${y}"
+                    fi
                 else
                 	if [[ "x${DALIGNER_VERSION}" == "x2" ]]
-            		then    
-                    	        echo -n "-$((y-1)) && mv"
-                	else
-                		echo -n " && mv"
+            		then 
+            			echo -n "-$((y-1))"   
                 	fi
-                    	z=${count}
-		    		while [[ $z -ge 1 ]]
-		    		do
-						echo -n " ${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.$((y-z)).las"
-						z=$((z-1))
-		    		done
-		    		echo -n " d${x}"
-				    if [[ -z "${FIX_SCRUB_DALIGNER_ASYMMETRIC}" ]]
+                	
+					echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+                    
+					if [[ -z "${FIX_SCRUB_DALIGNER_ASYMMETRIC}" ]]
 				    then
-						z=${count}
-			            while [[ $z -ge 1 ]]
-		        	    do
-							if [[ ${x} -ne $((y-z)) ]]
-							then
-		                    	echo -n " && mv ${FIX_DAZZ_DB%.db}.$((y-z)).${FIX_DAZZ_DB%.db}.${x}.las d$((y-z))"
-							fi
-		                    z=$((z-1)) 
-		            	done   
-				    fi
-				    echo " && cd ${myCWD}"
-                    if [[ -n ${FIX_SCRUB_DALIGNER_NUMACTL} && ${FIX_SCRUB_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
+				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${FIX_DAZZ_DB%.db}.\$(($y-z)).${FIX_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
+				    fi                	
+                    
+#                    z=${count}
+#		    		while [[ $z -ge 1 ]]
+#		    		do
+#						echo -n " ${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.$((y-z)).las"
+#						z=$((z-1))
+#		    		done
+#		    		echo -n " d${x}"
+#				    if [[ -z "${FIX_SCRUB_DALIGNER_ASYMMETRIC}" ]]
+#				    then
+#						z=${count}
+#			            while [[ $z -ge 1 ]]
+#		        	    do
+#							if [[ ${x} -ne $((y-z)) ]]
+#							then
+#		                    	echo -n " && mv ${FIX_DAZZ_DB%.db}.$((y-z)).${FIX_DAZZ_DB%.db}.${x}.las d$((y-z))"
+#							fi
+#		                    z=$((z-1)) 
+#		            	done   
+#				    fi
+					echo " && ${dTMPDIR}cd ${myCWD}"
+				    ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+		            if [[ -n ${FIX_SCRUB_DALIGNER_TMP} ]]
+		    		then
+		    			
+		    			cTMPDIR="mkdir ${FIX_SCRUB_DALIGNER_TMP}/daligner.b${x}.b${x} && "    		
+		        		SCRUB_DALIGNER_OPT="${SCRUB_DALIGNER_OPT} -P${FIX_SCRUB_DALIGNER_TMP}/daligner.b${x}.b${$y}"
+		        		dTMPDIR="rm -rf ${FIX_SCRUB_DALIGNER_TMP}/daligner.b${x}.b${x} && "
+		        	else 
+		        		cTMPDIR=""	
+		        		dTMPDIR=""
+		    		fi
                     if [[ "x${DALIGNER_VERSION}" == "x2" ]]
             		then
-                    		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x} ${FIX_DAZZ_DB%.db}.@${y}"
+                    		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x} ${FIX_DAZZ_DB%.db}.@${y}"
                 	else
-                		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${NUMACTL}${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x} ${FIX_DAZZ_DB%.db}.${y}"
+                		echo -n "cd ${FIX_DALIGN_OUTDIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DAZZ_DB%.db}.${x} ${FIX_DAZZ_DB%.db}.${y}"
                 	fi
-                    cmdLine=$((${cmdLine}+1))
                     count=1
                 fi
             done
-	    if [[ "x${DALIGNER_VERSION}" == "x2" ]]	
-	    then
-            	echo -n "-${y} && mv"
-	    else
-		echo -n " && mv"
-	    fi
-            z=$((count-1))
-                    while [[ $z -ge 0 ]]
-                    do
-                        echo -n " ${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.$((y-z)).las"
-                        z=$((z-1))
-                    done
-                    echo -n " d${x}"
-                    if [[ -z "${FIX_SCRUB_DALIGNER_ASYMMETRIC}" ]]
-                    then
-                        z=$((count-1))
-                        while [[ $z -ge 0 ]]
-                        do
-                                if [[ ${x} -ne $((y-z)) ]]
-                                then
-                                   echo -n " && mv ${FIX_DAZZ_DB%.db}.$((y-z)).${FIX_DAZZ_DB%.db}.${x}.las d$((y-z))"
-                                fi
-                                z=$((z-1))
-                        done
-                    fi
-                    echo " && cd ${myCWD}"
+		    if [[ "x${DALIGNER_VERSION}" == "x2" ]]	
+		    then
+		    	echo -n "-${y}"	            	
+		    fi
+		    
+		    echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+                    
+			if [[ -z "${FIX_SCRUB_DALIGNER_ASYMMETRIC}" ]]
+		    then
+		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${FIX_DAZZ_DB%.db}.\$(($y-z)).${FIX_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
+		    fi
+		    
+#            z=$((count-1))
+#            while [[ $z -ge 0 ]]
+#            do
+#                echo -n " ${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.$((y-z)).las"
+#                z=$((z-1))
+#            done
+#            echo -n " d${x}"
+#            if [[ -z "${FIX_SCRUB_DALIGNER_ASYMMETRIC}" ]]
+#            then
+#                z=$((count-1))
+#                while [[ $z -ge 0 ]]
+#                do
+#                        if [[ ${x} -ne $((y-z)) ]]
+#                        then
+#                           echo -n " && mv ${FIX_DAZZ_DB%.db}.$((y-z)).${FIX_DAZZ_DB%.db}.${x}.las d$((y-z))"
+#                        fi
+#                        z=$((z-1))
+#                done
+#            fi
+            echo " && ${dTMPDIR}cd ${myCWD}"
     	done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version	    
     elif [[ ${currentStep} -eq 3 ]]
@@ -1183,7 +1197,6 @@ then
         ### find and set repcomp options 
         setRepcompOptions
 
-        cmdLine=1
     	for x in $(seq 1 ${fixblocks}); 
         do 
             srcDir=${FIX_REPCOMP_OUTDIR}/d${x}_ForRepComp
@@ -1201,7 +1214,6 @@ then
                 if [[ -f ${srcDir}/${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.${y}.las ]]
                 then 
                     echo -n "${REPCOMP_PATH}/bin/repcomp${SCRUB_REPCOMP_OPT} -T/tmp/${FIX_DAZZ_DB%.db}.${x}.${y} ${desDir}/${FIX_DAZZ_DB%.db}.repcomp.${x}.${y} ${FIX_DAZZ_DB%.db} ${srcDir}/${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.${y}.las"
-                    cmdLine=$((${cmdLine}+1))
                     if [[ $x -eq $y ]]
                     then
                         echo ""
@@ -1593,7 +1605,6 @@ then
         ### find and set repcomp options 
         setForcealignOptions
 
-        cmdLine=1
     	for x in $(seq 1 ${fixblocks}); 
         do 
             start=${x}
@@ -1604,7 +1615,6 @@ then
                 then 
                     echo -n "${DACCORD_PATH}/bin/forcealign${SCRUB_FORCEALIGN_OPT} -T/tmp/${FIX_DAZZ_DB%.db}.forcealign.${x}.${y} ${FIX_FORCEALIGN_OUTDIR}/f${x}/${FIX_DAZZ_DB%.db}.forcealign.${x}.${y} ${FIX_DAZZ_DB%.db} ${FIX_FORCEALIGN_OUTDIR}/r${x}_ForForceAlign/${FIX_DAZZ_DB%.db}.${x}.${FIX_DAZZ_DB%.db}.${y}.mergeSort.las"
                     
-                    cmdLine=$((${cmdLine}+1))
                     if [[ $x -eq $y ]]
                     then
                         echo ""
@@ -1948,23 +1958,11 @@ then
         done 
         ### find and set daligner options 
         setDalignerOptions
-        cmdLine=1
+
         ### create daligner commands
         for x in $(seq 1 ${fixblocks})
         do 
-            if [[ -n ${FIX_SCRUB_DALIGNER_NUMACTL} && ${FIX_SCRUB_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
-            cmd="${NUMACTL}${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x}"
-            cmdLine=$((${cmdLine}+1))
+            cmd="${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x}"
             count=0
             for y in $(seq ${x} ${fixblocks})
             do  
@@ -1974,19 +1972,7 @@ then
                     count=$((${count}+1))
                 else    
                     echo "${cmd}"
-                    if [[ -n ${FIX_SCRUB_DALIGNER_NUMACTL} && ${FIX_SCRUB_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    cmd="${NUMACTL}${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x} ${FIX_DB%.db}.${y}"
-                    cmdLine=$((${cmdLine}+1))
+                    cmd="${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x} ${FIX_DB%.db}.${y}"
                     count=1
                 fi
             done
@@ -2301,23 +2287,10 @@ then
         done 
         ### find and set daligner options 
         setDalignerOptions
-        cmdLine=1
         ### create daligner commands
         for x in $(seq 1 ${fixblocks})
         do 
-            if [[ -n ${FIX_SCRUB_DALIGNER_NUMACTL} && ${FIX_SCRUB_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-            then
-                if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                then
-                    NUMACTL="numactl -m0 -N0 "
-                else
-                    NUMACTL="numactl -m1 -N1 "    
-                fi
-            else
-                NUMACTL=""
-            fi
-            cmd="${NUMACTL}${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x}"
-            cmdLine=$((${cmdLine}+1))
+            cmd="${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x}"
             count=0
             for y in $(seq ${x} ${fixblocks})
             do  
@@ -2327,19 +2300,7 @@ then
                     count=$((${count}+1))
                 else    
                     echo "${cmd}"
-                    if [[ -n ${FIX_SCRUB_DALIGNER_NUMACTL} && ${FIX_SCRUB_DALIGNER_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    cmd="${NUMACTL}${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x} ${FIX_DB%.db}.${y}"
-                    cmdLine=$((${cmdLine}+1))
+                    cmd="${MARVEL_PATH}/bin/daligner${SCRUB_DALIGNER_OPT} ${FIX_DB%.db}.${x} ${FIX_DB%.db}.${y}"
                     count=1
                 fi
             done
@@ -2671,7 +2632,6 @@ then
         done 
         ### find and set repcomp options 
         setRepcompOptions
-        cmdLine=1
         for x in $(seq 1 ${fixblocks}); 
         do 
             srcDir=$(getSubDirName ${FIX_SCRUB_DALIGNER_RUNID} ${x})_ForRepComp
@@ -2688,19 +2648,7 @@ then
                 movDir=$(getSubDirName ${FIX_SCRUB_REPCOMP_RUNID} ${y})
                 if [[ -f ${srcDir}/${FIX_DB%.db}.${x}.${FIX_DB%.db}.${y}.las ]]
                 then 
-                    if [[ -n ${FIX_SCRUB_REPCOMP_NUMACTL} && ${FIX_SCRUB_REPCOMP_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    echo -n "LIBMAUS2_DAZZLER_ALIGN_ALIGNMENTFILECONSTANTS_TRACE_XOVR=75 ${NUMACTL}${REPCOMP_PATH}/bin/repcomp${SCRUB_REPCOMP_OPT} -T/tmp/${FIX_DB%.db}.${x}.${y} ${desDir}/${FIX_DB%.db}.repcomp.${x}.${y} ${FIX_DAZZ_DB%.db} ${srcDir}/${FIX_DB%.db}.${x}.${FIX_DB%.db}.${y}.las"
-                    cmdLine=$((${cmdLine}+1))
+                    echo -n "LIBMAUS2_DAZZLER_ALIGN_ALIGNMENTFILECONSTANTS_TRACE_XOVR=75 ${REPCOMP_PATH}/bin/repcomp${SCRUB_REPCOMP_OPT} -T/tmp/${FIX_DB%.db}.${x}.${y} ${desDir}/${FIX_DB%.db}.repcomp.${x}.${y} ${FIX_DAZZ_DB%.db} ${srcDir}/${FIX_DB%.db}.${x}.${FIX_DB%.db}.${y}.las"
                     if [[ $x -eq $y ]]
                     then
                         echo ""
@@ -3072,7 +3020,7 @@ then
         done 
         ### find and set forcealign options 
         setForcealignOptions   
-        cmdLine=1        
+
         for x in $(seq 1 ${fixblocks}); 
         do 
             srcDir=$(getSubDirName ${FIX_SCRUB_REPCOMP_RUNID} ${x})_ForForceAlign
@@ -3091,19 +3039,8 @@ then
 
                 if [[ -f ${inFile} ]]
                 then 
-                    if [[ -n ${FIX_SCRUB_FORCEALIGN_NUMACTL} && ${FIX_SCRUB_FORCEALIGN_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    echo -n "LIBMAUS2_DAZZLER_ALIGN_ALIGNMENTFILECONSTANTS_TRACE_XOVR=75 ${NUMACTL}${DACCORD_PATH}/bin/forcealign${SCRUB_FORCEALIGN_OPT} -T/tmp/${FIX_DB%.db}.forcealign.${x}.${y} ${desDir}/${FIX_DB%.db}.forcealign.${x}.${y} ${FIX_DAZZ_DB%.db} ${inFile}"
-                    cmdLine=$((${cmdLine}+1))
+                    echo -n "LIBMAUS2_DAZZLER_ALIGN_ALIGNMENTFILECONSTANTS_TRACE_XOVR=75 ${DACCORD_PATH}/bin/forcealign${SCRUB_FORCEALIGN_OPT} -T/tmp/${FIX_DB%.db}.forcealign.${x}.${y} ${desDir}/${FIX_DB%.db}.forcealign.${x}.${y} ${FIX_DAZZ_DB%.db} ${inFile}"
+
                     if [[ $x -eq $y ]]
                     then
                         echo ""
@@ -3134,19 +3071,7 @@ then
                 
                 if [[ -f ${inFile} ]]
                 then 
-                    if [[ -n ${FIX_SCRUB_FORCEALIGN_NUMACTL} && ${FIX_SCRUB_FORCEALIGN_NUMACTL} -gt 0 ]] && [[ "x${SLURM_NUMACTL}" == "x" || ${SLURM_NUMACTL} -eq 0 ]]
-                    then
-                        if [[ $((${cmdLine} % 2)) -eq  0 ]]
-                        then
-                            NUMACTL="numactl -m0 -N0 "
-                        else
-                            NUMACTL="numactl -m1 -N1 "    
-                        fi
-                    else
-                        NUMACTL=""
-                    fi
-                    echo -n "LIBMAUS2_DAZZLER_ALIGN_ALIGNMENTFILECONSTANTS_TRACE_XOVR=75 ${NUMACTL}${DACCORD_PATH}/bin/forcealign${SCRUB_FORCEALIGN_OPT} -T/tmp/${FIX_DB%.db}.norepcomp.forcealign.${x}.${y} ${desDir}/${FIX_DB%.db}.norepcomp.forcealign.${x}.${y} ${FIX_DAZZ_DB%.db} ${inFile}"
-                    cmdLine=$((${cmdLine}+1))
+                    echo -n "LIBMAUS2_DAZZLER_ALIGN_ALIGNMENTFILECONSTANTS_TRACE_XOVR=75 ${DACCORD_PATH}/bin/forcealign${SCRUB_FORCEALIGN_OPT} -T/tmp/${FIX_DB%.db}.norepcomp.forcealign.${x}.${y} ${desDir}/${FIX_DB%.db}.norepcomp.forcealign.${x}.${y} ${FIX_DAZZ_DB%.db} ${inFile}"
                     if [[ $x -eq $y ]]
                     then
                         echo ""
