@@ -6,7 +6,8 @@ ALL = LAcartoons LAshow LAcheck LAcount LAmerge \
       LAstats LAextract LAZtest \
       TKshow TKcombine TKtrim \
       gff2track kmers CTanalyze \
-      LAfilterMito LAfilterChains txt2track CTtrim
+      LAfilterMito LAfilterChains txt2track CTtrim \
+	  LAfilterDepth
 
 have_gtk = @have_gtk@
 have_hdf5 = @have_hdf5@
@@ -108,3 +109,7 @@ LAfilterChains: LAfilterChains.c $(PATH_LIB)/utils.h $(PATH_LIB)/utils.c $(PATH_
 
 CTtrim: CTtrim.c CTtrim.h $(PATH_LIB)/utils.h $(PATH_LIB)/utils.c $(PATH_LIBE)/bitarr.h $(PATH_LIBE)/bitarr.c $(PATH_LIB)/pass.c $(PATH_LIB)/pass.h $(PATH_LIB)/oflags.h $(PATH_LIB)/oflags.c $(PATH_LIB)/tracks.h $(PATH_LIB)/tracks.c $(PATH_DALIGN)/align.c $(PATH_DALIGN)/align.h $(PATH_DB)/DB.c $(PATH_DB)/DB.h $(PATH_LIB)/compression.c $(PATH_LIB)/trim.c $(PATH_LIB)/read_loader.c
 	$(CC) $(CFLAGS) -o CTtrim CTtrim.c $(PATH_LIB)/oflags.c $(PATH_LIB)/utils.c $(PATH_LIBE)/bitarr.c  $(PATH_LIB)/tracks.c $(PATH_LIB)/pass.c $(PATH_DB)/QV.c $(PATH_DALIGN)/align.c $(PATH_DB)/DB.c $(PATH_LIB)/compression.c $(PATH_LIB)/trim.c $(PATH_LIB)/read_loader.c $(CLIBS)
+
+LAfilterDepth: LAfilterDepth.c $(PATH_LIB)/utils.h $(PATH_LIB)/utils.c $(PATH_LIBE)/bitarr.h $(PATH_LIBE)/bitarr.c $(PATH_LIB)/pass.c $(PATH_LIB)/pass.h $(PATH_LIB)/oflags.h $(PATH_LIB)/oflags.c $(PATH_LIB)/tracks.h $(PATH_LIB)/tracks.c $(PATH_DALIGN)/align.c $(PATH_DALIGN)/align.h $(PATH_DB)/DB.c $(PATH_DB)/DB.h $(PATH_LIB)/compression.c $(PATH_LIB)/trim.c $(PATH_LIB)/read_loader.c
+	$(CC) $(CFLAGS) -o LAfilterDepth LAfilterDepth.c $(PATH_LIB)/oflags.c $(PATH_LIB)/utils.c $(PATH_LIBE)/bitarr.c  $(PATH_LIB)/tracks.c $(PATH_LIB)/pass.c $(PATH_DB)/QV.c $(PATH_DALIGN)/align.c $(PATH_DB)/DB.c $(PATH_LIB)/compression.c $(PATH_LIB)/trim.c $(PATH_LIB)/read_loader.c $(CLIBS)		
+	
