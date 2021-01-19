@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
 				arg_purge = 1;
 				break;
 			case 'v':
-				fctx.verbose = 1;
+				fctx.verbose++;
 				break;
 			case 'T':
 				fctx.do_trim = 1;
