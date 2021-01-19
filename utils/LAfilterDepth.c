@@ -406,7 +406,7 @@ int main(int argc, char *argv[])
 				fctx.depth = atoi(optarg);
 				break;
 			case 's':
-				fctx.depth = atoi(optarg);
+				fctx.sort = atoi(optarg);
 				break;
 			case 'e':
 				fctx.erate = atof(optarg);
