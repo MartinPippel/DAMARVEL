@@ -160,8 +160,8 @@ static void filter_pre(PassContext *pctx, FilterContext *fctx)
 		fctx->trim = trim_init(fctx->db, pctx->twidth, fctx->trackTrim, fctx->rl);
 	}
 
-	fctx->coverageHist = malloc(sizeof(int)*(1+DB_READ_MAXLEN(fctx->db)/fctx->twidth));
-	bzero(fctx->coverageHist, sizeof(int)*(1+DB_READ_MAXLEN(fctx->db)/fctx->twidth));
+	fctx->coverageHist = malloc(sizeof(int) * (1 + DB_READ_MAXLEN(fctx->db) / fctx->twidth));
+	bzero(fctx->coverageHist, sizeof(int) * (1 + DB_READ_MAXLEN(fctx->db) / fctx->twidth));
 }
 
 static void filter_post(FilterContext *ctx)
@@ -194,8 +194,8 @@ static int cmp_ovls_erate(const void *a, const void *b)
 	Overlap *o1 = *(Overlap**) a;
 	Overlap *o2 = *(Overlap**) b;
 
-	float e1=	(200.*o1->path.diffs) /((o1->path.aepos - o1->path.abpos) + (o1->path.bepos - o1->path.bbpos));
-	float e2=	(200.*o2->path.diffs) /((o2->path.aepos - o2->path.abpos) + (o2->path.bepos - o2->path.bbpos));
+	float e1 = (200. * o1->path.diffs) / ((o1->path.aepos - o1->path.abpos) + (o1->path.bepos - o1->path.bbpos));
+	float e2 = (200. * o2->path.diffs) / ((o2->path.aepos - o2->path.abpos) + (o2->path.bepos - o2->path.bbpos));
 
 	float cmp = e1 - e2;
 
@@ -204,9 +204,9 @@ static int cmp_ovls_erate(const void *a, const void *b)
 		cmp = (o2->path.aepos - o2->path.abpos) - (o1->path.aepos - o1->path.abpos);
 	}
 
-	if(cmp < 0)
+	if (cmp < 0)
 		return -1;
-	else if(cmp > 0)
+	else if (cmp > 0)
 		return 1;
 	return 0;
 }
@@ -250,79 +250,91 @@ static void sort_overlaps(FilterContext *ctx, Overlap *ovl, int novl)
 
 static void filter_byDepth(FilterContext *ctx, Overlap *ovl, int novl)
 {
-	int i=0;
+	int i = 0;
 	int j;
 
-	int ndiscarded=0;
-	if(ctx->erate >= 0)
+	int ndiscarded = 0;
+	if (ctx->erate >= 0)
 	{
-		for(i=0; i<novl; i++)
+		for (i = 0; i < novl; i++)
 		{
 			Overlap *o = ovl + i;
-			if((200.*o->path.diffs) /((o->path.aepos - o->path.abpos) + (o->path.bepos - o->path.bbpos)) > ctx->erate)
+			if ((200. * o->path.diffs) / ((o->path.aepos - o->path.abpos) + (o->path.bepos - o->path.bbpos)) > ctx->erate)
 			{
 				ndiscarded++;
 				o->flags |= OVL_DISCARD;
+				if (ctx->verbose > 1)
+				{
+					printf(" DISCARD OVL ERATE: %d vs %d a[%d,%d] b[%d,%d] %.2f\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos, (200. * o->path.diffs) / ((o->path.aepos - o->path.abpos) + (o->path.bepos - o->path.bbpos)));
+				}
 				ctx->nFilteredLas++;
 			}
 		}
 	}
 
-	if(novl - ndiscarded <= ctx->depth)
+	if (novl - ndiscarded <= ctx->depth)
 		return;
 
-	bzero(ctx->coverageHist, sizeof(int)*(1+DB_READ_MAXLEN(ctx->db)/ctx->twidth));
+	bzero(ctx->coverageHist, sizeof(int) * (1 + DB_READ_MAXLEN(ctx->db) / ctx->twidth));
 	int abidx, aeidx;
 	int abrmd, aermd;
 
 	int nkept = 0;
-	for(i=0; i<novl;i++)
+	for (i = 0; i < novl; i++)
 	{
 		Overlap *o = ctx->ovl_sorted[i];
-		abidx = o->path.abpos/ctx->twidth;
+		abidx = o->path.abpos / ctx->twidth;
 		abrmd = o->path.abpos % ctx->twidth;
-		aeidx = o->path.aepos/ctx->twidth;
+		aeidx = o->path.aepos / ctx->twidth;
 		aermd = o->path.aepos % ctx->twidth;
 
-		if(abrmd && abrmd > (int)(0.2 * ctx->twidth))
+		if (abrmd && abrmd > (int) (0.2 * ctx->twidth))
 		{
 			abidx++;
 		}
 
-		if(o->path.aepos < DB_READ_LEN(ctx->db, o->aread) && aermd < ctx->twidth-(int)(0.2 * ctx->twidth))
+		if (o->path.aepos < DB_READ_LEN(ctx->db, o->aread) && aermd < ctx->twidth - (int) (0.2 * ctx->twidth))
 		{
 			aeidx--;
 		}
 
-		if(nkept > ctx->depth) // check if we need to add this overlap
+		if (nkept > ctx->depth) // check if we need to add this overlap
 		{
-			int nAboveDepth=0;
-			int skipForSure=0;
-			for(j=abidx; j<aeidx; j++)
+			int nAboveDepth = 0;
+			int skipForSure = 0;
+			for (j = abidx; j < aeidx; j++)
 			{
-				if(ctx->coverageHist[j]+1 >= 1.2*ctx->depth)
+				if (ctx->coverageHist[j] + 1 >= 1.2 * ctx->depth)
 				{
-					skipForSure=1;
+					skipForSure = 1;
 					break;
 				}
-				if(ctx->coverageHist[j]+1 >= ctx->depth)
+				if (ctx->coverageHist[j] + 1 >= ctx->depth)
 				{
 					nAboveDepth++;
 				}
 			}
 			// ignore overlap if more than 50% of segments are already above max coverage
-			if(skipForSure || nAboveDepth > (int)0.5*(aeidx-abidx+1))
+			if (skipForSure || nAboveDepth > (int) 0.5 * (aeidx - abidx + 1))
 			{
 				o->flags |= OVL_DISCARD;
+				if (ctx->verbose > 1)
+				{
+					printf(" DISCARD OVL HGH_COV: %d vs %d a[%d,%d] b[%d,%d] %.2f\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos, (200. * o->path.diffs) / ((o->path.aepos - o->path.abpos) + (o->path.bepos - o->path.bbpos)));
+				}
 				continue;
 			}
 		}
-		for(j=abidx; j<aeidx; j++)
+		for (j = abidx; j < aeidx; j++)
 		{
 			ctx->coverageHist[j]++;
 		}
 		o->flags |= OVL_TEMP;
 		nkept++;
+		if (ctx->verbose > 1)
+		{
+			printf(" KEEP OVL: %d vs %d a[%d,%d] b[%d,%d] %.2f\n", o->aread, o->bread, o->path.abpos, o->path.aepos, o->path.bbpos, o->path.bepos, (200. * o->path.diffs) / ((o->path.aepos - o->path.abpos) + (o->path.bepos - o->path.bbpos)));
+		}
 	}
 }
 
