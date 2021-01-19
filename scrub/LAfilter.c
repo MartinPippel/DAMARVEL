@@ -3208,7 +3208,6 @@ int main(int argc, char *argv[])
 	fctx.mergeRepeatsMaxLen = 2400;
 	fctx.phase_Type = -1;
 	fctx.phaseContext = NULL;
-	int c;
 
 	fctx.rm_mode = opt_repeat_count(argc, argv, 'm');
 	if (fctx.rm_mode == 0)
@@ -3216,6 +3215,7 @@ int main(int argc, char *argv[])
 		fctx.rm_mode = opt_repeat_count(argc, argv, 'M');
 	}
 
+	int c;
 	opterr = 0;
 	while ((c = getopt(argc, argv, "TvLpwy:z:d:n:o:l:R:s:S:u:m:M:r:t:P:x:f:I:Y:a:A:Z:D:V:W:b:jc:H:h:q:")) != -1)
 	{
