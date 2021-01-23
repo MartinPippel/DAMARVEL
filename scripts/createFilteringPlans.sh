@@ -584,8 +584,8 @@ then
 
         if [[ -n ${FIX_FILT_LAFILTER_RMSYMROUNDS} && ${FIX_FILT_LAFILTER_RMSYMROUNDS} -gt 0 ]]
         then
-	    echo "[ERROR] - not supported any more!!!!"
-	    exit 1
+	    	echo "[ERROR] - not supported any more!!!!"
+	    	exit 1
             ## check what is the current round
             for rnd in $(seq ${FIX_FILT_LAFILTER_RMSYMROUNDS} -1 0)
             do
@@ -654,12 +654,23 @@ then
                 then
                 	addOpt=" -a ${FIX_FILT_OUTDIR}/discardOvl.${x}.txt"
                 fi		
-		if [[ -n ${FIX_FILT_LAFILTER_REMPERCWORSTALN} && ${FIX_FILT_LAFILTER_REMPERCWORSTALN} -gt 0 ]]
-                then
-                        addOpt="${addOpt} -Z ${FIX_FILT_LAFILTER_REMPERCWORSTALN}"
+				if [[ -n ${FIX_FILT_LAFILTER_REMPERCWORSTALN} && ${FIX_FILT_LAFILTER_REMPERCWORSTALN} -gt 0 ]]
+        		then
+                	addOpt="${addOpt} -Z ${FIX_FILT_LAFILTER_REMPERCWORSTALN}"
                 fi
                 
-                echo "${MARVEL_PATH}/bin/LAfilter${FILT_LAFILTER_OPT}${addOpt} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_ALN}/${FIX_DAZZ_DB%.db}.${FIX_FILT_ENDING}.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las"
+                echo -n "${MARVEL_PATH}/bin/LAfilter${FILT_LAFILTER_OPT}${addOpt} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_ALN}/${FIX_DAZZ_DB%.db}.${FIX_FILT_ENDING}.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las"
+
+                if [[ -n ${FIX_FILT_LAFILTER_MINTIPCOV} && ${FIX_FILT_LAFILTER_MINTIPCOV} -ge 0 ]] || [[ -n ${FIX_FILT_LAFILTER_DISCARDFILEOUT} && ${FIX_FILT_LAFILTER_DISCARDFILEOUT} -ge 0 ]]
+                then 
+                	echo -n " && ${MARVEL_PATH}/bin/separateOvlToBlockFiles.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.db ${FIX_FILT_OUTDIR}/discardOvl.${x}.txt ${FIX_FILT_OUTDIR}/discardOvl.split"
+                	echo -n " && sort -k1,1n -k2,2n -u ${FIX_FILT_OUTDIR}/discardOvl.split.${x}.txt > ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
+                	echo -n " && ${MARVEL_PATH}/bin/LAfilter -p -A ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.${x}.las"
+                fi
+                
+                echo -e ""
+                
+                
             done > filt_02_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
         fi    
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > filt_02_LAfilter_block_${FIX_DB%.db}.${slurmID}.version
@@ -680,14 +691,10 @@ then
         setLAmergeOptions
         
 	if [[ -n ${FIX_FILT_LAFILTER_MINTIPCOV} && ${FIX_FILT_LAFILTER_MINTIPCOV} -ge 0 ]] || [[ -n ${FIX_FILT_LAFILTER_DISCARDFILEOUT} && ${FIX_FILT_LAFILTER_DISCARDFILEOUT} -ge 0 ]]
-        then
-		echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.async.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.*.las" 
-		echo "cat ${FIX_FILT_OUTDIR}/discardOvl.*.txt | awk '{if (\$1<\$2) print \$1\" \"\$2; else print \$2\" \"\$1}' | sort -k1,1n -k2,2n | uniq > ${FIX_FILT_OUTDIR}/discardOvl.sort.uniq.txt"
-		echo "${MARVEL_PATH}/bin/LAfilter -p -A ${FIX_FILT_OUTDIR}/discardOvl.sort.uniq.txt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.async.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.sync.las"
-		echo "ln -s -f -r ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.sync.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las"
-		
+    then
+    	echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.*.las"
 	else 
-        	echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.*.las" 
+        echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.*.las" 
 	fi > filt_03_LAmerge_single_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > filt_03_LAmerge_single_${FIX_DB%.db}.${slurmID}.version             
     else
