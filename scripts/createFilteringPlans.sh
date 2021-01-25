@@ -692,15 +692,16 @@ then
 	   		for x in $(seq 1 ${fixblocks})
 	        do 
 	        	echo -n "cat ${FIX_FILT_OUTDIR}/symDiscard_*/discardOvl.split.${x}.txt"
-	        	echo -n " | sort -k1,1n -k2,2n -u ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
+	        	echo -n " | sort -k1,1n -k2,2n -u > ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
 	        	echo -e " && ${MARVEL_PATH}/bin/LAfilter -p -A ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.${x}.las"
 	    	done 	
     	   	
             echo -n "while [ 1 ];" 
            	echo -n "do"
             echo -n " sleep 5m;"
+            echo -n " echo \"sleep 5m\";"
             echo -n " fail=0;"
-            echo -n " for x in \$(seq 1 ${fixblocks};" 
+            echo -n " for x in \$(seq 1 ${fixblocks});" 
             echo -n " do"
             echo -n " if [[ ! -f ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.\${x}.las || \$(od -i ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.\${x}.las | head -n 1 | awk '{print \$2}') -eq 0 ]];"
             echo -n " then "
@@ -708,7 +709,7 @@ then
            	echo -n " break;"
             echo -n " fi;"
             echo -n " done;"
-            echo -n " if [[ ${fail} -eq 0 ]];"
+            echo -n " if [[ \${fail} -eq 0 ]];"
             echo -n " then"
             echo -n " ${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.*.las;"             		
             echo -n " break;"
