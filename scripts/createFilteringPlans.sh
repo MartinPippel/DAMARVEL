@@ -691,8 +691,9 @@ then
 	    	(
 	   		for x in $(seq 1 ${fixblocks})
 	        do 
-	        	echo -n "cat ${FIX_FILT_OUTDIR}/symDiscard_*/discardOvl.split.${x}.txt && sort -k1,1n -k2,2n -u ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
-	        	echo -n " && ${MARVEL_PATH}/bin/LAfilter -p -A ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.${x}.las"
+	        	echo -n "cat ${FIX_FILT_OUTDIR}/symDiscard_*/discardOvl.split.${x}.txt"
+	        	echo -n " && sort -k1,1n -k2,2n -u ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
+	        	echo -e " && ${MARVEL_PATH}/bin/LAfilter -p -A ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.${x}.las"
 	    	done 	
     	   	
             echo -n "while [ 1 ];" 
@@ -712,11 +713,12 @@ then
             echo -n " ${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.*.las;"             		
             echo -n " break;"
 			echo -n " fi;"
-            echo -e " done") > filt_03_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan            
+            echo -e " done") > filt_03_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan
+            echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > filt_03_LAmerge_block_${FIX_DB%.db}.${slurmID}.version            
 		else 
-	        echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.*.las" > filt_03_LAmerge_single_${FIX_DB%.db}.${slurmID}.plan 
-		fi 
-    	echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > filt_03_LAmerge_single_${FIX_DB%.db}.${slurmID}.version             
+	        echo "${MARVEL_PATH}/bin/LAmerge${FILT_LAMERGE_OPT} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.*.las" > filt_03_LAmerge_single_${FIX_DB%.db}.${slurmID}.plan
+	        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > filt_03_LAmerge_single_${FIX_DB%.db}.${slurmID}.version 
+		fi     	             
     else
         (>&2 echo "step ${currentStep} in FIX_FILT_TYPE ${FIX_FILT_TYPE} not supported")
         (>&2 echo "valid steps are: ${myTypes[${FIX_FILT_TYPE}]}")
