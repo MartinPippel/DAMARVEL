@@ -102,6 +102,7 @@ for i in range(len(blockIds)):
         tmpFileName=foutprefix+"."+str(i)+".txt"
         fp = open(tmpFileName, "w")
         fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in data[i]))
+        fp.write('\n')
         fp.close()
 
 # close output files 
