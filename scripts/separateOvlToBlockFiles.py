@@ -100,7 +100,7 @@ for i in range(len(blockIds)):
     #print("Database block %d: %d" % (i, blockIds[i]))
     if (len(data[i])):
         tmpFileName=foutprefix+"."+str(i)+".txt"
-        fp = open(tmpFileName, "a")
+        fp = open(tmpFileName, "w")
         fp.write('\n'.join('{} {}'.format(x[0],x[1]) for x in data[i]))
         fp.close()
 
