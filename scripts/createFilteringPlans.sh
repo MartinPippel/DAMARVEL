@@ -692,7 +692,7 @@ then
 	   		for x in $(seq 1 ${fixblocks})
 	        do 
 	        	echo -n "cat ${FIX_FILT_OUTDIR}/symDiscard_*/discardOvl.split.${x}.txt"
-	        	echo -n " && sort -k1,1n -k2,2n -u ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
+	        	echo -n " | sort -k1,1n -k2,2n -u ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt"
 	        	echo -e " && ${MARVEL_PATH}/bin/LAfilter -p -A ${FIX_FILT_OUTDIR}/discardOvl.usplit.${x}.txt ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filtsync.${x}.las"
 	    	done 	
     	   	
