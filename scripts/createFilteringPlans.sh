@@ -661,7 +661,7 @@ then
                 
                 echo -n "${MARVEL_PATH}/bin/LAfilter${FILT_LAFILTER_OPT}${addOpt} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_ALN}/${FIX_DAZZ_DB%.db}.${FIX_FILT_ENDING}.${x}.las ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las"
 
-                if [[ -n ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} && ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} -ne 0 ]] && ( [[ -n ${FIX_FILT_LAFILTER_MINTIPCOV} && ${FIX_FILT_LAFILTER_MINTIPCOV} -ge 0 ]] || [[ -n ${FIX_FILT_LAFILTER_DISCARDFILEOUT} && ${FIX_FILT_LAFILTER_DISCARDFILEOUT} -ge 0 ]] )
+                if [[ -z ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} || ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} -eq 0 ]] && ( [[ -n ${FIX_FILT_LAFILTER_MINTIPCOV} && ${FIX_FILT_LAFILTER_MINTIPCOV} -ge 0 ]] || [[ -n ${FIX_FILT_LAFILTER_DISCARDFILEOUT} && ${FIX_FILT_LAFILTER_DISCARDFILEOUT} -ge 0 ]] )
                 then
                 	echo -n " && mkdir -p ${FIX_FILT_OUTDIR}/symDiscard_${x}"  
                 	echo -n " && ${MARVEL_PATH}/scripts/separateOvlToBlockFiles.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.db ${FIX_FILT_OUTDIR}/discardOvl.${x}.txt ${FIX_FILT_OUTDIR}/symDiscard_${x}/discardOvl.split"
@@ -686,7 +686,7 @@ then
         ### find and set LAmerge options 
         setLAmergeOptions
         
-		if [[ -n ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} && ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} -ne 0 ]] && ( [[ -n ${FIX_FILT_LAFILTER_MINTIPCOV} && ${FIX_FILT_LAFILTER_MINTIPCOV} -ge 0 ]] || [[ -n ${FIX_FILT_LAFILTER_DISCARDFILEOUT} && ${FIX_FILT_LAFILTER_DISCARDFILEOUT} -ge 0 ]] )
+		if [[ -z ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} || ${FIX_FILT_LAFILTER_SKIPSYMMETRICRM} -eq 0 ]] && ( [[ -n ${FIX_FILT_LAFILTER_MINTIPCOV} && ${FIX_FILT_LAFILTER_MINTIPCOV} -ge 0 ]] || [[ -n ${FIX_FILT_LAFILTER_DISCARDFILEOUT} && ${FIX_FILT_LAFILTER_DISCARDFILEOUT} -ge 0 ]] )
 	    then
 	    	(
 	   		for x in $(seq 1 ${fixblocks})
