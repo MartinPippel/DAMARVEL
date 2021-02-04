@@ -915,7 +915,7 @@ then
         	exit 1
    		fi
    		
-   		echo "if [[ -d ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} ]]; then mv ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}" > hic_01_HIChiglassPrepare_single_${CONT_DB}.${slurmID}.plan
+   		echo "if [[ -d ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} ]]; then mv ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}" > hic_01_HIChiglassPrepare_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads" >> hic_01_HIChiglassPrepare_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" >> hic_01_HIChiglassPrepare_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter" >> hic_01_HIChiglassPrepare_single_${CONT_DB}.${slurmID}.plan
