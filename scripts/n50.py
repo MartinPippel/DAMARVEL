@@ -134,9 +134,10 @@ for i in range( len(arrSizes) ):
       sys.stdout.write(" NG100")
       firstNg100=0    
     sys.stdout.write("\n")
- 
-print("{} in {} ... ng50 {} ... asm size {}".format(ng_total, ng_count, arrSizes[ng_count-1][2], ng_size))
-print("{} in {} ... n50 {}  ... asm size {}".format(n_total, n_count, arrSizes[n_count-1][2], n_size))
+
+if n_count >= 1: 
+    print("{} in {} ... ng50 {} ... asm size {}".format(ng_total, ng_count, arrSizes[ng_count-1][2], ng_size))
+    print("{} in {} ... n50 {}  ... asm size {}".format(n_total, n_count, arrSizes[n_count-1][2], n_size))
 if n_count >= 3:
     print("longest_3 {} {} {}".format(arrSizes[0][2], arrSizes[1][2], arrSizes[2][2]))
 elif n_count == 2:
