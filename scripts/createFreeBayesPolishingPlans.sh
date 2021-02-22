@@ -117,7 +117,7 @@ then
         	exit 1
    		fi
    		
-   		echo "if [[ -d ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ]]; then mv ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}" > freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
+   		echo "if [[ -d ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ]]; then mv ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}" > freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/reads" >> freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/bams" >> freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/ref" >> freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
@@ -434,7 +434,7 @@ then
         	exit 1
    		fi
    		
-   		echo "if [[ -d ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ]]; then mv ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}" > freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
+   		echo "if [[ -d ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ]]; then mv ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID} ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}" > freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/bams" >> freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/ref" >> freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/freebayes" >> freebayes_01_FBprepareInput_single_${CONT_DB}.${slurmID}.plan
