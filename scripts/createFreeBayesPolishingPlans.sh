@@ -96,6 +96,12 @@ then
     exit 1
 fi
 
+if [[ -z ${BCFTOOLS_PATH} || ! -f ${BCFTOOLS_PATH}/bcftools ]]
+then
+	(>&2 echo "Variable BCFTOOLS_PATH must be set to a proper bcftools installation directory!!")
+    exit 1
+fi
+
 # Type: 0 [bwa mapping] - 01_FBprepareInput, 02_FBfastp, 03_FBbwa, 04_FBmarkDuplicates, 05_FBfreebayes, 06_FBconsensus, 07_FBstatistics 
 # Type: 1 [longranger mapping] - 01_FBprepareInput, 02_FBlongrangerAlign, 03_FBfreebayes, 04_FBconsensus, 05_FBstatistics
 myTypes=("01_FBprepareInput, 02_FBfastp, 03_FBbwa, 04_FBmarkDuplicates, 05_FBfreebayes, 06_FBconsensus, 07_FBstatistics", 
@@ -355,10 +361,10 @@ then
         	exit 1
    		fi 
    		
-   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} '{print "freebayes --bam "bam" --region "$1":1-"$2" -f "ref" | bcftools view --no-version -Ob -o "out$1":1-"$2".bcf"}' ${ref}.fai)" > freebayes_05_FBfreebayes_block_${CONT_DB}.${slurmID}.plan
+   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} -v BCFTOOLS_PATH=${BCFTOOLS_PATH} '{print "freebayes --bam "bam" --region "$1":1-"$2" -f "ref" | "BCFTOOLS_PATH"/bcftools view --no-version -Ob -o "out$1":1-"$2".bcf"}' ${ref}.fai)" > freebayes_05_FBfreebayes_block_${CONT_DB}.${slurmID}.plan
 
 		echo "freebayes $(${CONDA_FREEBAYES_ENV} && freebayes --version && conda deactivate)" > freebayes_05_FBfreebayes_block_${CONT_DB}.${slurmID}.version
-		echo "bcftools $(${CONDA_FREEBAYES_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> freebayes_05_FBfreebayes_block_${CONT_DB}.${slurmID}.version
+		echo "bcftools $(${BCFTOOLS_PATH}/bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> freebayes_05_FBfreebayes_block_${CONT_DB}.${slurmID}.version
    	### 06_FBconsensus
     elif [[ ${currentStep} -eq 6 ]]
     then
@@ -387,11 +393,11 @@ then
         
     	# create list of bcf files, same order as in ref.fai
         echo "awk -v d=\"${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/freebayes/\" '{print d\$1\":1-\"\$2\".bcf\"}' ${ref}.fai > ${outdir}/${PROJECT_ID}_10x_concatList.txt" > freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-        echo "bcftools concat -nf ${outdir}/${PROJECT_ID}_10x_concatList.txt | bcftools view -Ou -e'type=\"ref\"' | bcftools norm -Ob -f $ref -o ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-        echo "bcftools index ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-        echo "bcftools consensus -i'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Hla -f ${ref} ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.fasta" >> freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+        echo "${BCFTOOLS_PATH}/bcftools concat -nf ${outdir}/${PROJECT_ID}_10x_concatList.txt | ${BCFTOOLS_PATH}/bcftools view -Ou -e'type=\"ref\"' | ${BCFTOOLS_PATH}/bcftools norm -Ob -f $ref -o ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+        echo "${BCFTOOLS_PATH}/bcftools index ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+        echo "${BCFTOOLS_PATH}/bcftools consensus -i'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Hla -f ${ref} ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.fasta" >> freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.plan
       
-      	echo "bcftools $(${CONDA_FREEBAYES_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.version  
+      	echo "bcftools $(${BCFTOOLS_PATH}/bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > freebayes_06_FBconsensus_single_${CONT_DB}.${slurmID}.version  
     ### 7-FBstatistics
     elif [[ ${currentStep} -eq 7 ]]
     then
@@ -528,10 +534,10 @@ then
 		echo "Using $mean_cov for mean coverage"
 		max_cov=$((${mean_cov}*12))
    		
-   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} -v max_cov=${max_cov} '{print "freebayes --bam "bam" --region "$1":1-"$2" --skip-coverage "max_cov" -f "ref" | bcftools view --no-version -Ou -o "out$1":1-"$2".bcf"}' ${ref}.fai)" > freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.plan
+   		echo "$(awk -v bam=${bam} -v ref=${ref} -v out=${outdir} -v max_cov=${max_cov} -v BCFTOOLS_PATH=${BCFTOOLS_PATH} '{print "freebayes --bam "bam" --region "$1":1-"$2" --skip-coverage "max_cov" -f "ref" | "BCFTOOLS_PATH"/bcftools view --no-version -Ou -o "out$1":1-"$2".bcf"}' ${ref}.fai)" > freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.plan
 
 		echo "freebayes $(${CONDA_FREEBAYES_ENV} && freebayes --version && conda deactivate)" > freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.version
-		echo "bcftools $(${CONDA_FREEBAYES_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.version   
+		echo "bcftools $(${BCFTOOLS_PATH}/bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" >> freebayes_03_FBfreebayes_block_${CONT_DB}.${slurmID}.version   
 	### 04-FBconsensus
 	elif [[ ${currentStep} -eq 4 ]]
     then
@@ -562,14 +568,14 @@ then
         
     	# create list of bcf files, same order as in ref.fai
         echo "awk -v d=\"${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/freebayes/\" '{print d\$1\":1-\"\$2\".bcf\"}' ${ref}.fai > ${outdir}/${PROJECT_ID}_10x_concatList.txt" > freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-        echo "bcftools concat -Ou -f ${outdir}/${PROJECT_ID}_10x_concatList.txt | bcftools view -Ou -e'type=\"ref\"' | bcftools norm -Ob -f $ref -o ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-        echo "bcftools index ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-        echo "bcftools consensus -i'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Hla -f ${ref} ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.fasta" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+        echo "${BCFTOOLS_PATH}/bcftools concat -Ou -f ${outdir}/${PROJECT_ID}_10x_concatList.txt | ${BCFTOOLS_PATH}/bcftools view -Ou -e'type=\"ref\"' | ${BCFTOOLS_PATH}/bcftools norm -Ob -f $ref -o ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+        echo "${BCFTOOLS_PATH}/bcftools index ${outdir}/${PROJECT_ID}_10x.bcf" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+        echo "${BCFTOOLS_PATH}/bcftools consensus -i'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Hla -f ${ref} ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.fasta" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
       
-		echo "echo \"Num. bases affected \$(bcftools view -H -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Ov ${outdir}/${PROJECT_ID}_10x.bcf | awk -F \"\\t\" '{print \$4\"\\t\"\$5}' | awk '{lenA=length(\$1); lenB=length(\$2); if (lenA < lenB ) {sum+=lenB-lenA} else if ( lenA > lenB ) { sum+=lenA-lenB } else {sum+=lenA}} END {print sum}')\" > ${outdir}/${PROJECT_ID}_10x.numvar " >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
-		echo "bcftools view -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Oz  ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.changes.vcf.gz" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+		echo "echo \"Num. bases affected \$(${BCFTOOLS_PATH}/bcftools view -H -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Ov ${outdir}/${PROJECT_ID}_10x.bcf | awk -F \"\\t\" '{print \$4\"\\t\"\$5}' | awk '{lenA=length(\$1); lenB=length(\$2); if (lenA < lenB ) {sum+=lenB-lenA} else if ( lenA > lenB ) { sum+=lenA-lenB } else {sum+=lenA}} END {print sum}')\" > ${outdir}/${PROJECT_ID}_10x.numvar " >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
+		echo "${BCFTOOLS_PATH}/bcftools view -i 'QUAL>1 && (GT=\"AA\" || GT=\"Aa\")' -Oz  ${outdir}/${PROJECT_ID}_10x.bcf > ${outdir}/${PROJECT_ID}_10x.changes.vcf.gz" >> freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.plan
             
-      	echo "bcftools $(${CONDA_FREEBAYES_ENV} && bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.version
+      	echo "bcftools $(${BCFTOOLS_PATH}/bcftools --version | head -n1 | awk '{print $2}' && conda deactivate)" > freebayes_04_FBconsensus_single_${CONT_DB}.${slurmID}.version
 	### 05-FBstatistics
 	elif [[ ${currentStep} -eq 5 ]]
     then
