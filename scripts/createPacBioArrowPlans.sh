@@ -97,6 +97,16 @@ function setPBmm2Options()
 	then 
 		ARROW_PBMM2_OPT="${ARROW_PBMM2_OPT} --preset ${PB_ARROW_PBMM2_PRESET}"
 	fi	
+	
+	if [[ -n ${PB_ARROW_PBMM2_N} ]]
+	then 
+		ARROW_PBMM2_OPT="${ARROW_PBMM2_OPT} -N ${PB_ARROW_PBMM2_N}"
+	fi	
+	
+	if [[ -n ${PB_ARROW_PBMM2_LEN} ]]
+	then 
+		ARROW_PBMM2_OPT="${ARROW_PBMM2_OPT} -l ${PB_ARROW_PBMM2_LEN}"
+	fi	
 }
 
 function setgcppOptions()
@@ -137,6 +147,17 @@ function setgcppOptions()
 	then 
 		ARROW_GCPP_OPT="${ARROW_GCPP_OPT} --min-accuracy ${PB_ARROW_GCPP_MINACCURACY}"
 	fi	
+	
+	if [[ -n ${PB_ARROW_GCPP_MINCOVERAGE} ]]
+	then 
+		ARROW_GCPP_OPT="${ARROW_GCPP_OPT} --min-coverage ${PB_ARROW_GCPP_MINCOVERAGE}"
+	fi	
+	
+	if [[ -n ${PB_ARROW_GCPP_NOEVIDENCECALL} ]]
+	then 
+		ARROW_GCPP_OPT="${ARROW_GCPP_OPT} --no-evidence-call ${PB_ARROW_GCPP_NOEVIDENCECALL}"
+	fi
+	
 	
 }
 
@@ -468,7 +489,7 @@ then
 		echo "grep -e \">\" ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta | sed -e 's:^>::' > ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.header" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
 		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
-    ### 2-pbalign
+    ### 2-pbmm2
     elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
@@ -513,10 +534,10 @@ then
    		do
         	name=$(basename ${x%.subreads.bam})
         	    		
-    		echo "${CONDA_BASE_ENV} && pbmm2 align${ARROW_PBMM2_OPT} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta ${x} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${name}.pbmm2.bam && conda deactivate"
+    		echo "${CONDA_PBMM2_ENV} && pbmm2 align${ARROW_PBMM2_OPT} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta ${x} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${name}.pbmm2.bam && conda deactivate"
     	done > arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.plan 
-    	echo "pbmm2 $(${CONDA_BASE_ENV} && pbmm2 --version && conda deactivate)" > arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.version
-		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.version		
+    	echo "pbmm2 $(${CONDA_PBMM2_ENV} && pbmm2 --version && conda deactivate)" > arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.version
+		echo "samtools $(${CONDA_PBMM2_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.version		
     ### 3-bamsplit
     elif [[ ${currentStep} -eq 3 ]]
     then
@@ -683,16 +704,16 @@ then
 				then 
 					if [[ ${cumSize} -eq 0 ]]
 					then
-						echo -n "${CONDA_BASE_ENV} && "
+						echo -n "${CONDA_GCPP_ENV} && "
 					fi
-					echo -n "bamtools index -in ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && pbindex ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam;"
+					echo -n "samtools index ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam;"
 					cumSize=$((cumSize+tmp))					
 				else
 					if [[ ${cumSize} -eq 0 ]]
 					then
-						echo -e "${CONDA_BASE_ENV} && bamtools index -in ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && pbindex ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
+						echo -e "${CONDA_GCPP_ENV} && bamtools index -in ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
 					else
-						echo -e "bamtools index -in ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && pbindex ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
+						echo -e "samtools index ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
 					fi
 					cumSize=0
 				fi   				
@@ -702,9 +723,8 @@ then
 		then
 			echo -e "" >> arrow_06_gcpp_block_${CONT_DB}.${slurmID}.plan	
 		fi
-		echo "$(${CONDA_BASE_ENV} && bamtools --version | grep bamtools && conda deactivate)" > arrow_06_gcpp_block_${CONT_DB}.${slurmID}.version
-		echo "pbindex $(${CONDA_BASE_ENV} && pbindex --version && conda deactivate)" >> arrow_06_gcpp_block_${CONT_DB}.${slurmID}.version
-		echo "gcpp $(${CONDA_BASE_ENV} && gcpp --version && conda deactivate)" >> arrow_06_gcpp_block_${CONT_DB}.${slurmID}.version				
+		echo "$(samtools --version | grep samtools)" > arrow_06_gcpp_block_${CONT_DB}.${slurmID}.version
+		echo "gcpp $(${CONDA_GCPP_ENV} && gcpp --version && conda deactivate)" >> arrow_06_gcpp_block_${CONT_DB}.${slurmID}.version				
 	### 7-statistics 
     elif [[ ${currentStep} -eq 7 ]]
     then
