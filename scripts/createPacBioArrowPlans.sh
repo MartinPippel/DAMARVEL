@@ -711,7 +711,7 @@ then
 				else
 					if [[ ${cumSize} -eq 0 ]]
 					then
-						echo -e "${CONDA_GCPP_ENV} && bamtools index -in ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
+						echo -e "${CONDA_GCPP_ENV} && samtools index ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
 					else
 						echo -e "samtools index ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && gcpp${ARROW_GCPP_OPT} -w ${x}:0-${clen} -r ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/arrow_in.id_${x}.fasta -o ${aout} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${x}/ALL_${x}.bam && conda deactivate"
 					fi
