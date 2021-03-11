@@ -206,6 +206,12 @@ then
 	then
 	    STEPSIZE=":${!TMP}"
 	fi
+	MAXJOBS=""
+	TMP="MAXJOBS_${jname}"
+	if [[ -n ${!TMP} ]]
+	then
+	    MAXJOBS="%${!TMP}"
+	fi
 	TMP="PARTITION_${jname}"
 	if [[ -n ${!TMP} ]]
 	then
@@ -251,7 +257,7 @@ then
 	        echo "#!/bin/bash
 #SBATCH -J ${PROJECT_ID}_p${currentPhase}s${currentStep}
 #SBATCH -p ${SLURM_PARTITION}
-#SBATCH -a 1-${jobs}${STEPSIZE}
+#SBATCH -a 1-${jobs}${STEPSIZE}${MAXJOBS}
 #SBATCH -c ${CORES} # Number of cores 
 #SBATCH -n 1 # number of nodes
 #SBATCH -o ${log_folder}/${prefix}_${cjobid}_${db}_${d}_%A_%a.out # Standard output 
@@ -344,7 +350,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 	        echo "#!/bin/bash
 #SBATCH -J ${PROJECT_ID}_p${currentPhase}s${currentStep}
 #SBATCH -p ${SLURM_PARTITION}
-#SBATCH -a 1-${jobs}${STEPSIZE}
+#SBATCH -a 1-${jobs}${STEPSIZE}${MAXJOBS}
 #SBATCH -c ${CORES} # Number of cores 
 #SBATCH -n 1 # number of nodes
 #SBATCH -o ${log_folder}/${prefix}_${cjobid}_${db}_%A_%a.out # Standard output
