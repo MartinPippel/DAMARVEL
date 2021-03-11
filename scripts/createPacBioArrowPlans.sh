@@ -583,9 +583,14 @@ then
    		do
         	name=$(basename ${x%.subreads.bam})
         	file=${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${name}.pbmm2.bam
-        	echo "bamtools split -in  ${file} -reference"			   			   		
-		done > arrow_03_bamtools_block_${CONT_DB}.${slurmID}.plan
-		echo "$(${CONDA_BASE_ENV} && bamtools --version | grep bamtools && conda deactivate)" > arrow_03_bamtools_block_${CONT_DB}.${slurmID}.version
+        	for y in $(cat ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.header);
+        	do
+        		echo "samtools view -h -b ${file} ${y} > ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${name}.pbmm2.REF_${y}.bam"
+        	done
+        	
+        	#echo "bamtools split -in  ${file} -reference"			   			   		
+		done > arrow_03_bamsplit_block_${CONT_DB}.${slurmID}.plan
+		echo "$(samtools --version | grep samtools)" > arrow_03_bamsplit_block_${CONT_DB}.${slurmID}.version
     ### 4-bamseparate
     elif [[ ${currentStep} -eq 4 ]]
     then
