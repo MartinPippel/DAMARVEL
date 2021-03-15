@@ -204,9 +204,9 @@ then
     fi    		
 elif [[ ${CT_PURGEHAPLOTIGS_TYPE} -eq 1 ]]
 then 
-	if [[ -z ${PBBIOCONDA_ENV} ]]
+	if [[ -z ${CONDA_BASE_ENV} ]]
 	then 
-		(>&2 echo "ERROR - var PBBIOCONDA_ENV needs to be set! We need a conda env with folling tools: bam2fasta")
+		(>&2 echo "ERROR - var CONDA_BASE_ENV needs to be set! We need a conda env with folling tools: bam2fasta")
 		exit 1
 	fi  
 
@@ -299,12 +299,12 @@ then
 			for x in ${DB_PATH}/*.subreads.bam	
 			do
 				name=$(basename ${x%.subreads.bam})
-				echo -n "${PBBIOCONDA_ENV} && bam2fasta -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.fa.gz ${x} "
+				echo -n "${CONDA_BASE_ENV} && bam2fasta -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.fa.gz ${x} "
 				echo -e "minimap2 -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.fa.gz | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz && conda deactivate"        	
 			done > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.plan 
         fi
-       	echo "minimap2 $(${PBBIOCONDA_ENV}) && minimap2 --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version	
-		echo "$(${PBBIOCONDA_ENV}) && bam2fasta --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
+       	echo "minimap2 $(${CONDA_BASE_ENV}) && minimap2 --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
+		echo "$(${CONDA_BASE_ENV}) && bam2fasta --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
 	### 03_PDcalcuts				("01_PDprepInput, 02_PDminimap2, 03_PDcalcuts, 04_PDminimap2, 05_purgedups, 06_statistics")
     elif [[ ${currentStep} -eq 3 ]]
     then
@@ -340,10 +340,10 @@ then
 		fi
 
 		echo "${PURGEDUPS_PATH}/bin/split_fa ${CT_PURGEHAPLOTIGS_INFASTA} > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta" > purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.plan 
-		echo "${PBBIOCONDA_ENV} && minimap2${addOpt} -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} -DP ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.self.paf.gz && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.plan 
+		echo "${CONDA_BASE_ENV} && minimap2${addOpt} -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} -DP ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.self.paf.gz && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.plan
 
 		echo "purge_dups (split_fa) $(${PURGEDUPS_PATH}/bin/purge_dups -h 2>&1 | grep Version)" > purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.version 
-    	echo "minimap2 $(${PBBIOCONDA_ENV}) && minimap2 --version && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.version 
+    	echo "minimap2 $(${CONDA_BASE_ENV}) && minimap2 --version && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.version
    	### 05_purgedups 				("01_PDprepInput, 02_PDminimap2, 03_PDcalcuts, 04_PDminimap2, 05_purgedups, 06_statistics")
     elif [[ ${currentStep} -eq 5  ]]
     then
