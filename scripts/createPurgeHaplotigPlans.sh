@@ -56,7 +56,7 @@ then
         for x in $(ls purgeHaplotigs_01_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
-        done
+        done 
         
         if [[ ! -f "${CT_PURGEHAPLOTIGS_INFASTA}" ]]
         then
