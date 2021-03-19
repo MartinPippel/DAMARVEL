@@ -251,7 +251,7 @@ then
         then
 			# sanity checks
 			numFiles=0 
-			for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.subreads.fasta
+			for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null
 			do
 				if [[ ! -f ${x} || ! -s ${x} ]]
 				then
@@ -269,9 +269,12 @@ then
 			
 			ref=$(basename ${CT_PURGEHAPLOTIGS_INFASTA%.fasta})
 					
-			for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.subreads.fasta	
+			for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null	
 			do
 				name=$(basename ${x%.subreads.fasta})
+				name=${name%.subreads.fa.gz}
+				name=${name%.ccs.fasta}
+				name=${name%.ccs.fa.gz}
 				echo "${CONDA_BASE_ENV} && minimap2 -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${x} | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz"        	
 			done > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.plan 
 		else 
