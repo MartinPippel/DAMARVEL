@@ -251,7 +251,7 @@ then
         then
 			# sanity checks
 			numFiles=0 
-			for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null
+			for x in $(ls ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null)
 			do
 				if [[ ! -f ${x} || ! -s ${x} ]]
 				then
@@ -269,7 +269,7 @@ then
 			
 			ref=$(basename ${CT_PURGEHAPLOTIGS_INFASTA%.fasta})
 					
-			for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null	
+			for x in $(ls ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null)	
 			do
 				name=$(basename ${x%.subreads.fasta})
 				name=${name%.subreads.fa.gz}
