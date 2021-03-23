@@ -302,8 +302,8 @@ then
 			for x in ${DB_PATH}/*.subreads.bam	
 			do
 				name=$(basename ${x%.subreads.bam})
-				echo -n "${CONDA_BAM2FASTX_ENV} && bam2fasta -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.fa.gz ${x} && conda deactivate "
-				echo -e " && ${CONDA_BASE_ENV} && minimap2 -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.fa.gz | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz && conda deactivate"        	
+				echo -n "${CONDA_BAM2FASTX_ENV} && bam2fasta -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.subreads ${x} && conda deactivate "
+				echo -e " && ${CONDA_BASE_ENV} && minimap2 -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.subreads.fasta.gz | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz && conda deactivate"        	
 			done > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.plan 
         fi
        	echo "minimap2 $(${CONDA_BASE_ENV}) && minimap2 --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
