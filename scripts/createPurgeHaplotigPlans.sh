@@ -307,7 +307,7 @@ then
 			done > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.plan 
         fi
        	echo "minimap2 $(${CONDA_BASE_ENV}) && minimap2 --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
-		echo "$(${CONDA_BASE_ENV}) && bam2fasta --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
+		echo " && $(${CONDA_BASE_ENV}) && bam2fasta --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
 	### 03_PDcalcuts				("01_PDprepInput, 02_PDminimap2, 03_PDcalcuts, 04_PDminimap2, 05_purgedups, 06_statistics")
     elif [[ ${currentStep} -eq 3 ]]
     then
