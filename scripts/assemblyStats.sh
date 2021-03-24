@@ -130,6 +130,11 @@ then
 		cat ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.p.fasta | ${SUBMIT_SCRIPTS_PATH}/n50.py ${gsize} > ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.p.stats
 		cat ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.a.fasta | ${SUBMIT_SCRIPTS_PATH}/n50.py ${gsize} > ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.a.stats
 		
+		## create clean fasta header and corresponding alt and primary header files 
+		awk '{print $1}' ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.fasta > ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.clean.fasta
+		grep -e ">" ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.p.fasta | awk -F '[> ]' '{print $2}' > ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.p.header
+		grep -e ">" ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.a.fasta | awk -F '[> ]' '{print $2}' > ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_c.a.header
+		
 		## copy config file
 		cp $config ${p}/${PROJECT_ID}_${FIX_FILT_OUTDIR}_$(date '+%Y-%m-%d_%H-%M-%S').config.sh
 	else
