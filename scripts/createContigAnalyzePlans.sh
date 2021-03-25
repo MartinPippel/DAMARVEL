@@ -514,11 +514,6 @@ then
         echo "ln -s -r ${FIX_FILT_OUTDIR}/${COR_DIR}/.${COR_DB%db}.* ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%db}.db ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
 		echo "ln -s -r .${RAW_DB%db}.* ${RAW_DB%db}.db ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
 		
-		for x in $(seq 1 ${contigblocks})
-	    do
-			echo "mkdir -p ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/d${x}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
-		done
-		
 		first=1
 		for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.fasta
 		do 
@@ -543,7 +538,21 @@ then
         for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.fasta
         do  
             echo "${DACCORD_PATH}/bin/fastaidrename < ${x} | awk '{print \$1}' > ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/correctedContigs_dazzler/$(basename ${x%.fasta})_dazzler.fasta"            
-		done >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan        
+		done >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan    
+		
+		## create daligner directories  
+		if [[ -f ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db ]]
+		then
+			contigblocks=$(getNumOfDbBlocks ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db)
+		else 
+			(>&2 echo "ERROR - Database file missing: ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db. Cannot create daligner output directories!")
+			exit 1
+		fi
+				
+		for x in $(seq 1 ${contigblocks})
+	    do
+			echo "mkdir -p ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/d${x}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
+		done
 
         # create dazzler db
     	first=1 
