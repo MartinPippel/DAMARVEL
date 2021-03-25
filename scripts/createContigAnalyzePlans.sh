@@ -540,20 +540,6 @@ then
             echo "${DACCORD_PATH}/bin/fastaidrename < ${x} | awk '{print \$1}' > ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/correctedContigs_dazzler/$(basename ${x%.fasta})_dazzler.fasta"            
 		done >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan    
 		
-		## create daligner directories  
-		if [[ -f ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db ]]
-		then
-			contigblocks=$(getNumOfDbBlocks ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db)
-		else 
-			(>&2 echo "ERROR - Database file missing: ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db. Cannot create daligner output directories!")
-			exit 1
-		fi
-				
-		for x in $(seq 1 ${contigblocks})
-	    do
-			echo "mkdir -p ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/d${x}" >> cont_01_prepDB_single_${CONT_DB%.db}.${slurmID}.plan
-		done
-
         # create dazzler db
     	first=1 
         for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.fasta
@@ -577,6 +563,20 @@ then
         do            
             rm $x
         done
+        
+        ## create daligner directories  
+		if [[ -f ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db ]]
+		then
+			contigblocks=$(getNumOfDbBlocks ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db)
+		else 
+			(>&2 echo "ERROR - Database file missing: ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/${CONT_DB%.db}.db. Cannot create daligner output directories!")
+			exit 1
+		fi
+				
+		for x in $(seq 1 ${contigblocks})
+	    do
+			mkdir -p ${FIX_FILT_OUTDIR}/${ANALYZE_DIR}/d${x}
+		done
         
         ### find and set DBdust options 
         setDBdustOptions
