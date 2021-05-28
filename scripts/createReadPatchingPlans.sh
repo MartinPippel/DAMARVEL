@@ -301,6 +301,11 @@ function setLAqOptions()
         RAW_FIX_LAQ_MINSEG=25
         FIX_LAQ_OPT="${FIX_LAQ_OPT} -s ${RAW_FIX_LAQ_MINSEG}"
     fi
+    
+    if [[ -n ${RAW_FIX_LAQ_CCS} && ${RAW_FIX_LAQ_CCS} -gt 0 ]]
+    then 
+		FIX_LAQ_OPT="${FIX_LAQ_OPT} -c"
+    fi
 
     if [[ -n ${RAW_FIX_LAQ_QTRIMCUTOFF} && ${RAW_FIX_LAQ_QTRIMCUTOFF} -ne 0 ]]
     then
