@@ -119,6 +119,7 @@ typedef struct {
 
 	int includeLasFlag;
 	int *includeLas;
+	int includeOffset;
 	int numIncludeLas;
 
 	int removeLowCoverageOverlaps;
@@ -1756,6 +1757,7 @@ static void filter_post(FilterContext *ctx) {
 	if (ctx->includeLasFlag) {
 		printf("discarded by las mask file                      %10d\n",
 				ctx->nDiscByLasMask);
+				assert(ctx->includeOffset == ctx->numIncludeLas);
 		}
 
 
@@ -2695,17 +2697,18 @@ static int filter_handler(void *_ctx, Overlap *ovl, int novl) {
 
 	if (ctx->includeLasFlag) {
 
-		assert(novl == ctx->numIncludeLas);
+		assert(novl + ctx->includeOffset <= ctx->numIncludeLas);
 
 		for (j = 0; j < novl; j++)
 		{
 			Overlap *o = ovl + j;
-			if(ctx->includeLas[j] == 0)
+			if(ctx->includeLas[ctx->includeOffset+j] == 0)
 			{
 				o->flags |= OVL_DISCARD;
 				ctx->nDiscByLasMask++;
 			}
 		}
+		ctx->includeOffset += novl;
 	}
 
 	if (ctx->downsample) {
