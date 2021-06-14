@@ -482,7 +482,7 @@ then
 		else
 			echo "cat ${PB_ARROW_REFFASTA} | awk '{ print \$1}' | sed \"s:|:_:g\" > ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
 		fi
-		echo "sawriter ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		#echo "sawriter ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
 		echo "samtools faidx ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
 		echo "seqkit split -i  ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
 		echo "for x in ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta.split/*.fasta; do samtools faidx \${x}; done" >> arrow_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
