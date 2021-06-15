@@ -7,7 +7,7 @@ ALL = LArepeat LAfix \
       LAstitch LAtrim          \
       TKhomogenize TKmerge \
       datander TANmask Catrack \
-      LAseparate
+      LAseparate LAmask
 
 all: $(ALL)
 
@@ -68,4 +68,7 @@ TANmask: TANmask.c $(PATH_DALIGN)/align.h $(PATH_DALIGN)/align.h $(PATH_DB)/DB.c
 
 Catrack: Catrack.c $(PATH_DB)/DB.c $(PATH_DB)/DB.h $(PATH_DB)/QV.c $(PATH_DB)/QV.h
 	$(CC) $(CFLAGS) -o Catrack Catrack.c $(PATH_DB)/DB.c $(PATH_DB)/QV.c -lm
+	
+LAmask: LAmask.c $(PATH_LIB)/borders.h $(PATH_LIB)/borders.c $(PATH_LIB)/utils.c $(PATH_LIB)/utils.h $(PATH_LIB)/pass.c $(PATH_LIB)/pass.h $(PATH_LIB)/tracks.h $(PATH_LIB)/tracks.c $(PATH_DALIGN)/align.c $(PATH_DALIGN)/align.h $(PATH_DB)/DB.c $(PATH_DB)/DB.h $(PATH_LIB)/compression.c
+	$(CC) $(CFLAGS) -o LAmask LAmask.c $(PATH_LIB)/borders.c $(PATH_LIB)/utils.c $(PATH_LIB)/tracks.c $(PATH_LIB)/pass.c $(PATH_DB)/QV.c $(PATH_DALIGN)/align.c $(PATH_DB)/DB.c $(PATH_LIB)/compression.c $(CLIBS)
 	
