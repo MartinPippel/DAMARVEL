@@ -529,12 +529,18 @@ then
 		fi
 		
 		setPBmm2Options
-        
+		
+		envVar=""
+		if [[ -n ${PB_ARROW_PBMM2_TMPDIR} ]]
+		then 
+			envVar="TMPDIR=${PB_ARROW_PBMM2_TMPDIR}"
+		fi	
+		        
         for x in ${PB_ARROW_BAM}/*.subreads.bam   		
    		do
         	name=$(basename ${x%.subreads.bam})
         	    		
-    		echo "${CONDA_PBMM2_ENV} && pbmm2 align${ARROW_PBMM2_OPT} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta ${x} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${name}.pbmm2.bam && conda deactivate"
+    		echo "${CONDA_PBMM2_ENV} && ${envVar} pbmm2 align${ARROW_PBMM2_OPT} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/arrow_in.fasta ${x} ${PB_ARROW_OUTDIR}/arrow_${PB_ARROW_RUNID}/${name}.pbmm2.bam && conda deactivate"
     	done > arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.plan 
     	echo "pbmm2 $(${CONDA_PBMM2_ENV} && pbmm2 --version && conda deactivate)" > arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.version
 		echo "samtools $(${CONDA_PBMM2_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> arrow_02_pbmm2_block_${CONT_DB}.${slurmID}.version		
