@@ -50,10 +50,6 @@ static void usage()
 
 static void pre_mask( MaskContext* ctx )
 {
-#ifdef VERBOSE
-    printf( ANSI_COLOR_GREEN "PASS estimate coverage\n" ANSI_COLOR_RESET );
-#endif
-
     ctx->cov_read_active = (char*)malloc( DB_READ_MAXLEN( ctx->db ) );
 
 }
