@@ -121,6 +121,10 @@ static int handler_mask( void* _ctx, Overlap* ovl, int novl )
     		}
     	}
     }
+    if(m_beg != -1)
+	{
+		printf("%d %d %d\n", ovl->aread, m_beg, m_end);
+	}
 
     return 1;
 }
