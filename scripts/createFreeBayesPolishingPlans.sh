@@ -478,7 +478,7 @@ then
     	
     	if [[ -n ${CT_FREEBAYES_LONGRANGER_MRO_TEMPLATE} && -f ${CT_FREEBAYES_LONGRANGER_MRO_TEMPLATE} ]]
     	then 
-    		echo "sed -e \"s:REPLACE_MY_SAMPLE_ID:10x_${PROJECT_ID}_longrangerAlign:\" -e \"s:REPLACE_MY_READ_PATH:${TENX_PATH}:\" -e \"s:REPLACE_MY_SAMPLE_NAME:${PROJECT_ID}:\" -e \"s:REPLACE_MY_REF_PATH:$(pwd)/../ref/refdata-${REFNAME%.fasta}:\" ${CT_FREEBAYES_LONGRANGER_MRO_TEMPLATE} > ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/bams/${PROJECT_ID}.mro"
+    		echo "sed -e \"s:REPLACE_MY_SAMPLE_ID:10x_${PROJECT_ID}_longrangerAlign:\" -e \"s:REPLACE_MY_READ_PATH:${TENX_PATH}:\" -e \"s:REPLACE_MY_SAMPLE_NAME:${PROJECT_ID}:\" -e \"s:REPLACE_MY_REF_PATH:$(pwd)/${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/ref/refdata-${REFNAME%.fasta}:\" ${CT_FREEBAYES_LONGRANGER_MRO_TEMPLATE} > ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/bams/${PROJECT_ID}.mro"
     		echo "cd ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/bams && ${LONGRANGER_PATH}/longranger align 10x_${PROJECT_ID}_longrangerAlign ${PROJECT_ID}.mro --jobmode=slurm --maxjobs=1000 --jobinterval=5000 --disable-ui --nopreflight && cd ../../../"
     	else 
     		echo "cd ${CT_FREEBAYES_OUTDIR}/freebayes_${CT_FREEBAYES_RUNID}/bams && ${LONGRANGER_PATH}/longranger align --id=10x_${PROJECT_ID}_longrangerAlign --fastqs=${TENX_PATH} --sample=${PROJECT_ID} --reference=../ref/refdata-${REFNAME%.fasta} --jobmode=slurm --localcores=38 --localmem=128 --maxjobs=1000 --jobinterval=5000 --disable-ui --nopreflight && cd ../../../"
