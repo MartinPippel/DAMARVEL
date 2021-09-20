@@ -1019,7 +1019,11 @@ then
    		if [[ -n "${SC_HIC_HIGLASS_SEQTYPE}" && "${SC_HIC_HIGLASS_SEQTYPE}" == "OMNIC" ]]
    		then 
    			addBwaOpt="-5SP -T0"	
-   			addPairToolsOpt="--min-mapq 40 --walks-policy 5unique --max-inter-align-gap 30"
+   			if [[ -z ${SC_HIC_HIGLASS_MAPQ} ]]
+   			then 
+   				SC_HIC_HIGLASS_MAPQ=40
+   			fi
+   			addPairToolsOpt="--min-mapq ${SC_HIC_HIGLASS_MAPQ} --walks-policy 5unique --max-inter-align-gap 30"
    		fi 
    		
 		for r1 in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz
@@ -1062,13 +1066,23 @@ then
    		if [[ -n "${SC_HIC_HIGLASS_SEQTYPE}" && "${SC_HIC_HIGLASS_SEQTYPE}" == "OMNIC" ]]
    		then 
 			if [[ $(echo $files | wc -w) -eq 1 ]]
-	   		then        
-		    	echo "pairtools dedup --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --mark-dups --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.stats -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz"
-				echo "pairtools split --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --output-pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz --output-sam ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.bam ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz"
+	   		then
+	   			if [[ -n ${SC_HIC_HIGLASS_NODEDUP} && ${SC_HIC_HIGLASS_NODEDUP} != "0" ]] 
+	   			then 
+	   				echo "pairtools dedup --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.stats -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz --output-dups ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz"
+	   			else        
+		    		echo "pairtools dedup --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --mark-dups --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.stats -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz"
+		    	fi
+		    	echo "pairtools split --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --output-pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz --output-sam ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.bam ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz"
 		    	echo "pairix -f -p pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz"    	
 		    else 
 		    	echo "pairtools merge --tmpdir ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/tmp --nproc ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --memory 10G --max-nmerge $(($(echo $files | wc -w)+2)) -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz \$(ls ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/*_bwa.sorted.pairsam.gz)"
-		        echo "pairtools dedup --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --mark-dups --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.stats -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz"
+		    	if [[ -n ${SC_HIC_HIGLASS_NODEDUP} && ${SC_HIC_HIGLASS_NODEDUP} != "0" ]] 
+	   			then 
+	   				echo "pairtools dedup --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.stats -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz --output-dups ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz  ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz"
+	   			else
+		        	echo "pairtools dedup --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --mark-dups --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.stats -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz"
+				fi
 				echo "pairtools split --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --output-pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz --output-sam ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.bam ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.dedup.pairsam.gz"
 		    	echo "pairix -f -p pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz"
 		    fi
