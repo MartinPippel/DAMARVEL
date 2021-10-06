@@ -29,7 +29,10 @@ def main():
                 print("file {} does not exist".format(path))
                 sys.exit(1)
 
-    fout = open(args.readids, "w")
+    if args.readids == "-":
+        fout = sys.stdout
+    else:
+        fout = open(args.readids, "w")
     rids = set()
 
     for path in args.paths:
