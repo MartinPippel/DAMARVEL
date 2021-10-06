@@ -404,7 +404,8 @@ then
 
         echo "max_reads=100000" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "bl=1" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "rm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.rids ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.paths 2> /dev/null" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "[ -e ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.1.rids ] && rm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.rids" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "[ -e ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.1.paths ] && rm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.paths" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "for x in \$(find ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/ -name \"*.paths\");"  >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "do" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
     	echo "  outfile_r=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.rids" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
