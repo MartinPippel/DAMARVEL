@@ -251,9 +251,128 @@ then
     exit 1
 fi
 
-myTypes=("1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics")
+myTypes=("1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics" "1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics")
 #type-0 steps: 1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics
+#type-0 steps: 1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics ### for BIG genomes, we need to create several corrected databases 
 if [[ ${FIX_CORR_TYPE} -eq 0 ]]
+then
+    ### paths2rids
+    if [[ ${currentStep} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_01_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do
+            rm $x
+        done
+
+        setLAfilterOptions
+        setpath2ridsOptions
+
+        # create sym links 
+        if [[ -d ${FIX_FILT_OUTDIR}/${COR_DIR} ]]
+        then
+            rm -r ${FIX_FILT_OUTDIR}/${COR_DIR}
+        fi
+
+        mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/reads
+        mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs
+
+        for x in ${FIX_FILT_OUTDIR}/tour/*[0-9].tour.paths;
+        do  
+            ln -s -r ${x} ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/$(basename ${x%.tour.paths}.tour.paths);
+            ln -s -r ${x%.tour.paths}.graphml ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/$(basename ${x%.tour.paths}.graphml);
+        done
+
+        echo "find ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/ -name \"*.paths\" -exec cat {} \+ | awk '{if (NF > 4) print \$0}' | ${MARVEL_PATH}/scripts/paths2rids.py - ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.version
+    ### LAcorrect
+    elif [[ ${currentStep} -eq 2 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_02_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do
+            rm $x
+        done
+
+        setLAcorrectOptions
+
+        for x in $(seq 1 ${fixblocks})
+        do
+            echo "${MARVEL_PATH}/bin/LAcorrect${COR_LACORRECT_OPT} -b ${x} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db}.filt.${x}.las ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.${x}"
+        done > corr_02_LAcorrect_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_02_LAcorrect_block_${FIX_DB%.db}.${slurmID}.version
+    ### prepare corrected db 
+    elif [[ ${currentStep} -eq 3 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_03_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do
+            rm $x
+        done
+
+        if [[ -z ${FILT_LAFILTER_OPT} ]]
+        then
+            setLAfilterOptions
+        fi
+
+        echo "if [[ -f ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.db ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}; fi" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "find ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/ -name \"${FIX_DB%.db}.[0-9]*.[0-9]*.fasta\" > ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.fofn" >> corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}" >> corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.version
+    elif [[ ${currentStep} -eq 4 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_04_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do
+            rm $x
+        done
+        if [[ -z ${FILT_LAFILTER_OPT} ]]
+        then
+            setLAfilterOptions
+        fi
+        setTourToFastaOptions
+        for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.tour.paths
+        do
+            echo "${MARVEL_PATH}/scripts/tour2fasta.py${COR_TOURTOFASTA_OPT} -p $(basename ${x%.tour.paths}) -c ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${x%.tour.paths}.graphml ${x}" 
+        done > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.version
+    ### statistics
+    elif [[ ${currentStep} -eq 5 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_05_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do
+            rm $x
+        done
+
+        if [[ -z ${FILT_LAFILTER_OPT} ]]
+        then
+            setLAfilterOptions
+        fi
+
+        if [[ -n ${SLURM_STATS} && ${SLURM_STATS} -gt 0 ]]
+                then
+                ### run slurm stats - on the master node !!! Because sacct is not available on compute nodes
+                if [[ $(hostname) == "falcon1" || $(hostname) == "falcon2" ]]
+                then
+                        bash ${SUBMIT_SCRIPTS_PATH}/slurmStats.sh ${configFile}
+                else
+                        cwd=$(pwd)
+                        ssh falcon "cd ${cwd} && bash ${SUBMIT_SCRIPTS_PATH}/slurmStats.sh ${configFile}"
+                fi
+                fi
+
+            if [[ -n ${MARVEL_STATS} && ${MARVEL_STATS} -gt 0 ]]
+                then
+                ### create assemblyStats plan 
+                echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 7" > corr_05_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
+                echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_05_marvelStats_single_${FIX_DB%.db}.${slurmID}.version
+        fi
+    else
+        (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
+        exit 1
+elif [[ ${FIX_CORR_TYPE} -eq 1 ]]
 then 
     ### paths2rids
     if [[ ${currentStep} -eq 1 ]]
@@ -282,7 +401,22 @@ then
             ln -s -r ${x%.tour.paths}.graphml ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/$(basename ${x%.tour.paths}.graphml); 
         done
 
-        echo "find ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/ -name \"*.paths\" -exec cat {} \+ | awk '{if (NF > 4) print \$0}' | ${MARVEL_PATH}/scripts/paths2rids.py - ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "max_reads=100000" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "bl=1" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "rm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.rids ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.paths 2> /dev/null" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "for x in \$(find ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/ -name \"*.paths\");"  >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "do" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "  outfile_r=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.rids" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "  outfile_p=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.paths" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    
+    	echo "  echo \$x >> \${outfile_p}" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "  awk '{if (NF > 4) print \$0}' \$x | ${MARVEL_PATH}/scripts/paths2rids.py - - >> \${outfile_r}" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "  if [[ \$(wc -l < \${outfile_r}) -gt \$max_reads ]]" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "  then" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "    bl=\$((bl+1))" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "  fi" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "done" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "cat ${FIX_FILT_OUTDIR}/${COR_DB%.db}.tour.[0-9]*.rids | sort -n > ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.version
     ### LAcorrect
     elif [[ ${currentStep} -eq 2 ]]
@@ -314,10 +448,8 @@ then
             setLAfilterOptions
         fi
 
-        echo "if [[ -f ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.db ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}; fi" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "find ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/ -name \"${FIX_DB%.db}.[0-9]*.[0-9]*.fasta\" > ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.fofn" >> corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}" >> corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.version            
+        echo "bl=0; while [[ 1 ]]; do bl=\$((bl+1)); infile_r=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.rids; if [[ ! -f \${infile_r} ]]; then break; fi; if [[ -d ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl} ]]; then rm -r ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}; fi; mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}; for x in \$(cat \${infile_r}); do blockID=\$(${MARVEL_PATH}/scripts/rid2bid.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} \${x}); echo \".* source=\${x},.*\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${blockID}.txt; done; y=1; while [[ \$y -lt ${fixblocks} ]]; do bfile=${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${y}.txt; seqkit grep -n -r -f \${bfile} ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.\${y}.00.fasta > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta; echo \"${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn; done; ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${COR_DB%.db}; done" corr_03_createDB_block_${FIX_DB%.db}.${slurmID}.plan   
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_createDB_block_${FIX_DB%.db}.${slurmID}.version                    
     elif [[ ${currentStep} -eq 4 ]]
     then
         ### clean up plans 
@@ -330,9 +462,12 @@ then
             setLAfilterOptions
         fi
         setTourToFastaOptions
+        
+
+        
         for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.tour.paths
         do 
-            echo "${MARVEL_PATH}/scripts/tour2fasta.py${COR_TOURTOFASTA_OPT} -p $(basename ${x%.tour.paths}) -c ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${x%.tour.paths}.graphml ${x}" 
+        	echo "bl=\$(grep -e $x ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.*.paths | awk -F : '{print \$1}' | awk -F . '{print \$(NF-1)}'); ${MARVEL_PATH}/scripts/tour2fasta.py${COR_TOURTOFASTA_OPT} -p $(basename ${x%.tour.paths}) -c ${FIX_FILT_OUTDIR}/${FIX_DB%.db}/part_\${bl}/${COR_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${x%.tour.paths}.graphml ${x}" 
         done > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.version
     ### statistics
