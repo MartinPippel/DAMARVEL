@@ -372,6 +372,7 @@ then
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
         (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
         exit 1
+	fi
 elif [[ ${FIX_CORR_TYPE} -eq 1 ]]
 then 
     ### paths2rids
