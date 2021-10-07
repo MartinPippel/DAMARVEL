@@ -406,18 +406,7 @@ then
 		echo "bl=1" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "[ -e ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.1.rids ] && rm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.rids" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "[ -e ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.1.paths ] && rm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.[0-9]*.paths" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "for x in \$(find ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/ -name \"*.paths\");"  >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "do" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "  outfile_r=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.rids" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "  outfile_p=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.paths" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    
-    	echo "  echo \$x >> \${outfile_p}" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "  awk '{if (NF > 4) print \$0}' \$x | ${MARVEL_PATH}/scripts/paths2rids.py - - >> \${outfile_r}" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "  if [[ \$(wc -l < \${outfile_r}) -gt \$max_reads ]]" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "  then" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-        echo "    bl=\$((bl+1))" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "  fi" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "done" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "for x in \$(find ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/ -name \"*.paths\"); do outfile_r=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.rids; outfile_p=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.paths; echo \$x >> \${outfile_p}; awk '{if (NF > 4) print \$0}' \$x | ${MARVEL_PATH}/scripts/paths2rids.py - - >> \${outfile_r}; if [[ \$(wc -l < \${outfile_r}) -gt \$max_reads ]]; then bl=\$((bl+1)); fi; done" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "cat ${FIX_FILT_OUTDIR}/${COR_DB%.db}.tour.[0-9]*.rids | sort -n > ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}" >> corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_paths2rids_single_${FIX_DB%.db}.${slurmID}.version
     ### LAcorrect
