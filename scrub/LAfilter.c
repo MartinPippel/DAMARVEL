@@ -1321,7 +1321,7 @@ static int filter(FilterContext *ctx, Overlap *ovl) {
 	}
 
 	if (ctx->fMaxDiffs > 0 && ctx->remUpToXPercAln == 0) {
-		if (1.0 * ovl->path.diffs / nLen > ctx->fMaxDiffs) {
+		if (2.0 * ovl->path.diffs / (nLen + nLenB) > ctx->fMaxDiffs) {
 			if (ctx->nVerbose) {
 				printf("overlap %d -> %d: drop due to diffs %d length %d\n",
 						ovl->aread, ovl->bread, ovl->path.diffs, nLen);
@@ -1757,10 +1757,8 @@ static void filter_post(FilterContext *ctx) {
 	if (ctx->includeLasFlag) {
 		printf("discarded by las mask file                      %10d\n",
 				ctx->nDiscByLasMask);
-				assert(ctx->includeOffset == ctx->numIncludeLas);
-		}
-
-
+		assert(ctx->includeOffset == ctx->numIncludeLas);
+	}
 
 #endif
 
@@ -2652,14 +2650,14 @@ static void filterByPhaseInfo(FilterContext *ctx, Overlap *ovl, int novl) {
 			 *
 			 */
 			if (phaseSCa == phaseSCb) {
-				if (phaseHPa == phaseHPb && phasePSa == phasePSb)// A_2_1_304 B_2_1_304
+				if (phaseHPa == phaseHPb && phasePSa == phasePSb) // A_2_1_304 B_2_1_304
 						{
 					continue;
-				} else if (phaseHPb == -1)// A_2_1_304 B_2_-1_-1 || A_2_-1_-1 B_2_-1_-1
+				} else if (phaseHPb == -1) // A_2_1_304 B_2_-1_-1 || A_2_-1_-1 B_2_-1_-1
 						{
 					continue;
 				}
-				o->flags |= OVL_DISCARD;// A_2_1_304 B_2_2_304 || A_2_1_304 B_2_1_9999 || A_2_-1_-1 B_2_1|2_*
+				o->flags |= OVL_DISCARD; // A_2_1_304 B_2_2_304 || A_2_1_304 B_2_1_9999 || A_2_-1_-1 B_2_1|2_*
 				continue;
 			} else {
 				o->flags |= OVL_DISCARD;		// A_2_*_* B_3_*_*
@@ -2699,11 +2697,9 @@ static int filter_handler(void *_ctx, Overlap *ovl, int novl) {
 
 		assert(novl + ctx->includeOffset <= ctx->numIncludeLas);
 
-		for (j = 0; j < novl; j++)
-		{
+		for (j = 0; j < novl; j++) {
 			Overlap *o = ovl + j;
-			if(ctx->includeLas[ctx->includeOffset+j] == 0)
-			{
+			if (ctx->includeLas[ctx->includeOffset + j] == 0) {
 				o->flags |= OVL_DISCARD;
 				ctx->nDiscByLasMask++;
 			}
