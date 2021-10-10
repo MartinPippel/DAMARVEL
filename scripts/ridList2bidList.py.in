@@ -1,0 +1,49 @@
+#!@PYTHON3@
+
+#
+# print list of block number for a given list read id
+#
+# output rid bid
+#        rid bid
+#        rid bid
+import sys
+
+if len(sys.argv) != 3:
+    print("usage: <db> <readIdFile>")
+    sys.exit(1)
+
+strDb = sys.argv[1]
+
+if not strDb.endswith(".db"):
+    strDb = strDb + ".db"
+
+if sys.argv[2] == "-":
+    fin = sys.stdin
+else:
+    fin = open(sys.argv[2], "r")
+
+
+all_file = fin.read().strip()  # Read and remove any extra new line
+all_file_list = all_file.split('\n')  # make a list of lines
+nIDlist = [[int(each_int) for each_int in line.split()] for line in all_file_list]  # make list of list and convert to int 
+
+nBlock = 0
+nOffReal_p = nOffTrim_p = 0
+
+for strLine in open(strDb):
+    if nBlock == 0:
+        if strLine.startswith("size = "):
+            nBlock = 1
+
+        continue
+
+    nOffReal = int(strLine.strip())
+
+	for nId in nIDList:
+    	if  nId >= nOffReal_p and nId < nOffReal:
+    		print("{} {}\n".format(nId, nBlock - 1))        	
+        	
+    nOffReal_p = nOffReal
+
+    nBlock += 1
+
