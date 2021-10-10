@@ -456,7 +456,7 @@ then
         	 mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}; 
         	 for x in $(cat ${infile_r}); 
         	 do 
-        	 	echo -e "blockID=$(${MARVEL_PATH}/scripts/rid2bid.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} \${x}); echo \".* source=\${x},.*\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${blockID}.txt"; 
+        	 	echo -e "blockID=\$(${MARVEL_PATH}/scripts/rid2bid.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} \${x}); echo \".* source=\${x},.*\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${blockID}.txt"; 
         	 done; 
         #	 y=1; 
         #	 while [[ \$y -lt ${fixblocks} ]]; 
