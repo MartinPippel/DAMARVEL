@@ -439,7 +439,6 @@ then
             setLAfilterOptions
         fi
 
-        #echo "bl=0; while [[ 1 ]]; do bl=\$((bl+1)); infile_r=${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.\${bl}.rids; if [[ ! -f \${infile_r} ]]; then break; fi; if [[ -d ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl} ]]; then rm -r ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}; fi; mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}; for x in \$(cat \${infile_r}); do blockID=\$(${MARVEL_PATH}/scripts/rid2bid.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} \${x}); echo \".* source=\${x},.*\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${blockID}.txt; done; y=1; while [[ \$y -lt ${fixblocks} ]]; do bfile=${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${y}.txt; seqkit grep -n -r -f \${bfile} ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.\${y}.00.fasta > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta; echo \"${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn; done; ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${COR_DB%.db}; done" > corr_03_createDB_block_${FIX_DB%.db}.${slurmID}.plan
         bl=0; 
         while [[ 1 ]]; 
         do
@@ -455,17 +454,7 @@ then
         	 	rm -r ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}; 
         	 fi; 
         	 mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}; 
-        	 echo "${MARVEL_PATH}/scripts/ridList2bidList.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${infile_r} ${outfile_b}; block=1; while [[ \$block -lt ${fixblocks} ]]; do grep -e \" \${block}$\" ${outfile_b} | awk '{print \".* source=\"\$1\",.*\"}' > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/readID_pattern_block_\${block}.txt; block=\$((block+1)); done" > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.plan
-        	 
-        #	 echo -e "for x in \$(cat ${infile_r}); do blockID=\$(${MARVEL_PATH}/scripts/rid2bid.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} \${x}); echo \".* source=\${x},.*\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/readID_pattern_block_\${blockID}.txt; done" 
-        #	 y=1; 
-        #	 while [[ \$y -lt ${fixblocks} ]]; 
-        #	 do 
-        #	 	bfile=${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/readID_pattern_block_\${y}.txt; 
-        #	 	seqkit grep -n -r -f \${bfile} ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.\${y}.00.fasta > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta; 
-        # 	 	echo \"${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn; 
-        #	 done; 
-        #	 ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${COR_DB%.db}; 
+        	 echo "${MARVEL_PATH}/scripts/ridList2bidList.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${infile_r} ${outfile_b}; block=1; while [[ \$block -lt ${fixblocks} ]]; do grep -e \" \${block}$\" ${outfile_b} | awk '{print \".* source=\"\$1\",.*\"}' > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/readID_pattern_block_\${block}.txt; block=\$((block+1)); done"
         done > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.plan   
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.version                    
     ### prepare corrected db 
