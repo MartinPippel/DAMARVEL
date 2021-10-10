@@ -466,8 +466,8 @@ then
         # 	 	echo \"${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${FIX_DB%.db}.\${y}.00.fasta\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn; 
         #	 done; 
         #	 ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${COR_DB%.db}; 
-        done > corr_03_createDB_block_${FIX_DB%.db}.${slurmID}.plan   
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_createDB_block_${FIX_DB%.db}.${slurmID}.version                    
+        done > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.plan   
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.version                    
     elif [[ ${currentStep} -eq 4 ]]
     then
         ### clean up plans 
