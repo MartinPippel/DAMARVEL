@@ -454,7 +454,7 @@ then
         	 	rm -r ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}; 
         	 fi; 
         	 mkdir -p ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}; 
-        	 echo "${MARVEL_PATH}/scripts/ridList2bidList.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${infile_r} ${outfile_b}; block=1; while [[ \$block -lt ${fixblocks} ]]; do grep -e \" \${block}$\" ${outfile_b} | awk '{print \".* source=\"\$1\",.*\"}' > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/readID_pattern_block_\${block}.txt; block=\$((block+1)); done"
+        	 echo "${MARVEL_PATH}/scripts/ridList2bidList.py ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${infile_r} > ${outfile_b}; block=1; while [[ \$block -lt ${fixblocks} ]]; do grep -e \" \${block}$\" ${outfile_b} | awk '{print \".* source=\"\$1\",.*\"}' > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/readID_pattern_block_\${block}.txt; block=\$((block+1)); done"
         done > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.plan   
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_rid2bid_block_${FIX_DB%.db}.${slurmID}.version                    
     ### prepare corrected db 
