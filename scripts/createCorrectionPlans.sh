@@ -525,8 +525,8 @@ then
         for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.tour.paths
         do 
         	echo "bl=\$(grep -e $x ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.tour.*.paths | awk -F : '{print \$1}' | awk -F . '{print \$(NF-1)}'); ${MARVEL_PATH}/scripts/tour2fasta.py${COR_TOURTOFASTA_OPT} -p $(basename ${x%.tour.paths}) -c ${FIX_FILT_OUTDIR}/${FIX_DB%.db}/part_\${bl}/${COR_DB%.db} ${FIX_FILT_OUTDIR}/${FIX_DB%.db} ${x%.tour.paths}.graphml ${x}" 
-        done > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_04_tour2fasta_block_${FIX_DB%.db}.${slurmID}.version
+        done > corr_06_tour2fasta_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_06_tour2fasta_block_${FIX_DB%.db}.${slurmID}.version
     ### statistics
     elif [[ ${currentStep} -eq 7 ]]
     then
