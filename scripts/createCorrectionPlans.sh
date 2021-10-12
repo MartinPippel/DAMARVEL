@@ -501,7 +501,7 @@ then
         	 then 
         	 	break; 
         	 fi; 
-        	echo "if [[ -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${COR_DB%.db} ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${COR_DB%.db}; fi; ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${COR_DB%.db};" 
+        	echo "if [[ -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${COR_DB%.db}.db ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${COR_DB%.db}; fi; ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${COR_DB%.db};" 
         done > corr_05_createDB_block_${FIX_DB%.db}.${slurmID}.plan   
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_05_createDB_block_${FIX_DB%.db}.${slurmID}.version        
     elif [[ ${currentStep} -eq 6 ]]
