@@ -477,7 +477,7 @@ then
         	 	break; 
         	 fi; 
         	 y=1; 
-        	 while [[ $y -lt ${fixblocks} ]]; 
+        	 while [[ $y -le ${fixblocks} ]]; 
         	 do 
         	 	echo "bfile=${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/readID_pattern_block_${y}.txt; seqkit grep -n -r -f \${bfile} ${FIX_FILT_OUTDIR}/${COR_DIR}/reads/${FIX_DB%.db}.${y}.00.fasta > ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${FIX_DB%.db}.${y}.00.fasta; echo \"${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/${FIX_DB%.db}.${y}.00.fasta\" >> ${FIX_FILT_OUTDIR}/${COR_DIR}/part_${bl}/reads_block.fofn;"
         	 	y=$((y+1))
@@ -485,7 +485,7 @@ then
         #	 ${MARVEL_PATH}/bin/FA2db -x0 -c source -c correctionq -c postrace -f ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/reads_block.fofn ${FIX_FILT_OUTDIR}/${COR_DIR}/part_\${bl}/${COR_DB%.db}; 
         done > corr_04_seqkitGrep_block_${FIX_DB%.db}.${slurmID}.plan   
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_04_seqkitGrep_block_${FIX_DB%.db}.${slurmID}.version
-    ### prepare seqkit grep reads  
+    ### create separate corrected read DBs  
     elif [[ ${currentStep} -eq 5 ]]
     then
         ### clean up plans 
