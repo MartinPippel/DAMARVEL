@@ -28,6 +28,16 @@ function getNumOfDbBlocks()
     echo ${blocks}
 }
 
+function setMinimap2Options()
+{
+	 CT_PURGEHAPLOTIGS_MINMAP_OPT=""
+    	
+    if [[ -n ${CT_PURGEHAPLOTIGS_MINMAP_SPLITINDEX} ]]
+    then
+        CT_PURGEHAPLOTIGS_MINMAP_OPT="${CT_PURGEHAPLOTIGS_MINMAP_OPT} -I ${CT_PURGEHAPLOTIGS_MINMAP_SPLITINDEX}"
+    fi
+}
+
 source ${configFile}
 
 gsize=${GSIZE}
@@ -76,7 +86,9 @@ then
         done
         ref=$(basename ${CT_PURGEHAPLOTIGS_INFASTA%.fasta})
         
-        echo "${PURGEHAPLOTIGS_ENV} && minimap2 -t ${CT_PURGEHAPLOTIGS_MINIMAP2IDXTHREADS} -x map-pb -d ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}.idx ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}.fasta" > purgeHaplotigs_02_createMinimap2RefIndex_single_${CONT_DB}.${slurmID}.plan
+        setMinimap2Options
+       
+        echo "${PURGEHAPLOTIGS_ENV} && minimap2 ${CT_PURGEHAPLOTIGS_MINMAP_OPT} -t ${CT_PURGEHAPLOTIGS_MINIMAP2IDXTHREADS} -x map-pb -d ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}.idx ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}.fasta" > purgeHaplotigs_02_createMinimap2RefIndex_single_${CONT_DB}.${slurmID}.plan
         echo "minimap2 $(${PURGEHAPLOTIGS_ENV} && minimap2 --version && ${PURGEHAPLOTIGS_ENV_DEACT})" > purgeHaplotigs_02_createMinimap2RefIndex_single_${CONT_DB}.${slurmID}.version
 		echo "samtools $(${PURGEHAPLOTIGS_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && ${PURGEHAPLOTIGS_ENV_DEACT})" >> purgeHaplotigs_02_createMinimap2RefIndex_single_${CONT_DB}.${slurmID}.version
     ### 3-minimap2
@@ -120,11 +132,13 @@ then
 			exit 1
 		fi
 		
+		setMinimap2Options
+		
         for x in ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.subreads.fa.gz   		
    		do
         	name=$(basename ${x%.subreads.fa.gz})
         	    		
-    	echo "${PURGEHAPLOTIGS_ENV} && minimap2 -a -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}.idx ${x} | samtools view -h - | samtools sort -@ ${CT_PURGEHAPLOTIGS_SAMTOOLSTHREADS} -m ${CT_PURGEHAPLOTIGS_SAMTOOLSMEM}G -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.bam -T /tmp/${ref}_${name}_minimap2.sort.tmp && samtools index -@ ${CT_PURGEHAPLOTIGS_SAMTOOLSTHREADS} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.bam"        	
+    	echo "${PURGEHAPLOTIGS_ENV} && minimap2 ${CT_PURGEHAPLOTIGS_MINMAP_OPT} -a -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}.idx ${x} | samtools view -h - | samtools sort -@ ${CT_PURGEHAPLOTIGS_SAMTOOLSTHREADS} -m ${CT_PURGEHAPLOTIGS_SAMTOOLSMEM}G -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.bam -T /tmp/${ref}_${name}_minimap2.sort.tmp && samtools index -@ ${CT_PURGEHAPLOTIGS_SAMTOOLSTHREADS} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.bam"        	
 		done > purgeHaplotigs_03_minimap2_block_${CONT_DB}.${slurmID}.plan 
     	echo "minimap2 $(${PURGEHAPLOTIGS_ENV} && minimap2 --version && ${PURGEHAPLOTIGS_ENV_DEACT})" > purgeHaplotigs_03_minimap2_block_${CONT_DB}.${slurmID}.version
 		echo "samtools $(${PURGEHAPLOTIGS_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && ${PURGEHAPLOTIGS_ENV_DEACT})" >> purgeHaplotigs_03_minimap2_block_${CONT_DB}.${slurmID}.version
@@ -269,13 +283,15 @@ then
 			
 			ref=$(basename ${CT_PURGEHAPLOTIGS_INFASTA%.fasta})
 					
+			setMinimap2Options
+			
 			for x in $(ls ${CT_PURGEHAPLOTIGS_PACBIOFASTA}/*.{ccs,subreads}.{fasta,fa.gz} 2>/dev/null)	
 			do
 				name=$(basename ${x%.subreads.fasta})
 				name=${name%.subreads.fa.gz}
 				name=${name%.ccs.fasta}
 				name=${name%.ccs.fa.gz}
-				echo "${CONDA_BASE_ENV} && minimap2 -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${x} | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz"        	
+				echo "${CONDA_BASE_ENV} && minimap2  ${CT_PURGEHAPLOTIGS_MINMAP_OPT}  -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${x} | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz"        	
 			done > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.plan 
 		else 
         	(>&2 echo "ERROR - Variable ${CT_PURGEHAPLOTIGS_PACBIOFASTA} is not set. Extract subreads on the fly.")
@@ -298,12 +314,14 @@ then
 			fi
 
 			ref=$(basename ${CT_PURGEHAPLOTIGS_INFASTA%.fasta})
+			
+			setMinimap2Options		
 					
 			for x in ${DB_PATH}/*.subreads.bam	
 			do
 				name=$(basename ${x%.subreads.bam})
 				echo -n "${CONDA_BAM2FASTX_ENV} && bam2fasta -o ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.subreads ${x} && conda deactivate "
-				echo -e " && ${CONDA_BASE_ENV} && minimap2 -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.subreads.fasta.gz | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz && conda deactivate"        	
+				echo -e " && ${CONDA_BASE_ENV} && minimap2 ${CT_PURGEHAPLOTIGS_MINMAP_OPT} -x map-pb -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} ${CT_PURGEHAPLOTIGS_INFASTA} ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${name%.bam}.subreads.fasta.gz | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_${name}_minimap2.sort.paf.gz && conda deactivate"        	
 			done > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.plan 
         fi
        	echo "minimap2 $(${CONDA_BASE_ENV}) && minimap2 --version && conda deactivate" > purgeHaplotigs_02_PDminimap2_block_${CONT_DB}.${slurmID}.version
@@ -341,9 +359,11 @@ then
 		else
 			addOpt="${addOpt} -x asm10"
 		fi
+		
+		setMinimap2Options
 
 		echo "${PURGEDUPS_PATH}/bin/split_fa ${CT_PURGEHAPLOTIGS_INFASTA} > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta" > purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.plan 
-		echo "${CONDA_BASE_ENV} && minimap2${addOpt} -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} -DP ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.self.paf.gz && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.plan
+		echo "${CONDA_BASE_ENV} && minimap2${addOpt} ${CT_PURGEHAPLOTIGS_MINMAP_OPT} -t ${CT_PURGEHAPLOTIGS_MINIMAP2ALNTHREADS} -DP ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.fasta | gzip -c - > ${CT_PURGEHAPLOTIGS_OUTDIR}/purgeHaplotigs_${CT_PURGEHAPLOTIGS_RUNID}/${ref}_split.self.paf.gz && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.plan
 
 		echo "purge_dups (split_fa) $(${PURGEDUPS_PATH}/bin/purge_dups -h 2>&1 | grep Version)" > purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.version 
     	echo "minimap2 $(${CONDA_BASE_ENV}) && minimap2 --version && conda deactivate" >> purgeHaplotigs_04_PDminimap2_single_${CONT_DB}.${slurmID}.version
