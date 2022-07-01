@@ -43,8 +43,8 @@
 
 // constants
 
-#define MAX_BUF_SIZE ( 10L * 1024 * 1024 * 1024 )
-#define MAX_BUFS     ( 16 )
+#define MAX_BUF_SIZE ( 13L * 1024 * 1024 * 1024 )
+#define MAX_BUFS     ( 18 )
 
 #define MIN_INT_LEN  ( 500 )        // min intervals length
 

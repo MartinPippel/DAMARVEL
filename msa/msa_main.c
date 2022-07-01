@@ -169,7 +169,7 @@ static int handler_msa(void* _ctx, Overlap* pOvls, int nOvls)
     }
 
     msa_print_simple(m, ctx->fileOutMsa, ctx->fileOutIds, ctx->a_from, ctx->a_to);
-    // msa_print_profile(m, stdout, 1);
+    msa_print_profile(m, stdout, ctx->a_from, ctx->a_to, 1);
 
     char* cons = msa_consensus(m, 0);
     write_seq(ctx->fileOutConsensus, cons);
