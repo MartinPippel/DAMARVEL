@@ -40,7 +40,7 @@ for strLine in open(strDb):
     nOffReal = int(strLine.strip())
 
 	for nId in nIDList:
-    	if  nId >= nOffReal_p and nId < nOffReal:
+    	if nId >= nOffReal_p and nId < nOffReal:
     		print("{} {}\n".format(nId, nBlock - 1))        	
         	
     nOffReal_p = nOffReal
