@@ -28,6 +28,9 @@ except ImportError:
     logging.error("The networkx library doesn't seem to be installed on your system.")
     sys.exit(1)
 
+nx_ver = str(nx.__version__)
+print("nx.__version__ : " + nx_ver )
+
 ### constants
 #
 
