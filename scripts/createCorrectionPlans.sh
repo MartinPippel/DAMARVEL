@@ -181,7 +181,15 @@ function setLAcorrectOptions()
     if [[ -n ${FIX_CORR_LACORRECT_THREAD} ]]
     then
         COR_LACORRECT_OPT="${COR_LACORRECT_OPT} -j ${FIX_CORR_LACORRECT_THREAD}"
+    fi
+    if [[ -n ${FIX_CORR_LACORRECT_MAXCOV} ]]
+    then
+        COR_LACORRECT_OPT="${COR_LACORRECT_OPT} -c ${FIX_CORR_LACORRECT_MAXCOV}"
     fi 
+    if [[ -n ${FIX_CORR_LACORRECT_MAXTILES} ]]
+    then
+        COR_LACORRECT_OPT="${COR_LACORRECT_OPT} -t ${FIX_CORR_LACORRECT_MAXTILES}"
+    fi  
     if [[ -z ${FIX_CORR_PATHS2RIDS_FILE} ]]
     then 
         setpath2ridsOptions

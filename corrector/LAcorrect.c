@@ -75,8 +75,12 @@ typedef struct
     int twidth;     // spacing between the alignment trace points
     off_t start;    // start offset in the overlap file
     off_t end;      // end offset in the overlap
+
     FILE* fileOvls; // overlaps
     FILE* fileOut;  // output file
+
+    int max_tiles; 		// maximum tiles
+    int max_coverage;   // max coverage, default 20
 
     HITS_DB db;         // database
     HITS_TRACK* qtrack; // quality track
@@ -111,6 +115,9 @@ typedef struct
 #endif
     int verbose;
     int thread; // thread #
+
+    int max_tiles; 		// maximum tiles
+    int max_coverage;   // max coverage, default 20
 
     int twidth; // spacing of trace points
 
@@ -318,7 +325,7 @@ static char* single_tile_consensus( corrector_context* cctx, int t, int* tiles_u
                      bb, be, NULL, 0 );
 #endif
 
-            if ( cctx->cons->added >= MAX_COVERAGE )
+            if ( cctx->cons->added >= cctx->max_coverage )
             {
                 break;
             }
@@ -450,7 +457,7 @@ static char* multi_tile_consensus( corrector_context* cctx, Overlap* ovls, int n
         msa_add( cctx->malign, cctx->reads[ ovl + 1 ], -1, -1, bb, be, NULL, 0 );
 #endif
 
-        if ( cctx->cons->added == MAX_COVERAGE )
+        if ( cctx->cons->added == cctx->max_coverage )
         {
             break;
         }
@@ -1174,7 +1181,7 @@ static void correct_overlaps( corrector_context* cctx, Overlap** ovls, int nOvls
 
         for ( t = tb; t <= te; t++ )
         {
-            if ( cctx->toff[ t + 1 ] < MAX_TILES )
+            if ( cctx->toff[ t + 1 ] < cctx->max_tiles )
             {
                 cctx->toff[ t + 1 ]++;
             }
@@ -1184,7 +1191,7 @@ static void correct_overlaps( corrector_context* cctx, Overlap** ovls, int nOvls
 #ifdef USE_A_TILES
     for ( i = 0; i < ntiles; i++ )
     {
-        if ( cctx->toff[ i + 1 ] < MAX_TILES )
+        if ( cctx->toff[ i + 1 ] < cctx->max_tiles )
         {
             cctx->toff[ i + 1 ]++;
         }
@@ -1248,7 +1255,7 @@ static void correct_overlaps( corrector_context* cctx, Overlap** ovls, int nOvls
         be      = ovls[ i ]->path.bbpos + trace[ 1 ];
         readidx = -1;
 
-        if ( curtiles[ tile ] < MAX_TILES )
+        if ( curtiles[ tile ] < cctx->max_tiles )
         {
             p = cctx->toff[ tile ] + curtiles[ tile ];
             curtiles[ tile ] += 1;
@@ -1287,7 +1294,7 @@ static void correct_overlaps( corrector_context* cctx, Overlap** ovls, int nOvls
                 be += trace[ t + 1 ];
             }
 
-            if ( curtiles[ tile ] < MAX_TILES )
+            if ( curtiles[ tile ] < cctx->max_tiles )
             {
                 p = cctx->toff[ tile ] + curtiles[ tile ];
                 curtiles[ tile ] += 1;
@@ -1410,6 +1417,8 @@ static void* corrector_thread( void* arg )
     cctx.twidth                 = carg->twidth;
     cctx.qtrack_offset          = carg->qtrack->anno;
     cctx.qtrack_data            = carg->qtrack->data;
+    cctx.max_coverage           = carg->max_coverage;
+    cctx.max_tiles              = carg->max_tiles;
     cctx.track = malloc( sizeof( int ) * carg->db.maxlen );
 
     cctx.stats_tiles_single = 0;
@@ -1566,11 +1575,13 @@ static void* corrector_thread( void* arg )
 
 static void usage()
 {
-    printf( "[-v] [-r <file>] [-jx <int>] [-q <track>] <db> <in.las> <out.fasta>\n" );
+    printf( "[-v] [-r <file>] [-jct <int>] [-q <track>] <db> <in.las> <out.fasta>\n" );
     printf( "options: -v ... verbose\n" );
     printf( "         -j ... number of threads\n" );
     printf( "         -q ... q track (%s)\n", DEF_ARG_Q );
     printf( "         -b ... block (%d)\n", DEF_ARG_B );
+    printf( "         -c ... maximum coverage (%d)\n", MAX_COVERAGE);
+    printf( "         -t ... maximum tiles (%d)\n", MAX_TILES);
     printf( "         -r ... text file with ids of the reads to be corrected\n");
 }
 
@@ -1584,6 +1595,8 @@ int main( int argc, char* argv[] )
     int verbose  = 0;
     int nThreads = 1;
     int block    = DEF_ARG_B;
+    int maxTiles = MAX_TILES;
+    int maxCov   = MAX_COVERAGE;
 
     char* qTrackName = DEF_ARG_Q;
     char* pathReadIds = NULL;
@@ -1594,7 +1607,7 @@ int main( int argc, char* argv[] )
 
     opterr = 0;
 
-    while ( ( c = getopt( argc, argv, "vr:b:j:q:" ) ) != -1 )
+    while ( ( c = getopt( argc, argv, "vr:b:j:q:t:c:" ) ) != -1 )
     {
         switch ( c )
         {
@@ -1612,6 +1625,14 @@ int main( int argc, char* argv[] )
 
             case 'b':
                 block = atoi( optarg );
+                break;
+
+            case 'c':
+                maxCov = atoi( optarg );
+                break;
+
+            case 't':
+                maxTiles = atoi( optarg );
                 break;
 
             case 'q':
@@ -1720,10 +1741,13 @@ int main( int argc, char* argv[] )
         cargs[ i ].qtrack  = qtrack;
         cargs[ i ].verbose = verbose;
 
-        cargs[ i ].thread = i;
-        cargs[ i ].start  = offsets[ i ];
-        cargs[ i ].end    = offsets[ i + 1 ];
-        cargs[ i ].twidth = twidth;
+        cargs[ i ].thread       = i;
+        cargs[ i ].start        = offsets[ i ];
+        cargs[ i ].end          = offsets[ i + 1 ];
+        cargs[ i ].twidth       = twidth;
+        cargs[ i ].max_coverage = maxCov;
+        cargs[ i ].max_tiles    = maxTiles;
+
 
         cargs[ i ].fileOvls = fopen( pcPathOverlaps, "r" );
 
