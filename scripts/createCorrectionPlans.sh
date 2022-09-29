@@ -245,6 +245,20 @@ function setTourToFastaOptions()
 	fi
 }
 
+function setDBsplitOptions()
+{
+    DACCORD_DBSPLIT_OPT=""
+
+   
+    if [[ -z ${COR_DACCORD_DBSPLIT_S} ]]
+    then
+        (>&2 echo "Set DBsplit -s argument to default value: 400!")
+        COR_DACCORD_DBSPLIT_S=400
+    fi
+
+    DACCORD_DBSPLIT_OPT="${DACCORD_DBSPLIT_OPT} -s${COR_DACCORD_DBSPLIT_S}"
+}
+
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
 if [[ -z ${COR_DIR} ]]
@@ -261,7 +275,11 @@ fi
 
 myTypes=("1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics" "1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics")
 #type-0 steps: 1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics
-#type-0 steps: 1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics ### for BIG genomes, we need to create several corrected databases 
+#type-1 steps: 1-paths2rids, 2-LAcorrect, 3-prepDB, 4-tour2fasta, 5-statistics ### for BIG genomes, we need to create several corrected databases
+### daccord correction - including remapping 
+#type-2 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 07-LArepeat/LAchain/LAstitch/LAgap, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord 
+#type-3 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 06a-repcomp, 07-LArepeat/LAchain, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord
+#type-4 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 06a-repcomp, 06b-forcealign, 07-LArepeat/LAchain, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord
 if [[ ${FIX_CORR_TYPE} -eq 0 ]]
 then
     ### paths2rids
@@ -569,6 +587,87 @@ then
         (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
         exit 1            
     fi
+#type-2 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 07-LArepeat/LAchain/LAstitch/LAgap, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord 
+elif [[ ${FIX_CORR_TYPE} -eq 2 ]]
+then 
+   	###01-prepareDB
+	if [[ ${currentStep} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls daccord_01_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+    	
+    	if [[ ! -f "${CORR_DACCORD_REFFASTA}" ]]
+        then
+        	(>&2 echo "ERROR - set CORR_DACCORD_REFFASTA to input fasta file")
+        	exit 1
+   		fi
+   				
+		if [[ ! -d ${CORR_DACCORD_OUTDIR} ]] 
+		then
+			(>&2 echo "ERROR - Variable ${CORR_DACCORD_OUTDIR} is not set or cannot be accessed")
+        	exit 1
+		fi
+    	
+    	echo "if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]; then mv ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}" > daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		
+		echo "${DACCORD_PATH}/bin/fastaidrename < ${CORR_DACCORD_REFFASTA} > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "samtools faidx ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "grep -e \">\" ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta | sed -e 's:^>::' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.header" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
+		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
+    	
+    	## create contig database - no scaffolds are supported yet 
+    	## marvel 
+    	echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+    	echo "${MARVEL_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB}" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+    	## dazzler 
+		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "${DAZZLER_PATH}/bin/DBsplit${SCRUB_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan               		
+    	
+    	
+    	 
+    	### check if input is a Marvel database or a fasta-fofn 
+#		if [[ ! -f "${CORR_DACCORD_READS}" ]]
+#        then
+#        	(>&2 echo "ERROR - set ${CORR_DACCORD_READS} to input fasta file")
+#        	exit 1
+#   		fi
+
+	else
+        (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
+        exit 1            
+    fi		
+#type-3 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 06a-repcomp, 07-LArepeat/LAchain, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord
+#type-4 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 06a-repcomp, 06b-forcealign, 07-LArepeat/LAchain, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord
+elif [[ ${FIX_CORR_TYPE} -eq 3 ]]
+then 
+		echo "todo"
+		    	
+    	
+    	
+
+	else
+        (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
+        exit 1            
+    fi		
+    
+#type-4 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 06a-repcomp, 06b-forcealign, 07-LArepeat/LAchain, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord
+elif [[ ${FIX_CORR_TYPE} -eq 4 ]]
+then 
+   	if [[ ${currentStep} -eq 1 ]]
+    then
+		echo "not present yet"
+	else
+        (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
+        (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
+        exit 1            
+    fi		
+    
 else
     (>&2 echo "unknown FIX_TOUR_TYPE ${FIX_CORR_TYPE}")
     (>&2 echo "supported types")
