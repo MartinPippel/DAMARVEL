@@ -645,6 +645,8 @@ then
 #type-4 steps: 01-prepareDB, 02-DBdust, 03-datander, 04-TANmask, 05-daliger, 06-LAmerge, 06a-repcomp, 06b-forcealign, 07-LArepeat/LAchain, 08-Lafilter, 09-lassort, 10-computeIntrinsicQV, 11-daccord
 elif [[ ${FIX_CORR_TYPE} -eq 3 ]]
 then 
+	if [[ ${currentStep} -eq 1 ]]
+    then
 		echo "todo"
 		    	
     	
