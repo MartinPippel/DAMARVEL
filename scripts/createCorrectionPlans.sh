@@ -613,7 +613,7 @@ then
     	
     	echo "if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]; then mv ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		
-		echo "${DACCORD_PATH}/bin/fastaidrename < ${CORR_DACCORD_REFFASTA} > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "awk '{print \$1}' ${CORR_DACCORD_REFFASTA} | ${DACCORD_PATH}/bin/fastaidrename > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "samtools faidx ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "grep -e \">\" ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta | sed -e 's:^>::' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.header" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
