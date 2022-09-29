@@ -594,7 +594,7 @@ then
 	if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls daccord_01_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_01_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -611,21 +611,21 @@ then
         	exit 1
 		fi
     	
-    	echo "if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]; then mv ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}" > daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+    	echo "if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]; then mv ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}" > corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
 		
-		echo "${DACCORD_PATH}/bin/fastaidrename < ${CORR_DACCORD_REFFASTA} > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
-		echo "samtools faidx ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
-		echo "grep -e \">\" ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta | sed -e 's:^>::' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.header" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
-		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
-		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
+		echo "${DACCORD_PATH}/bin/fastaidrename < ${CORR_DACCORD_REFFASTA} > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "samtools faidx ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "grep -e \">\" ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta | sed -e 's:^>::' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.header" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
+		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.version
     	
     	## create contig database - no scaffolds are supported yet 
     	## marvel 
-    	echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
-    	echo "${MARVEL_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB}" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+    	echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+    	echo "${MARVEL_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB}" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
     	## dazzler 
-		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
-		echo "${DAZZLER_PATH}/bin/DBsplit${SCRUB_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> daccord_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan               		
+		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_in.fasta" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan
+		echo "${DAZZLER_PATH}/bin/DBsplit${SCRUB_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> corr_01_prepInFasta_single_${CONT_DB}.${slurmID}.plan               		
     	
     	
     	 
