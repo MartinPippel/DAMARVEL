@@ -633,30 +633,19 @@ then
     	echo "${MARVEL_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		## dazzler 
 		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_reads.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "${DAZZLER_PATH}/bin/DBsplit${SCRUB_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan               		
+		echo "${DAZZLER_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan               		
 		## get number of read blocks
-		echo "grep block ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} | awk '{print \$NF}' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "grep block ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB%.db}.db | awk '{print \$NF}' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		    		
     	## 2. add contigs 
     	## marvel 
     	echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-    	echo "${MARVEL_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
     	## dazzler 
 		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "${DAZZLER_PATH}/bin/DBsplit${SCRUB_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan               		
     	
-    	
-    	 
-    	### check if input is a Marvel database or a fasta-fofn 
-#		if [[ ! -f "${CORR_DACCORD_READS}" ]]
-#        then
-#        	(>&2 echo "ERROR - set ${CORR_DACCORD_READS} to input fasta file")
-#        	exit 1
-#   		fi
 
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
 		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
-		
 
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
