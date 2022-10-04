@@ -777,7 +777,6 @@ then
 		echo "mv ${DACCORD_DAZZ_DB%.db}.db.tmp ${DACCORD_DAZZ_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 		
 			
 		## 4. create daligner sub directories
-		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)			   
 		echo "for x in \$(seq \$((1+\$(cat number_of_readsblocks.txt))) \$(grep block ${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 	    echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "  mkdir -p d\${x}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
