@@ -273,6 +273,24 @@ function setDatanderOptions()
     fi
 }
 
+function setTANmaskOptions()
+{
+    DACCORD_TANMASK_OPT=""
+    if [[ -n ${COR_DACCORD_TANMASK_VERBOSE} && ${COR_DACCORD_TANMASK_VERBOSE} -ge 1 ]]
+    then
+        DACCORD_TANMASK_OPT="${DACCORD_TANMASK_OPT} -v"
+    fi
+    if [[ -n ${COR_DACCORD_TANMASK_MINLEN} && ${COR_DACCORD_TANMASK_MINLEN} -ge 1 ]]
+    then
+        DACCORD_TANMASK_OPT="${DACCORD_TANMASK_OPT} -l${COR_DACCORD_TANMASK_MINLEN}"
+    fi
+    if [[ -n ${COR_DACCORD_TANMASK_TRACK} ]]
+    then
+        DACCORD_TANMASK_OPT="${DACCORD_TANMASK_OPT} -n${COR_DACCORD_TANMASK_TRACK}"
+    fi
+}
+
+
 
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
@@ -720,7 +738,41 @@ then
         do 
             echo "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DACCORD_DATANDER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} && cd ${myCWD}"
     	done > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "DAZZLER datander $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER datander $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.version		
+	### 05-datander
+    elif [[ ${currentStep} -eq 5 ]]
+    then 
+        ### clean up plans 
+        for x in $(ls corr_05_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        ### find and set TANmask options         
+        setTANmaskOptions
+        
+        myCWD=$(pwd) 
+		setDatanderOptions
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+		
+		
+		if [[ -z ${COR_DACCORD_TANMASK_JOBS} ]]
+        then 
+        	COR_DACCORD_TANMASK_JOBS=50
+        fi
+        
+        for x in $(seq 1 ${COR_DACCORD_TANMASK_JOBS} ${nCorrblocks})
+        do 
+        	y=$((x+COR_DACCORD_TANMASK_JOBS-1))
+        	if [[ $y -gt ${nCorrblocks} ]]
+        	then 
+        		y=${nCorrblocks}
+        	fi        	
+        	
+            echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/TANmask${DACCORD_TANMASK_OPT} ${DACCORD_DAZZ_DB%.db} TAN.${DACCORD_DAZZ_DB%.db}.@${x}-${y} && cd ${myCWD}" 
+    	done > corr_05_TANmask_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "DAZZLER TANmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > corr_05_TANmask_block_${FIX_DB%.db}.${slurmID}.version
 		
 		
 	else
