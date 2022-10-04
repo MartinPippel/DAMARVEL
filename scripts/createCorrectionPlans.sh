@@ -710,7 +710,7 @@ then
         	exit 1
 		fi
     	
-    	echo "if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]; then mv ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]; then mv ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		
 		echo "awk '{print \$1}' ${CORR_DACCORD_REFFASTA} | ${DACCORD_PATH}/bin/fastaidrename -pcontigs > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "samtools faidx ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
