@@ -646,7 +646,27 @@ then
 
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
 		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
-
+   	### 02-DBdust
+	if [[ ${currentStep} -eq 2 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_02_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+        nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+        myCWD=$(pwd)      
+		
+		### create DBdust commands 
+        for x in $(seq 1 ${nCorrblocks})
+        do 
+            echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${MARVEL_PATH}/bin/DBdust$ ${DACCORD_DB%.db}.${x} && cd ${myCWD}"
+            echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${DAZZLER_PATH}/bin/DBdust ${DACCORD_DAZZ_DB%.db}.${x} && cd ${myCWD}"
+    	done > corr_01_DBdust_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_DBdust_block_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_01_DBdust_block_${FIX_DB%.db}.${slurmID}.version
+		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
         (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
