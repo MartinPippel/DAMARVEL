@@ -259,6 +259,21 @@ function setDBsplitOptions()
     DACCORD_DBSPLIT_OPT="${DACCORD_DBSPLIT_OPT} -s${COR_DACCORD_DBSPLIT_S}"
 }
 
+function setDatanderOptions()
+{
+    ### find and set datander options 
+    DACCORD_DATANDER_OPT=""
+    if [[ -n ${COR_DACCORD_DATANDER_THREADS} ]]
+    then
+        DACCORD_DATANDER_OPT="${DACCORD_DATANDER_OPT} -T${COR_DACCORD_DATANDER_THREADS}"
+    fi
+    if [[ -n ${COR_DACCORD_DATANDER_MINLEN} ]]
+    then
+        DACCORD_DATANDER_OPT="${DACCORD_DATANDER_OPT} -l${COR_DACCORD_DATANDER_MINLEN}"
+    fi
+}
+
+
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
 if [[ -z ${COR_DIR} ]]
@@ -666,6 +681,7 @@ then
     	done > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
         echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
+	### 03-Catrack
     elif [[ ${currentStep} -eq 3 ]]
     then 
         ### clean up plans 
@@ -685,6 +701,27 @@ then
                  
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_Catrack_single_${FIX_DB%.db}.${slurmID}.version
         echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_03_Catrack_single_${FIX_DB%.db}.${slurmID}.version
+	### 04-datander
+    elif [[ ${currentStep} -eq 4 ]]
+    then 
+        ### clean up plans 
+        for x in $(ls corr_04_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        myCWD=$(pwd) 
+		setDatanderOptions
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+		
+		### create datander commands
+        for x in $(seq 1 ${nCorrblocks})
+        do 
+            echo "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DACCORD_DATANDER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} && cd ${myCWD}"
+    	done > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "DAZZLER datander $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.version
+		
 		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
