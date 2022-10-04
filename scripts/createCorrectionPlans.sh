@@ -666,6 +666,25 @@ then
     	done > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
         echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
+    elif [[ ${currentStep} -eq 3 ]]
+    then 
+        ### clean up plans 
+        for x in $(ls corr_03_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+        ### find and set Catrack options 
+        ## setCatrackOptions
+        
+        myCWD=$(pwd)
+        
+        ### create Catrack command
+        echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${MARVEL_PATH}/bin/Catrack -v -f -d ${DACCORD_DB%.db} dust && cd ${myCWD}" > corr_03_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${DAZZLER_PATH}/bin/Catrack  -v -f -d ${DACCORD_DAZZ_DB%.db} dust && cd ${myCWD}" >> corr_03_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
+                 
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_03_Catrack_single_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_03_Catrack_single_${FIX_DB%.db}.${slurmID}.version
 		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
