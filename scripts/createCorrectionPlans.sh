@@ -906,6 +906,8 @@ then
         echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/DBdump -r -m${COR_DACCORD_TANMASK_TRACK} ${DACCORD_DAZZ_DB%.db} | awk '{if (\$1 == \"R\") {read=\$2}; if (\$1 == \"T0\" && \$2 > 0) {for (i = 3; i < 3+2*\$2; i+=2) print read-1\" \"\$i\" \"\$(i+1)} }' > ${DACCORD_DAZZ_DB%.db}.${COR_DACCORD_TANMASK_TRACK}.txt && cd ${myCWD}" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
       	echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/txt2track -m ${DACCORD_DB%.db} ${DACCORD_DAZZ_DB%.db}.${COR_DACCORD_TANMASK_TRACK}.txt ${COR_DACCORD_TANMASK_TRACK} && cd ${myCWD}" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
       	echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/TKcombine ${DACCORD_DB%.db} ${COR_DACCORD_TANMASK_TRACK}_dust ${COR_DACCORD_TANMASK_TRACK} dust && cd ${myCWD}" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan 
+        ### cleanup TAN.*.las 
+        echo "cd ${Daccord_DIR} && rm TAN.${DACCORD_DAZZ_DB%.db}.*.las" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
         
         echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
         echo "LASTOOLS viewmasks $(git --git-dir=${LASTOOLS_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version    
