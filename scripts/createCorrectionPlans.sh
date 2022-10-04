@@ -647,7 +647,7 @@ then
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
 		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
    	### 02-DBdust
-	if [[ ${currentStep} -eq 2 ]]
+	elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
         for x in $(ls corr_02_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
