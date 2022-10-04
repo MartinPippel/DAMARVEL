@@ -769,8 +769,7 @@ then
 		echo "			found=1" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "		fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
 		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan		
-		echo "		  
+		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan				
 		echo "	fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	 			
 		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
 		echo "mv ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp ${Daccord_DIR}/${DACCORD_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
