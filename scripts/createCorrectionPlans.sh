@@ -287,6 +287,9 @@ function setTANmaskOptions()
     if [[ -n ${COR_DACCORD_TANMASK_TRACK} ]]
     then
         DACCORD_TANMASK_OPT="${DACCORD_TANMASK_OPT} -n${COR_DACCORD_TANMASK_TRACK}"
+    else 
+    	COR_DACCORD_TANMASK_TRACK=tan
+    	DACCORD_TANMASK_OPT="${DACCORD_TANMASK_OPT} -n${COR_DACCORD_TANMASK_TRACK}"
     fi
 }
 
@@ -739,7 +742,7 @@ then
             echo "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/datander${DACCORD_DATANDER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} && cd ${myCWD}"
     	done > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER datander $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > corr_04_datander_block_${FIX_DB%.db}.${slurmID}.version		
-	### 05-datander
+	### 05-TANmask
     elif [[ ${currentStep} -eq 5 ]]
     then 
         ### clean up plans 
@@ -752,7 +755,6 @@ then
         setTANmaskOptions
         
         myCWD=$(pwd) 
-		setDatanderOptions
 		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
 		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
 		
@@ -773,6 +775,40 @@ then
             echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/TANmask${DACCORD_TANMASK_OPT} ${DACCORD_DAZZ_DB%.db} TAN.${DACCORD_DAZZ_DB%.db}.@${x}-${y} && cd ${myCWD}" 
     	done > corr_05_TANmask_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER TANmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" > corr_05_TANmask_block_${FIX_DB%.db}.${slurmID}.version
+    ### 06-Catrack
+    elif [[ ${currentStep} -eq 6 ]]
+    then 
+        ### clean up plans 
+        for x in $(ls corr_06_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+        ### find and set Catrack options
+        #if [[ -z ${DACCORD_CATRACK_OPT} ]] 
+        #then
+        #    setCatrackOptions
+        #fi
+        
+        if [[ -z ${DACCORD_TANMASK_OPT} ]] 
+        then
+            setTANmaskOptions
+        fi
+                
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+        
+        ### create Catrack command
+        echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/Catrack -v -d -f ${DACCORD_DAZZ_DB%.db} ${COR_DACCORD_TANMASK_TRACK} && cd ${myCWD}" > corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
+        echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/DBdump -r -m${COR_DACCORD_TANMASK_TRACK} ${DACCORD_DAZZ_DB%.db} | awk '{if (\$1 == \"R\") {read=\$2}; if (\$1 == \"T0\" && \$2 > 0) {for (i = 3; i < 3+2*\$2; i+=2) print read-1\" \"\$i\" \"\$(i+1)} }' > ${DACCORD_DAZZ_DB%.db}.${COR_DACCORD_TANMASK_TRACK}.txt && cd ${myCWD}" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
+      	echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/txt2track -m ${DACCORD_DB%.db} ${RAW_DAZZ_DB%.db}.${COR_DACCORD_TANMASK_TRACK}.txt ${COR_DACCORD_TANMASK_TRACK} && cd ${myCWD}" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan
+      	echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/TKcombine ${DACCORD_DB%.db} ${COR_DACCORD_TANMASK_TRACK}_dust ${COR_DACCORD_TANMASK_TRACK} dust && cd ${myCWD}" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.plan 
+        
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" > corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
+        echo "LASTOOLS viewmasks $(git --git-dir=${LASTOOLS_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version    
+        echo "DAMAR txt2track $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
+        echo "DAMAR TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
 		
 		
 	else
