@@ -767,10 +767,10 @@ then
 		echo "			printf \"%10s%10s\\n\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "			printf \"%10s\\n\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "			found=1" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		else" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
-		echo "			sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "			sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan		
-		echo "		fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan  
+		echo "		fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan		
+		echo "		  
 		echo "	fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	 			
 		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
 		echo "mv ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp ${Daccord_DIR}/${DACCORD_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
