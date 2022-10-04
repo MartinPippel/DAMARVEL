@@ -663,9 +663,9 @@ then
         do 
             echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${MARVEL_PATH}/bin/DBdust$ ${DACCORD_DB%.db}.${x} && cd ${myCWD}"
             echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${DAZZLER_PATH}/bin/DBdust ${DACCORD_DAZZ_DB%.db}.${x} && cd ${myCWD}"
-    	done > corr_01_DBdust_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_DBdust_block_${FIX_DB%.db}.${slurmID}.version
-        echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_01_DBdust_block_${FIX_DB%.db}.${slurmID}.version
+    	done > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
 		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
