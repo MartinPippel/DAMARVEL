@@ -293,6 +293,69 @@ function setTANmaskOptions()
     fi
 }
 
+function setDaligerOptions()
+{
+    DACCORD_DALIGNER_OPT=""
+    if [[ -n ${COR_DACCORD_DALIGNER_IDENTITY_OVLS} && ${COR_DACCORD_DALIGNER_IDENTITY_OVLS} -gt 0 ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -I"
+    fi
+    if [[ -n ${COR_DACCORD_DALIGNER_KMER} && ${COR_DACCORD_DALIGNER_KMER} -gt 0 ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -k${COR_DACCORD_DALIGNER_KMER}"
+    fi
+    if [[ -n ${COR_DACCORD_DALIGNER_ERR} ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -e${COR_DACCORD_DALIGNER_ERR}"
+    fi
+    if [[ -n ${COR_DACCORD_DALIGNER_BIAS} && ${COR_DACCORD_DALIGNER_BIAS} -eq 1 ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -b"
+    fi
+    if [[ -n ${COR_DACCORD_DALIGNER_BRIDGE} && ${COR_DACCORD_DALIGNER_BRIDGE} -eq 1 ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -B"
+    fi
+    if [[ -n ${COR_DACCORD_DALIGNER_OLEN} ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -l${COR_DACCORD_DALIGNER_OLEN}"
+    fi    
+    if [[ -n ${COR_DACCORD_DALIGNER_MEM} && ${COR_DACCORD_DALIGNER_MEM} -gt 0 ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -M${COR_DACCORD_DALIGNER_MEM}"
+    fi    
+    if [[ -n ${COR_DACCORD_DALIGNER_HITS} ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -h${COR_DACCORD_DALIGNER_HITS}"
+    fi 
+    if [[ -n ${COR_DACCORD_DALIGNER_T} ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -t${COR_DACCORD_DALIGNER_T}"
+    fi  
+    if [[ -n ${COR_DACCORD_DALIGNER_MASK} ]]
+    then
+        for x in ${COR_DACCORD_DALIGNER_MASK}
+        do 
+            DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -m${x}"
+        done
+    fi
+    if [[ -n ${COR_DACCORD_DALIGNER_TRACESPACE} && ${COR_DACCORD_DALIGNER_TRACESPACE} -gt 0 ]]
+    then
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -s${COR_DACCORD_DALIGNER_TRACESPACE}"
+    fi
+    if [[ -n ${THREADS_daligner} ]]
+    then 
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -T${THREADS_daligner}"
+    fi
+        if [[ -n ${THREADS_daligner} ]]
+    then 
+        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -T${THREADS_daligner}"
+    fi
+    if [ ! -n ${COR_DACCORD_DALIGNER_DAL} ]
+    then
+        COR_DACCORD_DALIGNER_DAL=8
+    fi 
+}
 
 
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
@@ -672,14 +735,54 @@ then
 		echo "${DAZZLER_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan               		
 		## get number of read blocks
 		echo "grep block ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB%.db}.db | awk '{print \$NF}' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "grep daccord_reads ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB%.db}.db | awk '{print \$1}' > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_reads.txt" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		    		
     	## 2. add contigs 
     	## marvel 
     	echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
     	## dazzler 
 		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-    	
 
+		## 3. adjust blockIDs
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} 		
+		
+		echo "cd ${Daccord_DIR}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "cp ${DACCORD_DB%.db}.db ${DACCORD_DB%.db}.db.bac" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "cp ${DACCORD_DAZZ_DB%.db}.db ${DACCORD_DAZZ_DB%.db}.db.bac" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "found=0" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "for line in \$(seq 1 \$(wc -l < ${DACCORD_DB%.db}.db))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "	if [[ \${line} -le 6 && \${line} -ne 4 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "		sed -n \${line}p ${DACCORD_DB%.db}.db >> ${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		sed -n \${line}p ${DACCORD_DAZZ_DB%.db}.db >> ${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "	elif [[ \${line} -eq 4 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "	else" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "		read_count=\$(sed -n \${line}p ${DACCORD_DB%.db}.db | awk '{print \$1}')" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		if [[ \${read_count} -gt \$(cat number_of_reads.txt) && \${found} -eq 0 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "			printf \"%10s%10s\\n\" \"\$(cat number_of_reads.txt)\" \"\$(cat number_of_reads.txt)\" >> ${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "			printf \"%10s\\n\" \"\$(cat number_of_reads.txt)\" >> ${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "			found=1" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		else" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "			sed -n \${line}p ${DACCORD_DB%.db}.db >> ${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "			sed -n \${line}p ${DACCORD_DAZZ_DB%.db}.db >> ${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan		
+		echo "		fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan  
+		echo "	fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	 			
+		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo "mv ${DACCORD_DB%.db}.db.tmp ${DACCORD_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "mv ${DACCORD_DAZZ_DB%.db}.db.tmp ${DACCORD_DAZZ_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 		
+			
+		## 4. create daligner sub directories
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)			   
+		echo "for x in \$(seq \$((1+\$(cat number_of_readsblocks.txt))) \$(grep block ${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+	    echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "  mkdir -p d\${x}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	
+			
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
 		echo "samtools $(${CONDA_BASE_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
    	### 02-DBdust
@@ -809,7 +912,66 @@ then
         echo "LASTOOLS viewmasks $(git --git-dir=${LASTOOLS_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version    
         echo "DAMAR txt2track $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
         echo "DAMAR TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
+    ### 07-daligner
+    elif [[ ${currentStep} -eq 7 ]]
+    then
+        for x in $(ls corr_07_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        ### find and set daligner options 
+        setDaligerOptions
 		
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+		
+		
+		### reads go from 
+		
+		
+    	for x in $(seq ${firstContigBlock} ${nCorrblocks})
+        do             
+    		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@1"
+            count=0
+
+            for y in $(seq 2 ${lastReadBlock})
+            do  
+                if [[ $count -lt ${COR_DACCORD_DALIGNER_DAL} ]]
+                then
+                    count=$((${count}+1))
+                else
+            		echo -n "-$((y-1))"                   	
+					echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do mv ${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+                    
+					if [[ -z "${COR_DACCORD_DALIGNER_ASYMMETRIC}" ]]
+				    then
+				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${DACCORD_DAZZ_DB%.db}.\$(($y-z)).${DACCORD_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
+				    fi                	
+                    
+					echo " cd ${myCWD}"
+				    ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
+
+            		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@${y}"
+                    count=1
+                fi
+            done
+	    	echo -n "-${y}"	            	
+		    
+		    echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do mv ${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.\$(($y-z)).las d${x}; z=\$((z-1)); done)"
+                    
+			if [[ -z "${COR_DACCORD_DALIGNER_ASYMMETRIC}" ]]
+		    then
+		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${DACCORD_DAZZ_DB%.db}.\$(($y-z)).${DACCORD_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
+		    fi
+		    
+            echo " cd ${myCWD}"
+    	done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version		
+				
 		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
