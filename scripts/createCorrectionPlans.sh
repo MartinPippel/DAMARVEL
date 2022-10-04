@@ -661,7 +661,7 @@ then
 		### create DBdust commands 
         for x in $(seq 1 ${nCorrblocks})
         do 
-            echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${MARVEL_PATH}/bin/DBdust$ ${DACCORD_DB%.db}.${x} && cd ${myCWD}"
+            echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${MARVEL_PATH}/bin/DBdust ${DACCORD_DB%.db}.${x} && cd ${myCWD}"
             echo "cd ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} && ${DAZZLER_PATH}/bin/DBdust ${DACCORD_DAZZ_DB%.db}.${x} && cd ${myCWD}"
     	done > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_02_DBdust_block_${FIX_DB%.db}.${slurmID}.version
