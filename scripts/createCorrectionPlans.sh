@@ -952,7 +952,7 @@ then
     		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@1"
             count=0
 
-            for y in $(seq 2 ${lastReadBlock})
+            for y in $(seq 1 ${lastReadBlock})
             do  
                 if [[ $count -lt ${COR_DACCORD_DALIGNER_DAL} ]]
                 then
@@ -983,7 +983,7 @@ then
 		    fi
 		    
             echo " && cd ${myCWD}"
-    	done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
+    	done > corr_07b_daligner_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version		
 	### 08-LAmerge
     elif [[ ${currentStep} -eq 8 ]]
