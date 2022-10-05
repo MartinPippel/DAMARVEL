@@ -945,7 +945,7 @@ then
 				    	echo -n " && (z=${count}; while [[ \$z -ge 1 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${DACCORD_DAZZ_DB%.db}.\$(($y-z)).${DACCORD_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
 				    fi                	
                     
-					echo " cd ${myCWD}"
+					echo " && cd ${myCWD}"
 				    ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
 
             		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@${y}"
@@ -961,7 +961,7 @@ then
 		    	echo -n " && (z=$((count-1)); while [[ \$z -ge 0 ]]; do if [[ ${x} -ne \$(($y-z)) ]]; then mv ${DACCORD_DAZZ_DB%.db}.\$(($y-z)).${DACCORD_DAZZ_DB%.db}.${x}.las d\$(($y-z)); fi; z=\$((z-1)); done)"						   
 		    fi
 		    
-            echo " cd ${myCWD}"
+            echo " && cd ${myCWD}"
     	done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version		
 				
