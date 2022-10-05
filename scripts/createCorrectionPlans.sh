@@ -989,7 +989,7 @@ then
     elif [[ ${currentStep} -eq 8 ]]
     then
         ### clean up plans 
-        for x in corr_08_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_08_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
