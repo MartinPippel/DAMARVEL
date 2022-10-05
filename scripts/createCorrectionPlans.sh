@@ -983,7 +983,7 @@ then
 		    fi
 		    
             echo " && cd ${myCWD}"
-    	done > corr_07b_daligner_block_${FIX_DB%.db}.${slurmID}.plan
+    	done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version		
 	### 08-LAmerge
     elif [[ ${currentStep} -eq 8 ]]
