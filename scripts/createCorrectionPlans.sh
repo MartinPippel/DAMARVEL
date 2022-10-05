@@ -374,6 +374,89 @@ function setLAmergeOptions()
     fi
 }
 
+function setLArepeatOptions()
+{
+    if [[ ${#COR_DACCORD_LAREPEAT_LEAVE_COV[*]} -ne ${#COR_DACCORD_LAREPEAT_ENTER_COV[*]} || ${#COR_DACCORD_LAREPEAT_ENTER_COV[*]} -ne ${#COR_DACCORD_LAREPEAT_COV[*]} ]]
+    then 
+        (>&2 echo "LArepeat number of elements of COR_DACCORD_LAREPEAT_LEAVE_COV and COR_DACCORD_LAREPEAT_ENTER_COV and COR_DACCORD_LAREPEAT_COV differs")
+        (>&2 echo "they must be of the same length")
+        exit 1
+    fi
+
+    numRepeatTracks=${#COR_DACCORD_LAREPEAT_LEAVE_COV[*]}
+
+    # define array variable - because we may want to create several repeat tracks in one run
+    unset DACCORD_LAREPEAT_OPT
+    unset DACCORD_DAZZ_LAREPEAT_OPT_LAREPEAT_OPT
+    ### find and set LArepeat options     
+    
+    stype=""
+    if [[ "x$1" == "x1" ]]
+    then 
+        stype="_dalign"
+    elif [[ "x$1" == "x2" ]]
+    then 
+        stype="_repcomp"
+    elif [[ "x$1" == "x3" ]]
+    then 
+        stype="_forcealign"        
+    else
+        (>&2 echo "Unknown scrubbing type !!!")
+        exit 1            
+    fi 
+
+    for x in $(seq 0 $((${numRepeatTracks}-1)))
+    do 
+        tmp=""
+        tmp="${tmp} -l ${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}"
+        tmp="${tmp} -h ${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}"
+
+        if [[ -n ${COR_DACCORD_LAREPEAT_OLEN} && ${COR_DACCORD_LAREPEAT_OLEN} -gt 0 ]]
+        then
+            tmp="${tmp} -o ${COR_DACCORD_LAREPEAT_OLEN}"
+        fi
+
+        if [[ ${COR_DACCORD_LAREPEAT_COV[$x]} -ne -1 ]]
+        then 
+            tmp="${tmp} -c ${COR_DACCORD_LAREPEAT_COV[$x]}"
+            tmp="${tmp} -t repeats_c${COR_DACCORD_LAREPEAT_COV[$x]}_l${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}h${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}${stype}"
+        else
+        	if [[ -n ${COR_DACCORD_LAREPEAT_MAX_COV} && ${COR_DACCORD_LAREPEAT_MAX_COV} -gt 100 ]]
+        	then 
+        		tmp="${tmp} -M ${COR_DACCORD_LAREPEAT_MAX_COV}"
+			elif [[ -n ${RAW_COV} && $((${RAW_COV}+20)) -gt 100 ]]
+			then
+				tmp="${tmp} -M 200"
+        	fi         	
+            tmp="${tmp} -t repeats_calCov_l${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}h${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}${stype}"
+        fi
+        DACCORD_LAREPEAT_OPT[$x]=${tmp}                
+    done 
+    DACCORD_DAZZ_LAREPEAT_OPT_LAREPEAT_OPT=" -v -c$(echo "${FIX_COV} ${COR_DACCORD_LAREPEAT_ENTER_COV[0]}" | awk '{printf "%d", $1*$2}') -nrepeats_c$(echo "${FIX_COV} ${COR_DACCORD_LAREPEAT_ENTER_COV[0]}" | awk '{printf "%d", $1*$2}')${stype}"
+
+    FIX_REPMASK_REPEATTRACK=""
+    for x in $(seq 1 ${#FIX_REPMASK_BLOCKCMP[*]})
+    do
+        idx=$(($x-1))
+        FIX_REPMASK_REPEATTRACK="${FIX_REPMASK_REPEATTRACK} ${FIX_REPMASK_LAREPEAT_REPEATTRACK}_B${FIX_REPMASK_BLOCKCMP[${idx}]}C${FIX_REPMASK_LAREPEAT_COV[${idx}]}"
+    done 
+
+    ## check if repmaskFull_B10C10 exists 
+    if [[ -f .${FIX_DB}.${FIX_REPMASK_LAREPEAT_REPEATTRACK}Full_B${FIX_REPMASK_BLOCKCMP[${idx}]}C${FIX_REPMASK_LAREPEAT_COV[${idx}]}.d2 ]]
+    then
+        FIX_REPMASK_REPEATTRACK="${FIX_REPMASK_REPEATTRACK} ${FIX_REPMASK_LAREPEAT_REPEATTRACK}Full_B${FIX_REPMASK_BLOCKCMP[${idx}]}C${FIX_REPMASK_LAREPEAT_COV[${idx}]}"
+    fi    
+}
+
+function setTKmergeOptions() 
+{
+    DACCORD_TKMERGE_OPT=""
+    if [[ -n ${COR_DACCORD_TKMERGE_DELETE} && ${COR_DACCORD_TKMERGE_DELETE} -ne 0 ]]
+    then
+        DACCORD_TKMERGE_OPT="${DACCORD_TKMERGE_OPT} -d"
+    fi
+}
+
 
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
@@ -1008,7 +1091,76 @@ then
         do 
             echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAmerge${DACCORD_LAMERGE_OPT} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las d${x} && ${MARVEL_PATH}/bin/LAfilter -p -R6 ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las ${DACCORD_DB%.db}.dalignFilt.${x}.las && cd ${myCWD}"
     	done > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan  
-        echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.version       
+        echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.version
+    ### 09-LArepeat 
+	elif [[ ${currentStep} -eq 9 ]]
+    then    
+        ### clean up plans 
+        for x in $(ls corr_09_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        setLArepeatOptions 1
+        if [[ ${numRepeatTracks} -eq 0 ]]
+        then 
+            exit 1
+        fi    
+    
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+    
+    
+        ### create LArepeat commands
+        for y in $(seq ${firstContigBlock} ${nCorrblocks})
+        do
+        	for x in $(seq 0 $((${numRepeatTracks}-1)))
+    		do
+        		echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LArepeat${DACCORD_LAREPEAT_OPT[$x]} -b ${y} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las && cd ${myCWD}/"            		
+    		done
+    		echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/REPmask${DACCORD_DAZZ_LAREPEAT_OPT} ${DACCORD_DAZZ_DB%.db} ${DACCORD_DAZZ_DB%.db}.dalignFilt.${y}.las && cd ${myCWD}/"
+    	done > corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan 
+        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.version         
+    ### 10-TKmerge        
+    elif [[ ${currentStep} -eq 10 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_10_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+        setLArepeatOptions 1
+        ### find and set TKmerge options 
+        if [[ -z ${DACCORD_TKMERGE_OPT} ]]
+        then 
+            setTKmergeOptions
+        fi
+        
+        if [[ ${numRepeatTracks} -eq 0 ]]
+        then 
+            exit 1
+    	fi
+    	
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		    	
+    
+        ### create TKmerge command
+        rep=$(echo ${DACCORD_DAZZ_LAREPEAT_OPT_LAREPEAT_OPT} | awk '{print substr($NF,3)}')
+        echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/Catrack${DACCORD_TKMERGE_OPT} -f -v ${FIX_DAZZ_DB%.db} ${rep} && cd ${myCWD}/" > corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.plan
+        
+        for x in $(seq 0 $((${numRepeatTracks}-1)))
+        do 
+        	rep=$(echo ${DACCORD_LAREPEAT_OPT[${x}]} | awk '{print $NF}')
+            echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/TKmerge${DACCORD_TKMERGE_OPT} ${FIX_DB%.db} ${rep} && cd ${myCWD}"
+    	done >> corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.plan        
+        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.version	    
 				
 		
 	else
