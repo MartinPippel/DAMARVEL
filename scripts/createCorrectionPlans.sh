@@ -357,6 +357,23 @@ function setDaligerOptions()
     fi 
 }
 
+function setLAmergeOptions()
+{
+    DACCORD_LAMERGE_OPT=""
+    if [[ -n ${COR_DACCORD_LAMERGE_NFILES} && ${COR_DACCORD_LAMERGE_NFILES} -gt 0 ]]
+    then
+        DACCORD_LAMERGE_OPT="${DACCORD_LAMERGE_OPT} -n ${COR_DACCORD_LAMERGE_NFILES}"
+    fi
+    if [[ -n ${COR_DACCORD_LAMERGE_SORT} && ${COR_DACCORD_LAMERGE_SORT} -gt 0 ]]
+    then
+        DACCORD_LAMERGE_OPT="${DACCORD_LAMERGE_OPT} -s"
+    fi
+    if [[ -n ${COR_DACCORD_LAMERGE_VERBOSE} && ${COR_DACCORD_LAMERGE_VERBOSE} -gt 0 ]]
+    then
+        DACCORD_LAMERGE_OPT="${DACCORD_LAMERGE_OPT} -v"
+    fi
+}
+
 
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
@@ -968,6 +985,30 @@ then
             echo " && cd ${myCWD}"
     	done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
         echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version		
+	### 08-LAmerge
+    elif [[ ${currentStep} -eq 8 ]]
+    then
+        ### clean up plans 
+        for x in corr_08_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        ### find and set LAmerge options 
+        setLAmergeOptions
+        
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+        
+        ### create LAmerge commands
+        for x in $(seq ${firstContigBlock} ${nCorrblocks})
+        do 
+            echo "cd ${FIX_DALIGN_OUTDIR} && ${MARVEL_PATH}/bin/LAmerge${DACCORD_LAMERGE_OPT} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las d${x} && ${MARVEL_PATH}/bin/LAfilter -p -R6 ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las ${DACCORD_DB%.db}.dalignFilt.${x}.las && cd ${myCWD}"
+    	done > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan  
+        echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.version       
 				
 		
 	else
