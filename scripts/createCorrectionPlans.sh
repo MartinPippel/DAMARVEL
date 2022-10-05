@@ -347,10 +347,6 @@ function setDaligerOptions()
     then 
         DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -T${THREADS_daligner}"
     fi
-        if [[ -n ${THREADS_daligner} ]]
-    then 
-        DACCORD_DALIGNER_OPT="${DACCORD_DALIGNER_OPT} -T${THREADS_daligner}"
-    fi
     if [ ! -n ${COR_DACCORD_DALIGNER_DAL} ]
     then
         COR_DACCORD_DALIGNER_DAL=8
@@ -693,7 +689,7 @@ then
 	if [[ ${currentStep} -eq 1 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_01_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_01_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -787,7 +783,7 @@ then
 	elif [[ ${currentStep} -eq 2 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_02_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_02_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -807,7 +803,7 @@ then
     elif [[ ${currentStep} -eq 3 ]]
     then 
         ### clean up plans 
-        for x in $(ls corr_03_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_03_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -827,7 +823,7 @@ then
     elif [[ ${currentStep} -eq 4 ]]
     then 
         ### clean up plans 
-        for x in $(ls corr_04_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_04_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -847,7 +843,7 @@ then
     elif [[ ${currentStep} -eq 5 ]]
     then 
         ### clean up plans 
-        for x in $(ls corr_05_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_05_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
@@ -915,7 +911,7 @@ then
     ### 07-daligner
     elif [[ ${currentStep} -eq 7 ]]
     then
-        for x in $(ls corr_07_*_*_${CONT_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_07_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -928,9 +924,6 @@ then
 		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
 		firstContigBlock=$((1+lastReadBlock))
 		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
-		
-		
-		### reads go from 
 		
 		
     	for x in $(seq ${firstContigBlock} ${nCorrblocks})
@@ -969,8 +962,8 @@ then
 		    fi
 		    
             echo " cd ${myCWD}"
-    	done > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > ${currentPhase}_${sID}_${sName}_block_${FIX_DB%.db}.${slurmID}.version		
+    	done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version		
 				
 		
 	else
