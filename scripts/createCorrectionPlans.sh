@@ -387,7 +387,7 @@ function setLArepeatOptions()
 
     # define array variable - because we may want to create several repeat tracks in one run
     unset DACCORD_LAREPEAT_OPT
-    unset DACCORD_DAZZ_LAREPEAT_OPT_LAREPEAT_OPT
+    unset DACCORD_DAZZ_LAREPEAT
     ### find and set LArepeat options     
     
     stype=""
@@ -432,7 +432,7 @@ function setLArepeatOptions()
         fi
         DACCORD_LAREPEAT_OPT[$x]=${tmp}                
     done 
-    DACCORD_DAZZ_LAREPEAT_OPT_LAREPEAT_OPT=" -v -c$(echo "${FIX_COV} ${COR_DACCORD_LAREPEAT_ENTER_COV[0]}" | awk '{printf "%d", $1*$2}') -nrepeats_c$(echo "${FIX_COV} ${COR_DACCORD_LAREPEAT_ENTER_COV[0]}" | awk '{printf "%d", $1*$2}')${stype}"
+    DACCORD_DAZZ_LAREPEAT_OPT=" -v -c$(echo "${FIX_COV} ${COR_DACCORD_LAREPEAT_ENTER_COV[0]}" | awk '{printf "%d", $1*$2}') -nrepeats_c$(echo "${FIX_COV} ${COR_DACCORD_LAREPEAT_ENTER_COV[0]}" | awk '{printf "%d", $1*$2}')${stype}"
 
     FIX_REPMASK_REPEATTRACK=""
     for x in $(seq 1 ${#FIX_REPMASK_BLOCKCMP[*]})
@@ -445,7 +445,9 @@ function setLArepeatOptions()
     if [[ -f .${FIX_DB}.${FIX_REPMASK_LAREPEAT_REPEATTRACK}Full_B${FIX_REPMASK_BLOCKCMP[${idx}]}C${FIX_REPMASK_LAREPEAT_COV[${idx}]}.d2 ]]
     then
         FIX_REPMASK_REPEATTRACK="${FIX_REPMASK_REPEATTRACK} ${FIX_REPMASK_LAREPEAT_REPEATTRACK}Full_B${FIX_REPMASK_BLOCKCMP[${idx}]}C${FIX_REPMASK_LAREPEAT_COV[${idx}]}"
-    fi    
+    fi
+    
+        
 }
 
 function setTKmergeOptions() 
@@ -1151,7 +1153,7 @@ then
 		    	
     
         ### create TKmerge command
-        rep=$(echo ${DACCORD_DAZZ_LAREPEAT_OPT_LAREPEAT_OPT} | awk '{print substr($NF,3)}')
+        rep=$(echo ${DACCORD_DAZZ_LAREPEAT_OPT} | awk '{print substr($NF,3)}')
         echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/Catrack${DACCORD_TKMERGE_OPT} -f -v ${FIX_DAZZ_DB%.db} ${rep} && cd ${myCWD}/" > corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.plan
         
         for x in $(seq 0 $((${numRepeatTracks}-1)))
