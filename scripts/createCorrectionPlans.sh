@@ -1332,7 +1332,7 @@ then
          	## as we don't merge the block tracks into a global DB track
          	## we need to constract each repeat track individually 
          	my_block_rep_track=${y}.${DACCORD_LAREPEAT_REPEATNAMES[${COR_DACCORD_LAFILTER_REPEAT_IDX}]}
-			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_LAFILTER_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.dalignFiltRep.${y}.las && cd ${myCWD}/"
+			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_LAFILTER_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.${y}.dalignFiltRep.las && cd ${myCWD}/"
     	done > corr_10_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
 				
     ### 11-daccord        
@@ -1357,9 +1357,9 @@ then
         ## calc 
         for y in $(seq ${firstContigBlock} ${nCorrblocks})
         do
-        	cmd1="${DACCORD_PATH}/bin/computeintrinsicqv2 -d$((FIX_COV+FIX_COV)) ${DACCORD_DAZZ_DB%.db}.${y} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las"
-        	cmd2="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} --eprofonly ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db}.db"
-        	cmd3="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db}.db > ${DACCORD_DB%.db}.dalignFiltRep.${y}.dac.fasta"
+        	cmd1="${DACCORD_PATH}/bin/computeintrinsicqv2 -d$((FIX_COV+FIX_COV)) ${DACCORD_DAZZ_DB%.db} ${DACCORD_DB%.db}.${y}.dalignFiltRep.las"
+        	cmd2="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} --eprofonly ${DACCORD_DB%.db}.${y}.dalignFiltRep.las ${DACCORD_DAZZ_DB%.db}.db"
+        	cmd3="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} ${DACCORD_DB%.db}.${y}.dalignFiltRep.las ${DACCORD_DAZZ_DB%.db}.db > ${DACCORD_DB%.db}.${y}.dalignFiltRep.dac.fasta"
          	echo "cd ${Daccord_DIR} && ${cmd1}  && ${cmd2} && ${cmd3} && cd ${myCWD}/"
     	done > corr_11_daccord_block_${FIX_DB%.db}.${slurmID}.plan 
         
