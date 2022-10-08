@@ -375,6 +375,7 @@ function setLArepeatOptions()
     # define array variable - because we may want to create several repeat tracks in one run
     unset DACCORD_LAREPEAT_OPT
     unset DACCORD_DAZZ_LAREPEAT
+    unset DACCORD_LAREPEAT_REPEATNAMES
     ### find and set LArepeat options     
     
     stype=""
@@ -407,6 +408,7 @@ function setLArepeatOptions()
         then 
             tmp="${tmp} -c ${COR_DACCORD_LAREPEAT_COV[$x]}"
             tmp="${tmp} -t repeats_c${COR_DACCORD_LAREPEAT_COV[$x]}_l${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}h${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}${stype}"
+            DACCORD_LAREPEAT_REPEATNAMES[$x]="repeats_c${COR_DACCORD_LAREPEAT_COV[$x]}_l${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}h${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}${stype}"
         else
         	if [[ -n ${COR_DACCORD_LAREPEAT_MAX_COV} && ${COR_DACCORD_LAREPEAT_MAX_COV} -gt 100 ]]
         	then 
@@ -416,6 +418,7 @@ function setLArepeatOptions()
 				tmp="${tmp} -M 200"
         	fi         	
             tmp="${tmp} -t repeats_calCov_l${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}h${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}${stype}"
+            DACCORD_LAREPEAT_REPEATNAMES[$x]="repeats_calCov_l${COR_DACCORD_LAREPEAT_LEAVE_COV[$x]}h${COR_DACCORD_LAREPEAT_ENTER_COV[$x]}${stype}"
         fi
         DACCORD_LAREPEAT_OPT[$x]=${tmp}                
     done 
@@ -1252,9 +1255,8 @@ then
         do
          	## as we don't merge the block tracks into a global DB track
          	## we need to constract each repeat track individually 
-         	my_block_rep_track=${y}.${DACCORD_LAREPEAT_OPT[${COR_DACCORD_LAFILTER_REPEAT_IDX}]} 
-         	
-			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_FILTERT_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.dalignFiltRep.${y}.las && cd ${myCWD}/"
+         	my_block_rep_track=${y}.${DACCORD_LAREPEAT_REPEATNAMES[${COR_DACCORD_LAFILTER_REPEAT_IDX}]}
+			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_LAFILTER_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.dalignFiltRep.${y}.las && cd ${myCWD}/"
     	done > corr_10_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
 				
 		
