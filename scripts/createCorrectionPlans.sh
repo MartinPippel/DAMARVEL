@@ -111,19 +111,6 @@ function getSubDirName()
     echo ${dname}_${bname}                 
 }
 
-function setLAfilterOptions()
-{
-    FILT_LAFILTER_OPT=""
-
-    if [[ -z ${FIX_FILT_OUTDIR} ]]
-    then
-        FIX_FILT_OUTDIR="m1"
-    fi
-    
-    ## its never used, but the variable is set once the function called for the first time
-    FILT_LAFILTER_OPT="-v"    
-}
-
 function setpath2ridsOptions()
 {
     COR_PATH2RIDS_OPT=""
@@ -196,7 +183,7 @@ function setLAcorrectOptions()
     fi
     if [[ -z ${FILT_LAFILTER_OPT} ]]
     then
-        setLAfilterOptions
+        setLAfilterOptions 1
     fi
     COR_LACORRECT_OPT="${COR_LACORRECT_OPT} -r ${FIX_FILT_OUTDIR}/${FIX_CORR_PATHS2RIDS_FILE}"
 
@@ -459,6 +446,106 @@ function setTKmergeOptions()
     fi
 }
 
+function setLAfilterOptions()
+{
+    if [[ "x$1" == "x1" ]]
+    then 	
+	    FILT_LAFILTER_OPT=""
+	
+	    if [[ -z ${FIX_FILT_OUTDIR} ]]
+	    then
+	        FIX_FILT_OUTDIR="m1"
+	    fi
+	    
+	    ## its never used, but the variable is set once the function called for the first time
+	    FILT_LAFILTER_OPT="-v"
+	elif [[ "x$2" == "x2" ]]
+	then     	    
+	    DACCORD_LAFILTER_OPT=""
+	    	
+	    if [[ -z ${FIX_FILT_OUTDIR} ]]
+	    then
+	        FIX_FILT_OUTDIR="m1"
+	    fi
+	
+	    if [[ -n ${COR_DACCORD_LAFILTER_NREP} && ${COR_DACCORD_LAFILTER_NREP} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -n ${COR_DACCORD_LAFILTER_NREP}"
+	    fi
+	    if [[ -n ${COR_DACCORD_LAFILTER_VERBOSE} && ${COR_DACCORD_LAFILTER_VERBOSE} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -v"
+	    fi
+	    if [[ -n ${COR_DACCORD_LAFILTER_PURGE} && ${COR_DACCORD_LAFILTER_PURGE} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -p"
+	    fi
+	    if [[ -n ${COR_DACCORD_LAFILTER_OLEN} && ${COR_DACCORD_LAFILTER_OLEN} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -o ${COR_DACCORD_LAFILTER_OLEN}"
+	    fi    
+	    if [[ -n ${COR_DACCORD_LAFILTER_RLEN} && ${COR_DACCORD_LAFILTER_RLEN} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -l ${COR_DACCORD_LAFILTER_RLEN}"
+	    fi   
+	
+	    if [[ -n ${COR_DACCORD_LAFILTER_DIF} ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -d ${COR_DACCORD_LAFILTER_DIF}"
+	    fi
+	
+	    if [[ -n ${COR_DACCORD_LAFILTER_UBAS} ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -u ${COR_DACCORD_LAFILTER_UBAS}"
+	    fi
+	    if [[ -n ${COR_DACCORD_LAFILTER_PRELOAD} && ${COR_DACCORD_LAFILTER_PRELOAD} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -L"
+	    fi    
+	    if [[ -n ${COR_DACCORD_LAFILTER_MERGEREPEATS} && ${COR_DACCORD_LAFILTER_MERGEREPEATS} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -y ${COR_DACCORD_LAFILTER_MERGEREPEATS}"
+	    fi    
+	    if [[ -n ${COR_DACCORD_LAFILTER_MERGEREPEATTIPS} && ${COR_DACCORD_LAFILTER_MERGEREPEATTIPS} -ne 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -Y ${COR_DACCORD_LAFILTER_MERGEREPEATTIPS}"
+	    fi    
+	    if [[ -n ${COR_DACCORD_LAFILTER_MINTIPCOV} && ${COR_DACCORD_LAFILTER_MINTIPCOV} -gt 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -z ${COR_DACCORD_LAFILTER_MINTIPCOV}"
+	    fi            
+	    if [[ -n ${COR_DACCORD_LAFILTER_MULTIMAPPER} && ${COR_DACCORD_LAFILTER_MULTIMAPPER} -gt 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -w"
+	    fi
+	    if [[ -n ${COR_DACCORD_LAFILTER_MAXREPEATMERGELEN} && ${COR_DACCORD_LAFILTER_MAXREPEATMERGELEN} -gt 0 ]]
+	    then
+	        DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -V ${COR_DACCORD_LAFILTER_MAXREPEATMERGELEN}"
+	    fi
+	    if [[ -n ${COR_DACCORD_LAFILTER_MAXREPEATMERGEWINDOW} && ${COR_DACCORD_LAFILTER_MAXREPEATMERGEWINDOW} -gt 0 ]]
+	    then
+	    	DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -W ${COR_DACCORD_LAFILTER_MAXREPEATMERGEWINDOW}"
+	    fi
+	                
+	    
+	    if [[ -n ${COR_DACCORD_LAFILTER_TRIM} && ${COR_DACCORD_LAFILTER_TRIM} -ne 0 ]]
+	    then
+	        if [[ -z ${SCRUB_LAQ_OPT} ]]
+	        then 
+	            setLAqOptions
+	        fi
+	    fi
+		    
+	    if [[ -n ${COR_DACCORD_LAFILTER_CHIMER} ]]
+	    then 
+	       DACCORD_LAFILTER_OPT="${DACCORD_LAFILTER_OPT} -c ${COR_DACCORD_LAFILTER_CHIMER}"
+	    fi
+	
+	else 
+        (>&2 echo "setLAfilterOptions: type $1 not supported")
+        exit 1	
+	fi
+}
 
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
@@ -492,7 +579,7 @@ then
             rm $x
         done
 
-        setLAfilterOptions
+        setLAfilterOptions 1
         setpath2ridsOptions
 
         # create sym links 
@@ -539,7 +626,7 @@ then
 
         if [[ -z ${FILT_LAFILTER_OPT} ]]
         then
-            setLAfilterOptions
+            setLAfilterOptions 1
         fi
 
         echo "if [[ -f ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}.db ]]; then ${MARVEL_PATH}/bin/DBrm ${FIX_FILT_OUTDIR}/${COR_DIR}/${COR_DB%.db}; fi" > corr_03_createDB_single_${FIX_DB%.db}.${slurmID}.plan
@@ -555,7 +642,7 @@ then
         done
         if [[ -z ${FILT_LAFILTER_OPT} ]]
         then
-            setLAfilterOptions
+            setLAfilterOptions 1
         fi
         setTourToFastaOptions
         for x in ${FIX_FILT_OUTDIR}/${COR_DIR}/contigs/*.tour.paths
@@ -574,7 +661,7 @@ then
 
         if [[ -z ${FILT_LAFILTER_OPT} ]]
         then
-            setLAfilterOptions
+            setLAfilterOptions 1
         fi
 
         if [[ -n ${SLURM_STATS} && ${SLURM_STATS} -gt 0 ]]
@@ -611,7 +698,7 @@ then
             rm $x
         done
 
-        setLAfilterOptions
+        setLAfilterOptions 1
         setpath2ridsOptions
 
         # create sym links 
@@ -663,7 +750,7 @@ then
 
         if [[ -z ${FILT_LAFILTER_OPT} ]]
         then
-            setLAfilterOptions
+            setLAfilterOptions 1
         fi
 
         bl=0; 
@@ -740,7 +827,7 @@ then
         done
         if [[ -z ${FILT_LAFILTER_OPT} ]]
         then
-            setLAfilterOptions
+            setLAfilterOptions 1
         fi
         setTourToFastaOptions
         
@@ -762,7 +849,7 @@ then
         
         if [[ -z ${FILT_LAFILTER_OPT} ]]
         then
-            setLAfilterOptions
+            setLAfilterOptions 1
         fi
         
         if [[ -n ${SLURM_STATS} && ${SLURM_STATS} -gt 0 ]]
@@ -1127,7 +1214,7 @@ then
     	done > corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan 
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
         echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.version         
-    ### 10-TKmerge        
+    ### 10-LAfilter        
     elif [[ ${currentStep} -eq 10 ]]
     then
         ### clean up plans 
@@ -1137,32 +1224,38 @@ then
         done 
         
         setLArepeatOptions 1
-        ### find and set TKmerge options 
-        if [[ -z ${DACCORD_TKMERGE_OPT} ]]
-        then 
-            setTKmergeOptions
-        fi
+		setLAfilterOptions 2
         
         if [[ ${numRepeatTracks} -eq 0 ]]
         then 
             exit 1
     	fi
-    	
+    			    	
 		myCWD=$(pwd) 
 		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
-		    	
+		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
     
-        ### create TKmerge command
-        rep=$(echo ${DACCORD_DAZZ_LAREPEAT_OPT} | awk '{print substr($NF,3)}')
-        echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/Catrack${DACCORD_TKMERGE_OPT} -f -v ${FIX_DAZZ_DB%.db} ${rep} && cd ${myCWD}/" > corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.plan
-        
-        for x in $(seq 0 $((${numRepeatTracks}-1)))
-        do 
-        	rep=$(echo ${DACCORD_LAREPEAT_OPT[${x}]} | awk '{print $NF}')
-            echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/TKmerge${DACCORD_TKMERGE_OPT} ${FIX_DB%.db} ${rep} && cd ${myCWD}"
-    	done >> corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.plan        
-        echo "MARVEL TKmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.version
-        echo "DAZZLER Catrack $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAZZ_DB/.git rev-parse --short HEAD)" >> corr_10_TKmerge_single_${FIX_DB%.db}.${slurmID}.version	    
+     	if [[ -n ${COR_DACCORD_LAFILTER_REPEAT_IDX} ]]
+	    then 	
+	        if [[ ${numRepeatTracks} -eq 0 || $((${COR_DACCORD_LAFILTER_REPEAT_IDX}+1)) -gt ${#DACCORD_LAREPEAT_OPT[*]} ]]
+	        then 
+	            exit 1
+	        fi
+	    fi
+    	
+    
+        ### create LAfilter commands
+        for y in $(seq ${firstContigBlock} ${nCorrblocks})
+        do
+         	## as we don't merge the block tracks into a global DB track
+         	## we need to constract each repeat track individually 
+         	my_block_rep_track=${y}.${DACCORD_LAREPEAT_OPT[${COR_DACCORD_LAFILTER_REPEAT_IDX}]} 
+         	
+			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_FILTERT_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.dalignFiltRep.${y}.las && cd ${myCWD}/"
+    	done > corr_10_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
 				
 		
 	else
