@@ -459,7 +459,7 @@ function setLAfilterOptions()
 	    
 	    ## its never used, but the variable is set once the function called for the first time
 	    FILT_LAFILTER_OPT="-v"
-	elif [[ "x$2" == "x2" ]]
+	elif [[ "x$1" == "x2" ]]
 	then     	    
 	    DACCORD_LAFILTER_OPT=""
 	    	
