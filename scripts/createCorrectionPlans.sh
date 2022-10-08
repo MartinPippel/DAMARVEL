@@ -550,6 +550,82 @@ function setLAfilterOptions()
 	fi
 }
 
+function setDaccordOptions()
+{
+	DACCORD_DACCORD_OPT=""
+	
+	if [[ -z ${COR_DACCORD_DACCORD_THREADS} ]]
+	then 
+		COR_DACCORD_DACCORD_THREADS=8
+	fi
+	DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -t${COR_DACCORD_DACCORD_THREADS}"
+	
+	if [[ -n ${COR_DACCORD_DACCORD_WINDOW} && ${COR_DACCORD_DACCORD_WINDOW} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -w${COR_DACCORD_DACCORD_WINDOW}"
+	fi
+
+	if [[ -n ${COR_DACCORD_DACCORD_ADVANCESIZE} && ${COR_DACCORD_DACCORD_ADVANCESIZE} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -a${COR_DACCORD_DACCORD_ADVANCESIZE}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_MAXDEPTH} && ${COR_DACCORD_DACCORD_MAXDEPTH} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -d${COR_DACCORD_DACCORD_MAXDEPTH}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_FULLSEQ} && ${COR_DACCORD_DACCORD_FULLSEQ} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -f1"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_VEBOSE} && ${COR_DACCORD_DACCORD_VEBOSE} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -V${COR_DACCORD_DACCORD_VEBOSE}"
+	fi
+		
+	if [[ -n ${COR_DACCORD_DACCORD_MINWINDOWCOV} && ${COR_DACCORD_DACCORD_MINWINDOWCOV} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -m${COR_DACCORD_DACCORD_MINWINDOWCOV}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_MINWINDOWERR} && ${COR_DACCORD_DACCORD_MINWINDOWERR} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -e${COR_DACCORD_DACCORD_MINWINDOWERR}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_MINOUTLEN} && ${COR_DACCORD_DACCORD_MINOUTLEN} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -l${COR_DACCORD_DACCORD_MINOUTLEN}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_MINKFREQ} && ${COR_DACCORD_DACCORD_MINKFREQ} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} --minfilterfreq${COR_DACCORD_DACCORD_MINKFREQ}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_MAXKFREQ} && ${COR_DACCORD_DACCORD_MAXKFREQ} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} --maxfilterfreq${COR_DACCORD_DACCORD_MAXKFREQ}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_MAXOVLS} && ${COR_DACCORD_DACCORD_MAXOVLS} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -D${COR_DACCORD_DACCORD_MAXOVLS}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_VARD} && ${COR_DACCORD_DACCORD_VARD} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} --vard${COR_DACCORD_DACCORD_VARD}"
+	fi
+	
+	if [[ -n ${COR_DACCORD_DACCORD_KMER} && ${COR_DACCORD_DACCORD_KMER} -gt 0 ]]
+	then 
+		DACCORD_DACCORD_OPT="${DACCORD_DACCORD_OPT} -k${COR_DACCORD_DACCORD_KMER}"
+	fi
+}
+
 fixblocks=$(getNumOfDbBlocks ${FIX_DB%.db}.db)
 
 if [[ -z ${COR_DIR} ]]
@@ -1259,7 +1335,45 @@ then
 			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_LAFILTER_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.dalignFiltRep.${y}.las && cd ${myCWD}/"
     	done > corr_10_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
 				
+    ### 11-daccord        
+    elif [[ ${currentStep} -eq 11 ]]
+    then
+        ### clean up plans 
+        for x in $(ls corr_11_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
 		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+        
+        setDaccordOptions
+        
+        ## run daccord -eprof
+        ## calc 
+        for y in $(seq ${firstContigBlock} ${nCorrblocks})
+        do
+        	cmd1="${DACCORD_PATH}/bin/computeintrinsicqv2 -d$((FIX_COV+FIX_COV)) ${DACCORD_DAZZ_DB%.db} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las"
+        	cmd2="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} --eprofonly ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db}"
+        	cmd3="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db} > ${DACCORD_DB%.db}.dalignFiltRep.${y}.dac.fasta"
+         	echo "cd ${Daccord_DIR} && ${cmd1}  && ${cmd2} && ${cmd3} && cd ${myCWD}/"
+    	done > corr_11_daccord_block_${FIX_DB%.db}.${slurmID}.plan 
+        
+        
+    ### 12-stats        
+    elif [[ ${currentStep} -eq 12 ]]
+    then
+		### clean up plans 
+        for x in $(ls corr_12_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+    	
+        		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
         (>&2 echo "valid steps are: ${myTypes[${FIX_CORR_TYPE}]}")
