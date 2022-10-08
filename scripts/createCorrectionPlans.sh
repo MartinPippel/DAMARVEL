@@ -1357,9 +1357,9 @@ then
         ## calc 
         for y in $(seq ${firstContigBlock} ${nCorrblocks})
         do
-        	cmd1="${DACCORD_PATH}/bin/computeintrinsicqv2 -d$((FIX_COV+FIX_COV)) ${DACCORD_DAZZ_DB%.db} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las"
-        	cmd2="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} --eprofonly ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db}"
-        	cmd3="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db} > ${DACCORD_DB%.db}.dalignFiltRep.${y}.dac.fasta"
+        	cmd1="${DACCORD_PATH}/bin/computeintrinsicqv2 -d$((FIX_COV+FIX_COV)) ${DACCORD_DAZZ_DB%.db}.${y} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las"
+        	cmd2="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} --eprofonly ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db}.db"
+        	cmd3="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} ${DACCORD_DB%.db}.dalignFiltRep.${y}.las ${DACCORD_DAZZ_DB%.db}.db > ${DACCORD_DB%.db}.dalignFiltRep.${y}.dac.fasta"
          	echo "cd ${Daccord_DIR} && ${cmd1}  && ${cmd2} && ${cmd3} && cd ${myCWD}/"
     	done > corr_11_daccord_block_${FIX_DB%.db}.${slurmID}.plan 
         
