@@ -52,6 +52,24 @@ then
  gsize=$((${GSIZE:0:$i}*1000))
 fi
 
+function getNumOfDbBlocks()
+{
+    db=$1
+    if [[ ! -f $db ]]
+    then
+        (>&2 echo "database $db not found")
+        exit 1
+    fi
+
+    blocks=$(grep block $db | awk '{print $3}')
+    if [[ ! -n $blocks ]]
+    then 
+        (>&2 echo "database $db has not been partitioned. Run DBsplit first!")
+        exit 1
+    fi 
+    echo ${blocks}
+}
+
 if [[ ${phase} -eq 6 ]] ## raw assembly stats  (last step in touring)
 then 
 	if [[ -d ${FIX_FILT_OUTDIR}/tour ]]
@@ -1017,7 +1035,7 @@ then
 		
 		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
 		firstContigBlock=$((1+lastReadBlock))
-		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+		nCorrblocks=$(getNumOfDbBlocks ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db)
 		
 		
 		for y in $(seq ${firstContigBlock} ${nCorrblocks})
