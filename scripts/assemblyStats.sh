@@ -1023,7 +1023,7 @@ then
 		
 		${QUAST_PATH}/quast.py -t 1 -s -e --fast --est-ref-size ${gsize} -o ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
 		assemblyStats.pl -n 1 ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.assemblyStats
-
+		cp ${config} ${daccordPath}/$(date '+%Y-%m-%d_%H-%M-%S')_$(basename ${config})
 
     	cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | ${SUBMIT_SCRIPTS_PATH}/n50.py ${gsize} > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats
         allBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "\n" | wc -m)
@@ -1034,7 +1034,7 @@ then
         fracNoN=$(echo "scale=4;${arrowedBases}*100/${allBasesNoN}" | bc)
 		echo "allBases ${allBases} N ${allN} daccordBases ${daccordBases} daccordFraction ${frac}% daccordFractionNoN ${fracNoN}%" >> ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats		
 		
-		if [[ -d ${COD_DACCORD_MERYL_DB} ]]
+		if [[ -d "${COR_DACCORD_MERYL_DB}" ]]
 		then 
 			## run merquery
 			export PATH=$PATH:/projects/dazzler/pippel/prog/bedtools2/bin:/projects/dazzler/pippel/prog/samtools/samtools-1.8/bin:/projects/dazzler/brown/prog/igvtools/IGV_2.8.2
@@ -1046,6 +1046,7 @@ then
 			
 			cd ${daccordPath} && /projects/dazzler/pippel/prog/merqury/_submit_merqury.sh ${COD_DACCORD_MERYL_DB} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} 					
 		fi
+		
 	else
 		(>&2 echo "ERROR - directory ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} not available")
   		exit 1
