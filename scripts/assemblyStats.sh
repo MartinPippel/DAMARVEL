@@ -991,8 +991,63 @@ then
 			(>&2 echo "ERROR - CT_PHASE_TYPE: ${CT_PHASE_TYPE} not supported yet!")
   			exit 1
 		fi
+elif [[ ${phase} -eq 16 ]] ## daccord 
+then
+	if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]
+	then 
+	
+		daccordPath=stats/contigs/${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		prevExt=$(basename ${CORR_DACCORD_REFFASTA%.*} | awk -F '[_.]' '{print $(NF-1)}')
+		cset=$(basename ${CORR_DACCORD_REFFASTA%.*} | awk -F '[_.]' '{print $(NF)}')
+		
+		fext="D"
+
+		if [[ -d ${daccordPath} ]]
+		then
+			mv ${daccordPath} ${daccordPath}_$(date '+%Y-%m-%d_%H-%M-%S')	
+		fi
+		
+		mkdir -p ${daccordPath}
+				
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+		
+		
+		for y in $(seq ${firstContigBlock} ${nCorrblocks})
+        do
+        	cat ${DACCORD_DB%.db}.${y}.dalignFiltRep.dac.fasta
+        done > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
+		
+		${QUAST_PATH}/quast.py -t 1 -s -e --fast --est-ref-size ${gsize} -o ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
+		assemblyStats.pl -n 1 ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.assemblyStats
+
+
+    	cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | ${SUBMIT_SCRIPTS_PATH}/n50.py ${gsize} > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats
+        allBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "\n" | wc -m)
+        allBasesNoN=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "Nn\n" | wc -m)
+        allN=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "acgtACGT\n" | wc -m)
+        daccordBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "\nacgtnN" | wc -m)
+        frac=$(echo "scale=4;${arrowedBases}*100/${allBases}" | bc)
+        fracNoN=$(echo "scale=4;${arrowedBases}*100/${allBasesNoN}" | bc)
+		echo "allBases ${allBases} N ${allN} daccordBases ${daccordBases} daccordFraction ${frac}% daccordFractionNoN ${fracNoN}%" >> ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats		
+		
+		if [[ -d ${COD_DACCORD_MERYL_DB} ]]
+		then 
+			## run merquery
+			export PATH=$PATH:/projects/dazzler/pippel/prog/bedtools2/bin:/projects/dazzler/pippel/prog/samtools/samtools-1.8/bin:/projects/dazzler/brown/prog/igvtools/IGV_2.8.2
+			export PATH=/projects/dazzler/pippel/prog/meryl/build/bin:$PATH
+			MERYL=/projects/dazzler/pippel/prog/meryl/build/bin
+			export PATH=${MERYL}:${PATH}
+			export PATH=/projects/dazzler/brown/prog/pigz/pigz-2.4:$PATH
+			export MERQURY=/projects/dazzler/pippel/prog/merqury
+			
+			cd ${daccordPath} && /projects/dazzler/pippel/prog/merqury/_submit_merqury.sh ${COD_DACCORD_MERYL_DB} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} 					
+		fi
 	else
-		(>&2 echo "ERROR - directory ${CT_PHASE_OUTDIR}/phase_${CT_PHASE_RUNID} not available")
+		(>&2 echo "ERROR - directory ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} not available")
   		exit 1
 	fi	
 else

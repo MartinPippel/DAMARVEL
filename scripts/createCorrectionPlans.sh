@@ -1373,6 +1373,12 @@ then
             rm $x
         done 
     	
+    	if [[ -n ${MARVEL_STATS} && ${MARVEL_STATS} -gt 0 ]]
+   		then
+	        ### create assemblyStats plan
+	        echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 16" > corr_12_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
+		fi
+    	
         		
 	else
         (>&2 echo "step ${currentStep} in FIX_CORR_TYPE ${FIX_CORR_TYPE} not supported")
