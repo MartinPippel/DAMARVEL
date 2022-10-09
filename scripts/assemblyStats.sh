@@ -1040,7 +1040,7 @@ then
 		
 		for y in $(seq ${firstContigBlock} ${nCorrblocks})
         do
-        	cat ${DACCORD_DB%.db}.${y}.dalignFiltRep.dac.fasta
+        	cat ${Daccord_DIR}/${DACCORD_DB%.db}.${y}.dalignFiltRep.dac.fasta
         done > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
 		
 		${QUAST_PATH}/quast.py -t 1 -s -e --fast --est-ref-size ${gsize} -o ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
