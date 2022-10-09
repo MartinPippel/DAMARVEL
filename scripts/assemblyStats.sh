@@ -1049,12 +1049,9 @@ then
 
     	cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | ${SUBMIT_SCRIPTS_PATH}/n50.py ${gsize} > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats
         allBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "\n" | wc -m)
-        allBasesNoN=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "Nn\n" | wc -m)
-        allN=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "acgtACGT\n" | wc -m)
-        daccordBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "\nacgtnN" | wc -m)
-        frac=$(echo "scale=4;${arrowedBases}*100/${allBases}" | bc)
-        fracNoN=$(echo "scale=4;${arrowedBases}*100/${allBasesNoN}" | bc)
-		echo "allBases ${allBases} N ${allN} daccordBases ${daccordBases} daccordFraction ${frac}% daccordFractionNoN ${fracNoN}%" >> ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats		
+        daccordBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "acgt\n" | wc -m)                
+        frac=$(echo "scale=4;${daccordBases}*100/${allBases}" | bc)       
+		echo "allBases ${allBases} N ${allN} daccordBases ${daccordBases} daccordFraction ${frac}%" >> ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats		
 		
 		if [[ -d "${COR_DACCORD_MERYL_DB}" ]]
 		then 
@@ -1066,7 +1063,7 @@ then
 			export PATH=/projects/dazzler/brown/prog/pigz/pigz-2.4:$PATH
 			export MERQURY=/projects/dazzler/pippel/prog/merqury
 			
-			cd ${daccordPath} && /projects/dazzler/pippel/prog/merqury/_submit_merqury.sh ${COD_DACCORD_MERYL_DB} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} 					
+			cd ${daccordPath} && /projects/dazzler/pippel/prog/merqury/_submit_merqury.sh ${COR_DACCORD_MERYL_DB} ${PROJECT_ID}_${prevExt}${fext}.fasta ${PROJECT_ID}_${prevExt}${fext} 					
 		fi
 		
 	else
