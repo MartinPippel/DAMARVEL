@@ -1377,6 +1377,8 @@ then
    		then
 	        ### create assemblyStats plan
 	        echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 16" > corr_12_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
+	    else 
+	     	echo "echo set MARVEL_STATS to 1" > corr_12_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
 		fi
     	
         		
