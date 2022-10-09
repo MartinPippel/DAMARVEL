@@ -991,6 +991,10 @@ then
 			(>&2 echo "ERROR - CT_PHASE_TYPE: ${CT_PHASE_TYPE} not supported yet!")
   			exit 1
 		fi
+	else
+		(>&2 echo "ERROR - directory ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} not available")
+  		exit 1
+	fi			
 elif [[ ${phase} -eq 16 ]] ## daccord 
 then
 	if [[ -d ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID} ]]
