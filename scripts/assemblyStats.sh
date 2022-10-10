@@ -1043,7 +1043,7 @@ then
         	cat ${Daccord_DIR}/${DACCORD_DB%.db}.${y}.dalignFiltRep.dac.fasta
         done > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
 		
-		${QUAST_PATH}/quast.py -t 1 -s -e --fast --est-ref-size ${gsize} -o ${daccordPath}/${PROJECT_ID}_${prevExt}${fext} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
+		${QUAST_PATH}/quast.py -t 1 -s -e --fast --est-ref-size ${gsize} -o quast_${daccordPath}/${PROJECT_ID}_${prevExt}${fext} ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta
 		assemblyStats.pl -n 1 ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta > ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.assemblyStats
 		cp ${config} ${daccordPath}/$(date '+%Y-%m-%d_%H-%M-%S')_$(basename ${config})
 
@@ -1051,7 +1051,7 @@ then
         allBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "\n" | wc -m)
         daccordBases=$(cat ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.fasta | awk '{ if ($1 ~ /^>/) ; else print $0;}' | tr -d "acgt\n" | wc -m)                
         frac=$(echo "scale=4;${daccordBases}*100/${allBases}" | bc)       
-		echo "allBases ${allBases} N ${allN} daccordBases ${daccordBases} daccordFraction ${frac}%" >> ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats		
+		echo "allBases ${allBases} daccordBases ${daccordBases} daccordFraction ${frac}%" >> ${daccordPath}/${PROJECT_ID}_${prevExt}${fext}.stats		
 		
 		if [[ -d "${COR_DACCORD_MERYL_DB}" ]]
 		then 
@@ -1063,7 +1063,7 @@ then
 			export PATH=/projects/dazzler/brown/prog/pigz/pigz-2.4:$PATH
 			export MERQURY=/projects/dazzler/pippel/prog/merqury
 			
-			cd ${daccordPath} && /projects/dazzler/pippel/prog/merqury/_submit_merqury.sh ${COR_DACCORD_MERYL_DB} ${PROJECT_ID}_${prevExt}${fext}.fasta ${PROJECT_ID}_${prevExt}${fext} 					
+			cd ${daccordPath} && /projects/dazzler/pippel/prog/merqury/_submit_merqury.sh ${COR_DACCORD_MERYL_DB} ${PROJECT_ID}_${prevExt}${fext}.fasta merqury_${PROJECT_ID}_${prevExt}${fext} 					
 		fi
 		
 	else
