@@ -46,7 +46,7 @@ function setbwaOptions()
 	if [[ -n ${SC_HIC_BWA_MISMATCHPENALTY} && ${SC_HIC_BWA_MISMATCHPENALTY} -gt 0 ]]
 	then 
 		CONTIG_BWA_OPT="${CONTIG_BWA_OPT} -B ${SC_HIC_BWA_MISMATCHPENALTY}"
-	fi
+	fi	
 }
 
 
@@ -236,12 +236,14 @@ fi
 # Type: 2 - Aiden Lab Juicer/3d-dna Pipeline (For QC) - full scaffolding pipeline
 # Type: 3 - Aiden Lab fast Juicer + visualize any input assembly 
 # Type: 4 - higlass visualization
+# Type: 5 - Rapid curation pipeline 
 
 myTypes=("01_HICsalsaPrepareInput, 02_HICsalsaBwa, 03_HICsalsaFilter, 04_HICsalsaMerge, 05_HICsalsaMarkduplicates, 06_HICsalsaSalsa, 07_HICsalsaStatistics", 
 "01_HICphasePrepareInput, 02_HICphaseBwa, 03_HICphaseFilter, 04_HICphaseMatlock", 
 "01_HIC3dnaPrepareInput, 02_HIC3dnaJuicer, 03_HIC3dnaAssemblyPipeline",
 "01_HIC3dnaPrepareInput, 02_HIC3dnaJuicer, 03_HIC3dnaVisualize",
-"01_HIChiglassPrepare, 02_HiChiglassBwa, 03_HiChiglassFilter, 04_HiChiglassMatrix")
+"01_HIChiglassPrepare, 02_HiChiglassBwa, 03_HiChiglassFilter, 04_HiChiglassMatrix",
+"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext, 09_HICrapidCurCoverage, 10_HICrapidCurRepeat, 11_HICrapidCurGap, 12_HICrapidCurTelomer")
 if [[ ${SC_HIC_TYPE} -eq 0 ]]
 then 
     ### 01_HICsalsaPrepareInput
@@ -1145,6 +1147,313 @@ then
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
     	exit 1
 	fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext, 09_HICrapidCurCoverage, 10_HICrapidCurRepeat, 11_HICrapidCurGap, 12_HICrapidCurTelomer"	
+elif [[ ${SC_HIC_TYPE} -eq 5 ]]
+then 
+    ### 01_HICrapidCurPrepareInput
+    if [[ ${currentStep} -eq 1 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_01_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        if [[ ! -f "${SC_HIC_REF}" ]]
+        then
+        	(>&2 echo "ERROR - set SC_HIC_REF to reference fasta file")
+        	exit 1
+   		fi
+   		
+   		if [[ ! -d "${SC_HIC_READS}" ]]
+        then
+        	(>&2 echo "ERROR - set SC_HIC_READS to HiC read directory")
+        	exit 1
+   		fi
+   		
+   		echo "if [[ -d ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} ]]; then mv ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}_$(date '+%Y-%m-%d_%H-%M-%S'); fi && mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}" > hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/config" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		
+		if [[ -f ${SC_HIC_REF_EXCLUDELIST} ]]
+   		then
+   			echo "${SEQKIT_PATH} grep -v -f ${SC_HIC_REF_EXCLUDELIST} ${SC_HIC_REF} | sed -e \"s/:/-/g\" ${SC_HIC_REF} > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})" 
+   			echo "${SEQKIT_PATH} grep -f ${SC_HIC_REF_EXCLUDELIST} ${SC_HIC_REF} | sed -e \"s/:/-/g\" ${SC_HIC_REF} > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/exclude.fasta" 
+   		else   			
+   			echo "sed -e \"s/:/-/g\" ${SC_HIC_REF} > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
+   		fi >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+   		
+   		if [[ -v ${SC_HIC_REF_FIXBIONANOGAPS} && ${SC_HIC_REF_FIXBIONANOGAPS} -gt 0 ]]
+   		then
+   			tmpName=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta})
+   			tmpName=${tmpName%.fa}_tmp.fasta
+   			echo "mv ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF}) ${tmpName}"
+   			echo "${SEQKIT_PATH} replace -p \"^[Nn]+|[nN]+$\" -r \"\" -s ${tmpName} | ${SEQKIT_PATH} replace -p \"[Nn]+\" -r \"\$(printf 'N%.0s' {1..111})\" -s > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"   			
+   		fi >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+   		
+		echo "samtools faidx ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "bwa index ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "cp ${configFile} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/config/$(basename ${configFile%.sh})_$(date '+%Y-%m-%d_%H-%M-%S').sh" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		
+		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.version
+		echo "bwa $(${CONDA_HIC_ENV} && bwa 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.version
+	### 02_HICrapidCurBwa 
+    elif [[ ${currentStep} -eq 2 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_02_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+		
+		if [[ ! -d "${SC_HIC_READS}" ]]
+        then
+        	(>&2 echo "ERROR - set SC_HIC_READS to directory that contain the PROJECT_ID*.fastq.qz read files")
+        	exit 1
+   		fi   		   				
+        
+        if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads" ]]
+        then
+        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads!")
+        	exit 1
+   		fi
+   		
+   		ref=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})
+   		
+   		if [[ ! -f "${ref}" ]]
+        then
+        (>&2 echo "ERROR - cannot reference fasta file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})!")
+        	exit 1
+   		fi
+   		
+   		### link HiC reads into current reads sub directory
+   		for x in ${SC_HIC_READS}/${PROJECT_ID}_*_*_R[12].fastq.gz
+		do
+			if [[ -f ${x} ]]
+			then	
+				ln -s -r -f ${x} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads 
+			fi
+		done
+   		   				
+   		numR1Files=0
+		for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz
+		do
+			if [[ -f ${x} ]]
+			then	
+				numR1Files=$((${numR1Files}+1))	
+			fi
+		done
+		
+		if [[ ${numR1Files} -eq 0 ]]
+        then
+        	(>&2 echo "ERROR - cannot read HiC R1 files with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz")
+        	exit 1
+   		fi
+   		
+   		numR2Files=0
+		for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R2.fastq.gz
+		do
+			if [[ -f ${x} ]]
+			then	
+				numR2Files=$((${numR2Files}+1))	
+			fi
+		done
+		
+		if [[ ${numR2Files} -eq 0 ]]
+        then
+        	(>&2 echo "ERROR - cannot read HiC R2 files with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R2.fastq.gz")
+        	exit 1
+   		fi
+   		
+   		if [[ ${numR1Files} -ne ${numR2Files} ]]
+        then
+        	(>&2 echo "ERROR - HiC R1 files ${numR1Files} does not match R2 files ${numR2Files}")
+        	exit 1
+   		fi
+   		
+   		setbwaOptions
+   		
+		for r1 in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz
+		do
+			id=$(dirname ${r1})
+			f1=$(basename ${r1})
+			f2=$(echo "${f1}" | sed -e "s:_R1.fastq.gz:_R2.fastq.gz:")
+			o="${f1%_R1.fastq.gz}"											
+			
+			echo "bwa mem${CONTIG_BWA_OPT} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f1} | samtools view -Sb - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa_1.bam"
+			echo "bwa mem${CONTIG_BWA_OPT} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f2} | samtools view -Sb - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa_2.bam" 				 
+		done > hic_02_HICrapidCurBwa_block_${CONT_DB}.${slurmID}.plan
+		
+   		echo "bwa $(${CONDA_HIC_ENV} && bwa 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_02_HICrapidCurBwa_block_${CONT_DB}.${slurmID}.version
+   		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> hic_02_HICrapidCurBwa_block_${CONT_DB}.${slurmID}.version
+	### 03_HICrapidCurFilter
+    elif [[ ${currentStep} -eq 3 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_03_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+
+		if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" ]]
+        then
+        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
+        	exit 1
+   		fi
+   		   		   				
+		for b1 in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwa_1.bam
+		do
+			d=$(dirname ${b1})
+			b2="${b1%_1.bam}_2.bam"
+			f1=$(basename ${b1%_bwa_1.bam})_bwaFilt_1.bam
+			f2="${f1%_1.bam}_2.bam"			
+			
+			echo "samtools view -h ${b1} | perl ${MARVEL_PATH}/scripts/filter_five_end.pl | samtools view -Sb - > ${d}/${f1}"
+			echo "samtools view -h ${b2} | perl ${MARVEL_PATH}/scripts/filter_five_end.pl | samtools view -Sb - > ${d}/${f2}" 				 
+		done > hic_03_HICrapidCurFilter_block_${CONT_DB}.${slurmID}.plan
+					
+		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_03_HICrapidCurFilter_block_${CONT_DB}.${slurmID}.version	   	
+	### 04_HICrapidCurMerge
+    elif [[ ${currentStep} -eq 4 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_04_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" ]]
+        then
+        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
+        	exit 1
+   		fi
+   		
+   		ref=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})
+   		
+   		if [[ ! -f ${ref}.fai ]]
+   		then  
+   		 	(>&2 echo "ERROR - cannot access reference fasta index ${ref}.fai!")
+        	exit 1
+		fi
+		 
+		if [[ -z ${SC_HIC_MINMAPQV} ]]
+		then
+			SC_HIC_MINMAPQV=0	
+		fi
+		 
+		for b1 in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt_1.bam
+		do
+			b2="${b1%_1.bam}_2.bam"
+			o="${b1%_1.bam}.bam"			
+			
+			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner.pl ${b1} ${b2} $(which samtools) ${SC_HIC_MINMAPQV} | samtools view -bS -t ${ref}.fai - | samtools sort -o ${o} -"			 				 
+			done > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.plan
+		   
+		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.version		
+   	### 05_HICrapidCurMarkduplicates
+    elif [[ ${currentStep} -eq 5 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_05_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+		if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" ]]
+        then
+        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
+        	exit 1
+   		fi
+   		
+   		setPicardOptions
+   		   		
+   		## if multiple bam files are available (e.g. different Lanes) then merge files prior to markduplicates
+   		files=$(ls ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt.bam)
+   		   		   		
+   		echo "biobambam bammarkduplicates2 $(${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 --version 2>&1 | head -n 1 | awk '{print $NF}' && conda deactivate)" > hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.version
+   		
+   		if [[ $(echo $files | wc -w) -eq 1 ]]
+   		then
+   			ob="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
+			m="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics"
+		   	echo "$(CONDA_BIOBAMBAM_ENV) && bammarkduplicates2 I=${files} O=${ob} M=${m} markthreads=${SC_HIC_SAMTOOLS_THREADS} && samtools index -@ ${SC_HIC_SAMTOOLS_THREADS} -c ${ob} && ln -s -f -r ${ob} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+   		elif [[ $(echo $files | wc -w) -gt 1 ]]
+   		then
+   			mrg=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam
+   			o=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam
+   			m=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics
+   			i=$(echo -e ${files} | sed -e "s:${SC_HIC_OUTDIR}/:I=${SC_HIC_OUTDIR}/:g")
+   			echo "picard ${CONTIG_PICARD_OPT} MergeSamFiles ${i} OUTPUT=${mrg} USE_THREADING=TRUE ASSUME_SORTED=TRUE VALIDATION_STRINGENCY=LENIENT && $(CONDA_BIOBAMBAM_ENV) && bammarkduplicates2 I=${mrg} O=${o} M=${m} markthreads=${SC_HIC_SAMTOOLS_THREADS} && samtools index -@ ${SC_HIC_SAMTOOLS_THREADS} -c ${o} && ln -s -f -r ${o} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+   			echo "picard MergeSamFiles $(${CONDA_HIC_ENV} && picard MergeSamFiles --version && conda deactivate)" >> hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.version	
+   		else
+   	 		(>&2 echo "ERROR - cannot find file with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt.bam!")
+        	exit 1
+   	 	fi > hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.plan 
+	else	
+    	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
+    	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
+    	exit 1
+	fi
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
 else
     (>&2 echo "unknown SC_HIC_TYPE ${SC_HIC_TYPE}")
     (>&2 echo "supported types")
