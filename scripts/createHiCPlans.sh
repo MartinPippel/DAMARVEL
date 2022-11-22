@@ -1194,6 +1194,8 @@ then
 		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
 		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/config" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
+		echo "mkdir -p ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext" >> hic_01_HICrapidCurPrepareInput_single_${CONT_DB}.${slurmID}.plan
 		
 		if [[ -f ${SC_HIC_REF_EXCLUDELIST} ]]
    		then
@@ -1366,7 +1368,7 @@ then
 			b2="${b1%_1.bam}_2.bam"
 			o="${b1%_1.bam}.bam"			
 			
-			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner.pl ${b1} ${b2} $(which samtools) ${SC_HIC_MINMAPQV} | samtools view -bS -t ${ref}.fai - | samtools sort -o ${o} -"			 				 
+			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner.pl ${b1} ${b2} samtools ${SC_HIC_MINMAPQV} | samtools view -bS -t ${ref}.fai - | samtools sort -o ${o} -"			 				 
 			done > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.plan
 		   
 		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.version		
@@ -1396,6 +1398,7 @@ then
    		then
    			ob="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
 			m="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics"
+			echo "ln -s -r -f ${files} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam"
 		   	echo "$(CONDA_BIOBAMBAM_ENV) && bammarkduplicates2 I=${files} O=${ob} M=${m} markthreads=${SC_HIC_SAMTOOLS_THREADS} && samtools index -@ ${SC_HIC_SAMTOOLS_THREADS} -c ${ob} && ln -s -f -r ${ob} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
    		elif [[ $(echo $files | wc -w) -gt 1 ]]
    		then
@@ -1408,7 +1411,151 @@ then
    		else
    	 		(>&2 echo "ERROR - cannot find file with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt.bam!")
         	exit 1
-   	 	fi > hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.plan 
+   	 	fi > hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.plan
+ 	#06_HICrapidCurBam2Bed
+ 	elif [[ ${currentStep} -eq 6 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_06_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        
+		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam" ]]
+       	then
+    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam!")
+        	exit 1
+		fi
+		
+		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
+		
+		if [[ ! -f ${ref} ]]
+       	then
+    		(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
+        	exit 1
+		fi
+		
+		if [[ ! -f ${ref}.fai ]]
+       	then
+    		(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
+        	exit 1
+		fi
+
+		echo "samtools view -@${SC_HIC_SAMTOOLS_THREADS} -u -F0x400 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam | bamToBed | sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed" > hic_06_HICrapidCurBam2Bed_single_${CONT_DB}.${slurmID}.plan
+       	echo "${CONDA_HIC_ENV} && bedtools --version && conda deactivate" > hic_06_HICrapidCurBam2Bed_single_${CONT_DB}.${slurmID}.version
+ 	#07_HICrapidCurHiGlass
+ 	elif [[ ${currentStep} -eq 7 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_07_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        
+		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam" ]]
+       	then
+    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam!")
+        	exit 1
+		fi
+
+		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed" ]]
+       	then
+    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed!")
+        	exit 1
+		fi
+
+		
+		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
+		
+		if [[ ! -f ${ref} ]]
+       	then
+    		(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
+        	exit 1
+		fi
+		
+		if [[ ! -f ${ref}.fai ]]
+       	then
+    		(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
+        	exit 1
+		fi
+
+		echo "cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}.genome"  > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
+		echo "paste -d '\t' - - < ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed | sed 's/-/_/g' | awk 'BEGIN {FS=\"\t\"; OFS=\"\t\"} {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} }' | tr '\-+' '01'  | sort --parallel=${SC_HIC_SORT_THREADS} -S${SC_HIC_SORT_MEM}M -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.bed" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
+		for i in "${SC_HIC_HIGLASS_COOLERRESOLUTION[@]}"
+		do
+			echo "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.${i}.cool"
+        	# aggregation - (for HiGlass view)
+        	echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.${i}.cool"
+    	done > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
+
+       	echo "sed --version | head -n 1" > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
+       	echo "awk --version | head -n 1" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
+ 	  	echo "cooler --version" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
+	#08_HICrapidCurPretext
+ 	elif [[ ${currentStep} -eq 8 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_08_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+        
+		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam" ]]
+       	then
+    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam!")
+        	exit 1
+		fi
+
+		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed" ]]
+       	then
+    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed!")
+        	exit 1
+		fi
+
+		
+		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
+		
+		if [[ ! -f ${ref} ]]
+       	then
+    		(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
+        	exit 1
+		fi
+		
+		if [[ ! -f ${ref}.fai ]]
+       	then
+    		(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
+        	exit 1
+		fi	
+		
+		pretextmap_opt=""
+		if [[ -z "${SC_HIC_PRETEXTMAP_QV}" ]]
+		then
+			SC_HIC_PRETEXTMAP_QV=0
+			pretextmap_opt="${pretextmap_opt} --mapq ${SC_HIC_PRETEXTMAP_QV}"
+		fi
+		if [[ -n "${SC_HIC_PRETEXTMAP_HIGHRES}" && "${SC_HIC_PRETEXTMAP_HIGHRES}" != "0" ]]
+		then
+			pretextmap_opt="${pretextmap_opt} --highRes"
+		fi
+				
+		echo "samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.plan
+		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.version 
+	#09_HICrapidCurCoverage
+ 	elif [[ ${currentStep} -eq 9 ]]
+    then
+        ### clean up plans 
+        for x in $(ls hic_09_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+	
+	
+	#10_HICrapidCurRepeat
+	#11_HICrapidCurGap
+	#12_HICrapidCurTelomer
 	else	
     	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
