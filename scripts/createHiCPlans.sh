@@ -1401,14 +1401,14 @@ then
    			ob="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
 			m="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics"
 			echo "ln -s -r -f ${files} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam"
-		   	echo "bammarkduplicates2 I=${files} O=${ob} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${ob} && ln -s -f -r ${ob} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+		   	echo "${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 I=${files} O=${ob} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${ob} && ln -s -f -r ${ob} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
    		elif [[ $(echo $files | wc -w) -gt 1 ]]
    		then
    			mrg=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam
    			o=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam
    			m=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics
    			i=$(echo -e ${files} | sed -e "s:${SC_HIC_OUTDIR}/:I=${SC_HIC_OUTDIR}/:g")
-   			echo "picard ${CONTIG_PICARD_OPT} MergeSamFiles ${i} OUTPUT=${mrg} USE_THREADING=TRUE ASSUME_SORTED=TRUE VALIDATION_STRINGENCY=LENIENT && bammarkduplicates2 I=${mrg} O=${o} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${o} && ln -s -f -r ${o} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+   			echo "picard ${CONTIG_PICARD_OPT} MergeSamFiles ${i} OUTPUT=${mrg} USE_THREADING=TRUE ASSUME_SORTED=TRUE VALIDATION_STRINGENCY=LENIENT && ${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 I=${mrg} O=${o} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${o} && ln -s -f -r ${o} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
    			echo "picard MergeSamFiles $(${CONDA_HIC_ENV} && picard MergeSamFiles --version && conda deactivate)" >> hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.version	
    		else
    	 		(>&2 echo "ERROR - cannot find file with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt.bam!")
