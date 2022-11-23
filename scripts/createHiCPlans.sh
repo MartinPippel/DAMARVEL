@@ -243,7 +243,7 @@ myTypes=("01_HICsalsaPrepareInput, 02_HICsalsaBwa, 03_HICsalsaFilter, 04_HICsals
 "01_HIC3dnaPrepareInput, 02_HIC3dnaJuicer, 03_HIC3dnaAssemblyPipeline",
 "01_HIC3dnaPrepareInput, 02_HIC3dnaJuicer, 03_HIC3dnaVisualize",
 "01_HIChiglassPrepare, 02_HiChiglassBwa, 03_HiChiglassFilter, 04_HiChiglassMatrix",
-"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext, 09_HICrapidCurCoverage, 10_HICrapidCurRepeat, 11_HICrapidCurGap, 12_HICrapidCurTelomer")
+"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext")
 if [[ ${SC_HIC_TYPE} -eq 0 ]]
 then 
     ### 01_HICsalsaPrepareInput
@@ -1147,25 +1147,7 @@ then
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
     	exit 1
 	fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext, 09_HICrapidCurCoverage, 10_HICrapidCurRepeat, 11_HICrapidCurGap, 12_HICrapidCurTelomer"	
+"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext"	
 elif [[ ${SC_HIC_TYPE} -eq 5 ]]
 then 
     ### 01_HICrapidCurPrepareInput
@@ -1401,14 +1383,14 @@ then
    			ob="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
 			m="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics"
 			echo "ln -s -r -f ${files} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam"
-		   	echo "${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 I=${files} O=${ob} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${ob} && ln -s -f -r ${ob} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+		   	echo "${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 I=${files} O=${ob} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${ob} && ln -s -f -r ${ob} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.csi ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
    		elif [[ $(echo $files | wc -w) -gt 1 ]]
    		then
    			mrg=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam
    			o=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam
    			m=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.metrics
    			i=$(echo -e ${files} | sed -e "s:${SC_HIC_OUTDIR}/:I=${SC_HIC_OUTDIR}/:g")
-   			echo "picard ${CONTIG_PICARD_OPT} MergeSamFiles ${i} OUTPUT=${mrg} USE_THREADING=TRUE ASSUME_SORTED=TRUE VALIDATION_STRINGENCY=LENIENT && ${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 I=${mrg} O=${o} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${o} && ln -s -f -r ${o} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.bai ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+   			echo "picard ${CONTIG_PICARD_OPT} MergeSamFiles ${i} OUTPUT=${mrg} USE_THREADING=TRUE ASSUME_SORTED=TRUE VALIDATION_STRINGENCY=LENIENT && ${CONDA_BIOBAMBAM_ENV} && bammarkduplicates2 I=${mrg} O=${o} M=${m} markthreads=${SC_HIC_BIOBAMBAM_THREADS} && samtools index -@ ${SC_HIC_BIOBAMBAM_THREADS} -c ${o} && ln -s -f -r ${o} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ln -s -f -r ${ob}.csi ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
    			echo "picard MergeSamFiles $(${CONDA_HIC_ENV} && picard MergeSamFiles --version && conda deactivate)" >> hic_05_HICrapidCurMarkduplicates_single_${CONT_DB}.${slurmID}.version	
    		else
    	 		(>&2 echo "ERROR - cannot find file with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt.bam!")
@@ -1545,19 +1527,6 @@ then
 				
 		echo "samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.version 
-	#09_HICrapidCurCoverage
- 	elif [[ ${currentStep} -eq 9 ]]
-    then
-        ### clean up plans 
-        for x in $(ls hic_09_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
-        do            
-            rm $x
-        done
-	
-	
-	#10_HICrapidCurRepeat
-	#11_HICrapidCurGap
-	#12_HICrapidCurTelomer
 	else	
     	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
