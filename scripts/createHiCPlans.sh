@@ -1370,7 +1370,7 @@ then
 			
 			## ugly hack to use an older samtools version: prepend $(CONDA_BIOBAMBAM_ENV) &&  
 			## TODO bugfix: sam header format needs to be corrected -R: Sanger is using: rgline=$(samtools view -H {bam1} | grep "@RG"| perl -spe 's/\t/\\t/g') and bwa mem -t15 -B8 -H'$rgline' {assembly}.fa - see: https://gitlab.com/wtsi-grit/rapid-curation/-/blob/main/README_software.md
-			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner_sanger.pl ${b1} ${b2} samtools ${SC_HIC_MINMAPQV} | samtools view ${SC_HIC_SAMTOOLS_THREADS} -bS -t ${ref}.fai - | samtools sort ${SC_HIC_SAMTOOLS_THREADS} -o ${o} -"			 				 
+			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner_sanger.pl ${b1} ${b2} samtools ${SC_HIC_MINMAPQV} | samtools view -@ ${SC_HIC_SAMTOOLS_THREADS} -bS -t ${ref}.fai - | samtools sort -@ ${SC_HIC_SAMTOOLS_THREADS} -o ${o} -"			 				 
 			done > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.plan
 		   
 		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.version		
