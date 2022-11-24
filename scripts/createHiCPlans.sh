@@ -1472,7 +1472,7 @@ then
 			echo "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.${i}.cool"
         	# aggregation - (for HiGlass view)
         	echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.${i}.cool"
-    	done > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
+    	done >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
 
        	echo "sed --version | head -n 1" > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
        	echo "awk --version | head -n 1" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
