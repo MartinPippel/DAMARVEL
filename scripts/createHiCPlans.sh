@@ -1519,13 +1519,15 @@ then
 		then
 			SC_HIC_PRETEXTMAP_QV=0
 			pretextmap_opt="${pretextmap_opt} --mapq ${SC_HIC_PRETEXTMAP_QV}"
+		else 
+			pretextmap_opt="${pretextmap_opt} --mapq ${SC_HIC_PRETEXTMAP_QV}"			
 		fi
 		if [[ -n "${SC_HIC_PRETEXTMAP_HIGHRES}" && "${SC_HIC_PRETEXTMAP_HIGHRES}" != "0" ]]
 		then
 			pretextmap_opt="${pretextmap_opt} --highRes"
 		fi
 				
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.plan
+		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q${SC_HIC_PRETEXTMAP_QV}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.version 
 	else	
     	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
