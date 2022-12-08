@@ -318,16 +318,16 @@ then
             	then  
             		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
             		echo -e "then " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python " >> ${file}.slurm
             		echo -e "else " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH" >> ${file}.slurm
             		echo -e "fi" >> ${file}.slurm
                else
             		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
             		echo -e "then " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python" >> ${file}.slurm
             		echo -e "else " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH" >> ${file}.slurm
             		echo -e "fi" >> ${file}.slurm               		 
                fi                
             fi		
@@ -438,18 +438,18 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
             	then  
             		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
             		echo -e "then " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python " >> ${file}.slurm
             		echo -e "else " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH" >> ${file}.slurm
             		echo -e "fi" >> ${file}.slurm
                else
             		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
             		echo -e "then " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python" >> ${file}.slurm
             		echo -e "else " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH" >> ${file}.slurm
             		echo -e "fi" >> ${file}.slurm               		 
-               fi                
+               fi                       
             fi		
 			
 			echo -e "${ADDCMD}" >> ${file}.slurm
@@ -540,18 +540,18 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
             	then  
             		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
             		echo -e "then " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python " >> ${file}.slurm
             		echo -e "else " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH" >> ${file}.slurm
             		echo -e "fi" >> ${file}.slurm
                else
             		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
             		echo -e "then " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python" >> ${file}.slurm
             		echo -e "else " >> ${file}.slurm
-            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "	export PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH" >> ${file}.slurm
             		echo -e "fi" >> ${file}.slurm               		 
-               fi                
+               fi                     
             fi			
 
 			echo "export PATH=${MARVEL_PATH}/bin:\$PATH
