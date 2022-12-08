@@ -312,13 +312,30 @@ then
 			elif [[ ${prefix} == "freebayes" ]]
             then
             	echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm
-			fi
+			elif [[ ${prefix} == "tour" ]]			# TODO - adapt python code to networkx update
+            then
+            	if [[ -n ${CONDA_TOUR_ENV} ]]
+            	then  
+            		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
+            		echo -e "then " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "else " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "fi" >> ${file}.slurm
+               else
+            		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
+            		echo -e "then " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "else " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "fi" >> ${file}.slurm               		 
+               fi                
+            fi		
 			
 			echo -e "${ADDCMD}" >> ${file}.slurm
 			
             echo "export PATH=${MARVEL_PATH}/bin:\$PATH
 export PATH=${MARVEL_PATH}/scripts:\$PATH
-export PYTHONPATH=${MARVEL_PATH}/lib.python:\$PYTHONPATH
 
 FIRSTJOB=0
 LASTJOB=\$(wc -l ${file}.plan | awk '{print \$1}')
@@ -413,15 +430,32 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 			then	
 				echo -e "\n${CONDA_PURGEHAPLOTIGS_ENV}" >> ${file}.slurm
 			elif [[ ${prefix} == "freebayes" ]]
-                        then
-                                echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm
-			fi
+            then
+                echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm
+			elif [[ ${prefix} == "tour" ]]			# TODO - adapt python code to networkx update
+            then
+            	if [[ -n ${CONDA_TOUR_ENV} ]]
+            	then  
+            		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
+            		echo -e "then " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "else " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "fi" >> ${file}.slurm
+               else
+            		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
+            		echo -e "then " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "else " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "fi" >> ${file}.slurm               		 
+               fi                
+            fi		
 			
 			echo -e "${ADDCMD}" >> ${file}.slurm
 	
 	        echo "export PATH=${MARVEL_PATH}/bin:\$PATH
 export PATH=${MARVEL_PATH}/scripts:\$PATH
-export PYTHONPATH=${MARVEL_PATH}/lib.python:\$PYTHONPATH
 
 FIRSTJOB=0
 LASTJOB=\$(wc -l ${file}.plan | awk '{print \$1}')
@@ -499,12 +533,29 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 				echo -e "\n${CONDA_PURGEHAPLOTIGS_ENV}" >> ${file}.slurm
 			elif [[ ${prefix} == "freebayes" ]]
             then
-                echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm
+                echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm               
+			elif [[ ${prefix} == "tour" ]]			# TODO - adapt python code to networkx update
+            then
+            	if [[ -n ${CONDA_TOUR_ENV} ]]
+            	then  
+            		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
+            		echo -e "then " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "else " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=${CONDA_TOUR_ENV}/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "fi" >> ${file}.slurm
+               else
+            		echo -e "\nif [[ \"x\${PYTHONPATH}\" == \"x\" ]]" >> ${file}.slurm
+            		echo -e "then " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python\" " >> ${file}.slurm
+            		echo -e "else " >> ${file}.slurm
+            		echo -e "	echo -e \"\nexport PYTHONPATH=/projects/dazzler/pippel/prog/pkgs/DAmar/lib/python3.6/site-packages:${MARVEL_PATH}/lib.python:\$PYTHONPATH\"" >> ${file}.slurm
+            		echo -e "fi" >> ${file}.slurm               		 
+               fi                
             fi			
 
 			echo "export PATH=${MARVEL_PATH}/bin:\$PATH
 export PATH=${MARVEL_PATH}/scripts:\$PATH
-export PYTHONPATH=${MARVEL_PATH}/lib.python:\$PYTHONPATH
 
 FIRSTJOB=1
 LASTJOB=\$(wc -l ${file}.plan | awk '{print \$1}')
