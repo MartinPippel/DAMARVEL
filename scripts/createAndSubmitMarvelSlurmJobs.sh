@@ -312,7 +312,7 @@ then
 			elif [[ ${prefix} == "freebayes" ]]
             then
             	echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm
-			elif [[ ${prefix} == "tour" ]]			# TODO - adapt python code to networkx update
+			elif [[ ${prefix} == "tour" || ${prefix} == "corr" ]]			# TODO - adapt python code to networkx update
             then
             	if [[ -n ${CONDA_TOUR_ENV} ]]
             	then  
@@ -432,7 +432,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 			elif [[ ${prefix} == "freebayes" ]]
             then
                 echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm
-			elif [[ ${prefix} == "tour" ]]			# TODO - adapt python code to networkx update
+			elif [[ ${prefix} == "tour" || ${prefix} == "corr" ]]			# TODO - adapt python code to networkx update
             then
             	if [[ -n ${CONDA_TOUR_ENV} ]]
             	then  
@@ -534,7 +534,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 			elif [[ ${prefix} == "freebayes" ]]
             then
                 echo -e "\n${CONDA_FREEBAYES_ENV}" >> ${file}.slurm               
-			elif [[ ${prefix} == "tour" ]]			# TODO - adapt python code to networkx update
+			elif [[ ${prefix} == "tour" || ${prefix} == "corr" ]]			# TODO - adapt python code to networkx update
             then
             	if [[ -n ${CONDA_TOUR_ENV} ]]
             	then  
