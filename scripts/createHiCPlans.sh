@@ -1147,7 +1147,7 @@ then
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
     	exit 1
 	fi
-#"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext"	
+#"01_HICrapidCurPrepareInput, 02_HICrapidCurBwa, 03_HICrapidCurFilter, 04_HICrapidCurMerge, 05_HICrapidCurMarkduplicates, 06_HICrapidCurBam2Bed, 07_HICrapidCurHiGlass, 08_HICrapidCurPretext, 09_UploadAndIngestCoolerFiles"	
 elif [[ ${SC_HIC_TYPE} -eq 5 ]]
 then 
     ### 01_HICrapidCurPrepareInput
@@ -1499,7 +1499,7 @@ then
        	echo "sed --version | head -n 1" > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
        	echo "awk --version | head -n 1" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
  	  	echo "cooler --version" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.version
-	#08_HICrapidCurPretext
+ 	#08_HICrapidCurPretext
  	elif [[ ${currentStep} -eq 8 ]]
     then
         ### clean up plans 
@@ -1555,51 +1555,31 @@ then
 		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q10-dev.pretext --sortby length --mapq 10 --highRes" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q20-dev.pretext --sortby length --mapq 20 --highRes" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_single_${CONT_DB}.${slurmID}.version 
+	#09_UploadAndIngestCoolerFiles
+ 	elif [[ ${currentStep} -eq 9 ]]
+    then
+
+		### clean up plans 
+        for x in $(ls hic_09_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done
+        
+		echo "for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.*.mcool" > hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo "do" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo "	if [[ -f \$x ]]" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo "	then" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 
+		echo "		cmd1=\"cp \$(pwd | sed -e \"s:/lustre::\")/\${x} ~/hg-tmp/\$(basename \${x})\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo "		cmd2=\"docker exec higlass-container python higlass-server/manage.py ingest_tileset --filename /opt/prog/higlass/tmp/\$(basename \${x}) --filetype cooler --datatype matrix --project-name \${SC_HIC_HIGLASS_PROJECT}\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo "		cmd3=\"rm  ~/hg-tmp/\$(basename \${x})\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo "		ssh -tt myers-pc-20 \"\${cmd1} && \${cmd2} && \${cmd3}\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo "	fi  " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo "done" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 		
 	else	
     	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
     	exit 1
 	fi
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
 else
     (>&2 echo "unknown SC_HIC_TYPE ${SC_HIC_TYPE}")
     (>&2 echo "supported types")
