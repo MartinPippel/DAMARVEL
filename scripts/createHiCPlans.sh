@@ -1432,6 +1432,7 @@ then
 			if [[ "x${q}" == "x"  ]]
 			then 
 				x=""
+				q=0
 			else 
 				x=".q${q}-dev"
 			fi 	
@@ -1456,21 +1457,7 @@ then
         for x in $(ls hic_07_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
-        done
-        
-        
-		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam" ]]
-       	then
-    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam!")
-        	exit 1
-		fi
-
-		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed" ]]
-       	then
-    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed!")
-        	exit 1
-		fi
-
+        done               
 		
 		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
 		
@@ -1485,8 +1472,6 @@ then
     		(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
         	exit 1
 		fi
-		
-		
 		
 		## run those steps in parallel 
 		
@@ -1557,21 +1542,7 @@ then
         do            
             rm $x
         done
-        
-        
-		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam" ]]
-       	then
-    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam!")
-        	exit 1
-		fi
-
-		if [[ ! -f "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed" ]]
-       	then
-    		(>&2 echo "ERROR - cannot access final duplicate marked bam file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed!")
-        	exit 1
-		fi
-
-		
+        		
 		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
 		
 		if [[ ! -f ${ref} ]]
