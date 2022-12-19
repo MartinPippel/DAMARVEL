@@ -1439,12 +1439,12 @@ then
 			
 			cmd1="samtools view -@${SC_HIC_SAMTOOLS_THREADS} -u -F0x400 -q ${q} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
 			cmd2="bamToBed"
-			cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G"
+			cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
 			cmd4="paste -d '\t' - -"
 			cmd5="sed 's/-/_/g'"
 			cmd6="awk 'BEGIN {FS=\"\t\"; OFS=\"\t\"} {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} }'"
 			cmd7="tr '\-+' '01'"
-			cmd8="sort --parallel=${SC_HIC_SORT_THREADS} -S${SC_HIC_SORT_MEM}M -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed"
+			cmd8="sort --parallel=${SC_HIC_SORT_THREADS} -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} -S10G -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed"
 			
 			echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5} | ${cmd6} | ${cmd7} | ${cmd8}"		 
 		done > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.plan
