@@ -1594,16 +1594,16 @@ then
             rm $x
         done
         
-		echo "for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.*.mcool" > hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-		echo "do" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-		echo "	if [[ -f \$x ]]" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-		echo "	then" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 
-		echo "		cmd1=\"cp \$(pwd | sed -e \"s:/lustre::\")/\${x} ~/hg-tmp/\$(basename \${x})\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-        echo "		cmd2=\"docker exec higlass-container python higlass-server/manage.py ingest_tileset --filename /opt/prog/higlass/tmp/\$(basename \${x}) --filetype cooler --datatype matrix --project-name \${SC_HIC_HIGLASS_PROJECT}\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-        echo "		cmd3=\"rm  ~/hg-tmp/\$(basename \${x})\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-        echo "		ssh -tt myers-pc-20 \"\${cmd1} && \${cmd2} && \${cmd3}\"" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-		echo "	fi  " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-		echo "done" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 		
+		echo -n "for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.*.mcool; " > hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo -n "do" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo -n "	if [[ -f \$x ]]; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo -n "	then" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 
+		echo -n "		cmd1=\"cp \$(pwd | sed -e \"s:/lustre::\")/\${x} ~/hg-tmp/\$(basename \${x})\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo -n "		cmd2=\"docker exec higlass-container python higlass-server/manage.py ingest_tileset --filename /opt/prog/higlass/tmp/\$(basename \${x}) --filetype cooler --datatype matrix --project-name ${SC_HIC_HIGLASS_PROJECT}\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo -n "		cmd3=\"rm  ~/hg-tmp/\$(basename \${x})\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo -n "		ssh -tt myers-pc-20 \"\${cmd1} && \${cmd2} && \${cmd3}\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo -n "	fi; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo -e "done" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 		
 	else	
     	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
