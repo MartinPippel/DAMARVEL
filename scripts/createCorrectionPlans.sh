@@ -1198,10 +1198,10 @@ then
 		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
 		
 		## create m1 -- mN5
-    	for x in $(seq ${firstContigBlock} ${nCorrblocks})
-        do             
-		
-		done 		
+    	#for x in $(seq ${firstContigBlock} ${nCorrblocks})
+        #do             
+	#	
+	#	done 		
 	
 	
 	
