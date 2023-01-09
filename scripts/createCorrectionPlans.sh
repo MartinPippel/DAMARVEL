@@ -996,7 +996,7 @@ then
 		## create db 
 		## 1. add reads
 		## marvel 
-		echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_reads.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "${MARVEL_PATH}/bin/FA2db -v -x 0 ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_reads.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
     	echo "${MARVEL_PATH}/bin/DBsplit${DACCORD_DBSPLIT_OPT} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		## dazzler 
 		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_reads.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
@@ -1007,7 +1007,7 @@ then
 		    		
     	## 2. add contigs 
     	## marvel 
-    	echo "${MARVEL_PATH}/bin/FA2db -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+    	echo "${MARVEL_PATH}/bin/FA2db -v -x 0 ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
     	## dazzler 
 		echo "${DAZZLER_PATH}/bin/fasta2DB -v ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB} ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_contigs.fasta" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 
@@ -1026,8 +1026,8 @@ then
 		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "	elif [[ \${line} -eq 4 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "	else" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
 		echo "		read_count=\$(sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$1}')" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "		if [[ \${read_count} -gt \$(cat ${Daccord_DIR}/number_of_reads.txt) && \${found} -eq 0 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
@@ -1044,7 +1044,7 @@ then
 		echo "mv ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 		
 			
 		## 4. create daligner sub directories
-		echo "for x in \$(seq \$((1+\$(cat ${Daccord_DIR}/number_of_readsblocks.txt))) \$(grep block ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "for x in \$(seq 1 \$((1+\$(cat ${Daccord_DIR}/number_of_readsblocks.txt))) \$(grep block ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 	    echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "  mkdir -p ${Daccord_DIR}/d\${x}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	
@@ -1180,6 +1180,31 @@ then
         echo "LASTOOLS viewmasks $(git --git-dir=${LASTOOLS_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version    
         echo "DAMAR txt2track $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
         echo "DAMAR TKcombine $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >> corr_06_Catrack_single_${FIX_DB%.db}.${slurmID}.version
+	### 07-Repeat Masking - only on individual blocks on reads and on all contigs vs contigs
+    elif [[ ${currentStep} -eq 7 ]]
+    then
+        for x in $(ls corr_07_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        do            
+            rm $x
+        done 
+        ### find and set daligner options 
+        setDaligerOptions
+		
+		myCWD=$(pwd) 
+		Daccord_DIR=${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}
+		
+		lastReadBlock=$(cat ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/number_of_readsblocks.txt)
+		firstContigBlock=$((1+lastReadBlock))
+		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
+		
+		## create m1 -- mN5
+    	for x in $(seq ${firstContigBlock} ${nCorrblocks})
+        do             
+		
+		done 		
+	
+	
+	
     ### 07-daligner
     elif [[ ${currentStep} -eq 7 ]]
     then
