@@ -1198,17 +1198,31 @@ then
 		nCorrblocks=$(getNumOfDbBlocks ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/${DACCORD_DAZZ_DB%.db}.db)
 		
 		## create m1 -- mN5
-    	#for x in $(seq ${firstContigBlock} ${nCorrblocks})
-        #do             
-	#	
-	#	done 		
-	
-	
-	
-    ### 07-daligner
-    elif [[ ${currentStep} -eq 7 ]]
+    	for x in $(seq ${firstContigBlock} ${nCorrblocks})
+        do             
+			echo "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.${x} && mv ${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.${x}.las r${x}/ && cd ${myCWD}"
+		done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
+		echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version
+	 elif [[ ${currentStep} -eq 8 ]]
+	    then 
+	        ### clean up plans 
+	        for x in $(ls corr_08_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+	        do            
+	            rm $x
+	        done 
+	        
+	        ### create LArepeat commands
+	        for x in $(seq ${firstContigBlock} ${nCorrblocks})
+	        do 
+	            echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LArepeat -c 5 -l 1.0 -h 1.0 -b ${x} ${DACCORD_DAZZ_DB%.db} r${x}/${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.${x}.las && cd ${myCWD}/" 
+	            echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/REPmask -v -c5 -nrepeats ${DACCORD_DAZZ_DB%.db} r${x}/${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.${x}.las && cd ${myCWD}/"
+	    	done > corr_08_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan
+	        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_08_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
+	        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> corr_08_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
+    ### 09-daligner
+    elif [[ ${currentStep} -eq 9 ]]
     then
-        for x in $(ls corr_07_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_09_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
