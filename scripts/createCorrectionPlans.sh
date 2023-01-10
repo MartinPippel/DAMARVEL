@@ -1247,7 +1247,7 @@ then
 		
     	for x in $(seq ${firstContigBlock} ${nCorrblocks})
         do             
-    		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@1"
+    		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} -mrepeats ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@1"
             count=0
 
             for y in $(seq 1 ${lastReadBlock})
@@ -1267,7 +1267,7 @@ then
 					echo " && cd ${myCWD}"
 				    ### if another TMP dir is used, such as a common directory, we have to be sure that output files from jobs on different compute nodes do not collide (happens when the get the same PID)
 
-            		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@${y}"
+            		echo -n "cd ${Daccord_DIR} && PATH=${DAZZLER_PATH}/bin:\${PATH} ${DAZZLER_PATH}/bin/daligner${DACCORD_DALIGNER_OPT} -mrepeats ${DACCORD_DAZZ_DB%.db}.${x} ${DACCORD_DAZZ_DB%.db}.@${y}"
                     count=1
                 fi
             done
@@ -1281,13 +1281,13 @@ then
 		    fi
 		    
             echo " && cd ${myCWD}"
-    	done > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.plan
-        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_07_daligner_block_${FIX_DB%.db}.${slurmID}.version		
-	### 08-LAmerge
-    elif [[ ${currentStep} -eq 8 ]]
+    	done > corr_09_daligner_block_${FIX_DB%.db}.${slurmID}.plan
+        echo "DAZZLER daligner $(git --git-dir=${DAZZLER_SOURCE_PATH}/DALIGNER/.git rev-parse --short HEAD)" > corr_09_daligner_block_${FIX_DB%.db}.${slurmID}.version		
+	### 10-LAmerge
+    elif [[ ${currentStep} -eq 10 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_08_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_10_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -1305,8 +1305,8 @@ then
         for x in $(seq ${firstContigBlock} ${nCorrblocks})
         do 
             echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAmerge${DACCORD_LAMERGE_OPT} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las d${x} && ${MARVEL_PATH}/bin/LAfilter -p -R6 ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las ${DACCORD_DB%.db}.dalignFilt.${x}.las && cd ${myCWD}"
-    	done > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan  
-        echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_08_LAmerge_block_${FIX_DB%.db}.${slurmID}.version
+    	done > corr_10_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan  
+        echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_10_LAmerge_block_${FIX_DB%.db}.${slurmID}.version
     ### 09-LArepeat 
 	elif [[ ${currentStep} -eq 9 ]]
     then    
