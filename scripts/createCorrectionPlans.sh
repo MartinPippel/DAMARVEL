@@ -1222,7 +1222,7 @@ then
         ### create LArepeat commands
         for x in $(seq ${firstContigBlock} ${nCorrblocks})
         do 
-            echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LArepeat -c 5 -l 1.0 -h 1.0 -b ${x} ${DACCORD_DAZZ_DB%.db} r${x}/${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.${x}.las && cd ${myCWD}/" 
+            echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LArepeat -c 5 -l 1.0 -h 1.0 -b ${x} ${DACCORD_DB%.db} r${x}/${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.${x}.las && cd ${myCWD}/" 
             echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/REPmask -v -c5 -nrepeats ${DACCORD_DAZZ_DB%.db} r${x}/${DACCORD_DAZZ_DB%.db}.${x}.${DACCORD_DAZZ_DB%.db}.${x}.las && cd ${myCWD}/"
     	done > corr_08_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_08_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
