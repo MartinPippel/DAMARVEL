@@ -1044,9 +1044,9 @@ then
 		echo "mv ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 		
 			
 		## 4. create daligner sub directories
-		echo "for x in \$(seq 1 \$((1+\$(cat ${Daccord_DIR}/number_of_readsblocks.txt))) \$(grep block ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "for x in \$(seq \$((1+\$(cat ${Daccord_DIR}/number_of_readsblocks.txt))) \$(grep block ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 	    echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "  mkdir -p ${Daccord_DIR}/d\${x}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo "  mkdir -p ${Daccord_DIR}/d\${x} ${Daccord_DIR}/r\${x}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	
 			
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
