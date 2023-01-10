@@ -240,7 +240,7 @@ function setDBsplitOptions()
     if [[ -z ${COR_DACCORD_DBSPLIT_S} ]]
     then
         (>&2 echo "Set DBsplit -s argument to default value: 400!")
-        COR_DACCORD_DBSPLIT_S=400
+        COR_DACCORD_DBSPLIT_S=50
     fi
 
     DACCORD_DBSPLIT_OPT="${DACCORD_DBSPLIT_OPT} -s${COR_DACCORD_DBSPLIT_S}"
@@ -990,6 +990,8 @@ then
         	(>&2 echo "ERROR - set ${CORR_DACCORD_READS} to input db")
         	exit 1
    		fi
+   		
+   		setDBsplitOptions
    		
    		echo "${MARVEL_PATH}/bin/DBshow ${CORR_DACCORD_READS} | ${DACCORD_PATH}/bin/fastaidrename -preads > ${CORR_DACCORD_OUTDIR}/daccord_${CORR_DACCORD_RUNID}/daccord_reads.fasta"  >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
    		
