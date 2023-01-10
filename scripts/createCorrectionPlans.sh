@@ -1017,36 +1017,36 @@ then
 		#echo "cd ${Daccord_DIR}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "cp ${Daccord_DIR}/${DACCORD_DB%.db}.db ${Daccord_DIR}/${DACCORD_DB%.db}.db.bac" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "cp ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.bac" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "found=0" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "for line in \$(seq 1 \$(wc -l < ${Daccord_DIR}/${DACCORD_DB%.db}.db))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
-		echo "	if [[ \${line} -le 6 && \${line} -ne 4 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
-		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "	elif [[ \${line} -eq 4 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "	else" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
-		echo "		read_count=\$(sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$1}')" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		if [[ \${read_count} -gt \$(cat ${Daccord_DIR}/number_of_reads.txt) && \${found} -eq 0 ]]" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
-		echo "			printf \"%10s%10s\\n\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "			printf \"%10s\\n\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "			found=1" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
-		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan				
-		echo "	fi" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	 			
+		echo -n "found=0; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "for line in \$(seq 1 \$(wc -l < ${Daccord_DIR}/${DACCORD_DB%.db}.db)); " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "do " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo -n "	if [[ \${line} -le 6 && \${line} -ne 4 ]]; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo -n "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "	elif [[ \${line} -eq 4 ]]; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "	then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		printf \"blocks =%10d\\n\" \$(sed -n 4p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print 1+\$3}') >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "	else" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo -n "		read_count=\$(sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$1}'); " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		if [[ \${read_count} -gt \$(cat ${Daccord_DIR}/number_of_reads.txt) && \${found} -eq 0 ]]; " >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		then" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo -n "			printf \"%10s%10s\\n\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "			printf \"%10s\\n\" \"\$(cat ${Daccord_DIR}/number_of_reads.txt)\" >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "			found=1;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		fi;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
+		echo -n "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "		sed -n \${line}p ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db >> ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan				
+		echo -n "	fi;" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	 			
 		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 
 		echo "mv ${Daccord_DIR}/${DACCORD_DB%.db}.db.tmp ${Daccord_DIR}/${DACCORD_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "mv ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db.tmp ${Daccord_DIR}/${DACCORD_DAZZ_DB%.db}.db" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan 		
 			
 		## 4. create daligner sub directories
-		echo "for x in \$(seq \$((1+\$(cat ${Daccord_DIR}/number_of_readsblocks.txt))) \$(grep block ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$NF}'))" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-	    echo "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
-		echo "  mkdir -p ${Daccord_DIR}/d\${x} ${Daccord_DIR}/r\${x}" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "for x in \$(seq \$((1+\$(cat ${Daccord_DIR}/number_of_readsblocks.txt))) \$(grep block ${Daccord_DIR}/${DACCORD_DB%.db}.db | awk '{print \$NF}'));" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+	    echo -n "do" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
+		echo -n "  mkdir -p ${Daccord_DIR}/d\${x} ${Daccord_DIR}/r\${x};" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan
 		echo "done" >> corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.plan	
 			
 		echo "MARVEL $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_01_prepInFasta_single_${FIX_DB%.db}.${slurmID}.version
