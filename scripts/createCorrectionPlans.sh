@@ -1307,11 +1307,11 @@ then
             echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAmerge${DACCORD_LAMERGE_OPT} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las d${x} && ${MARVEL_PATH}/bin/LAfilter -p -R6 ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalign.${x}.las ${DACCORD_DB%.db}.dalignFilt.${x}.las && cd ${myCWD}"
     	done > corr_10_LAmerge_block_${FIX_DB%.db}.${slurmID}.plan  
         echo "MARVEL LAmerge $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" > corr_10_LAmerge_block_${FIX_DB%.db}.${slurmID}.version
-    ### 09-LArepeat 
-	elif [[ ${currentStep} -eq 9 ]]
+    ### 11-LArepeat 
+	elif [[ ${currentStep} -eq 11 ]]
     then    
         ### clean up plans 
-        for x in $(ls corr_09_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_11_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -1337,14 +1337,14 @@ then
         		echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LArepeat${DACCORD_LAREPEAT_OPT[$x]} -b ${y} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las && cd ${myCWD}/"            		
     		done
     		echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/REPmask${DACCORD_DAZZ_LAREPEAT_OPT} ${DACCORD_DAZZ_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las && cd ${myCWD}/"
-    	done > corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan 
-        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
-        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> corr_09_LArepeat_block_${FIX_DB%.db}.${slurmID}.version         
-    ### 10-LAfilter        
-    elif [[ ${currentStep} -eq 10 ]]
+    	done > corr_11_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan 
+        echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >corr_11_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
+        echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> corr_11_LArepeat_block_${FIX_DB%.db}.${slurmID}.version         
+    ### 12-LAfilter        
+    elif [[ ${currentStep} -eq 12 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_10_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_12_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -1380,13 +1380,13 @@ then
          	## we need to constract each repeat track individually 
          	my_block_rep_track=${y}.${DACCORD_LAREPEAT_REPEATNAMES[${COR_DACCORD_LAFILTER_REPEAT_IDX}]}
 			echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LAfilter${DACCORD_LAFILTER_OPT} -r ${my_block_rep_track} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las ${DACCORD_DB%.db}.${y}.dalignFiltRep.las && cd ${myCWD}/"
-    	done > corr_10_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
+    	done > corr_12_LAfilter_block_${FIX_DB%.db}.${slurmID}.plan 
 				
-    ### 11-daccord        
-    elif [[ ${currentStep} -eq 11 ]]
+    ### 13-daccord        
+    elif [[ ${currentStep} -eq 13 ]]
     then
         ### clean up plans 
-        for x in $(ls corr_11_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_13_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -1408,14 +1408,14 @@ then
         	cmd2="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} --eprofonly ${DACCORD_DB%.db}.${y}.dalignFiltRep.las ${DACCORD_DAZZ_DB%.db}.db"
         	cmd3="${DACCORD_PATH}/bin/daccord ${DACCORD_DACCORD_OPT} ${DACCORD_DB%.db}.${y}.dalignFiltRep.las ${DACCORD_DAZZ_DB%.db}.db > ${DACCORD_DB%.db}.${y}.dalignFiltRep.dac.fasta"
          	echo "cd ${Daccord_DIR} && ${cmd1}  && ${cmd2} && ${cmd3} && cd ${myCWD}/"
-    	done > corr_11_daccord_block_${FIX_DB%.db}.${slurmID}.plan 
+    	done > corr_13_daccord_block_${FIX_DB%.db}.${slurmID}.plan 
         
         
-    ### 12-stats        
-    elif [[ ${currentStep} -eq 12 ]]
+    ### 14-stats        
+    elif [[ ${currentStep} -eq 14 ]]
     then
 		### clean up plans 
-        for x in $(ls corr_12_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
+        for x in $(ls corr_14_*_*_${FIX_DB%.db}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done 
@@ -1423,9 +1423,9 @@ then
     	if [[ -n ${MARVEL_STATS} && ${MARVEL_STATS} -gt 0 ]]
    		then
 	        ### create assemblyStats plan
-	        echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 16" > corr_12_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
+	        echo "${SUBMIT_SCRIPTS_PATH}/assemblyStats.sh ${configFile} 16" > corr_14_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
 	    else 
-	     	echo "echo set MARVEL_STATS to 1" > corr_12_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
+	     	echo "echo set MARVEL_STATS to 1" > corr_14_marvelStats_single_${FIX_DB%.db}.${slurmID}.plan
 		fi
     	
         		
