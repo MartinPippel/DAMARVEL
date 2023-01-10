@@ -1335,8 +1335,7 @@ then
         	for x in $(seq 0 $((${numRepeatTracks}-1)))
     		do
         		echo "cd ${Daccord_DIR} && ${MARVEL_PATH}/bin/LArepeat${DACCORD_LAREPEAT_OPT[$x]} -b ${y} ${DACCORD_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las && cd ${myCWD}/"            		
-    		done
-    		echo "cd ${Daccord_DIR} && ${DAZZLER_PATH}/bin/REPmask${DACCORD_DAZZ_LAREPEAT_OPT} ${DACCORD_DAZZ_DB%.db} ${DACCORD_DB%.db}.dalignFilt.${y}.las && cd ${myCWD}/"
+    		done  		
     	done > corr_11_LArepeat_block_${FIX_DB%.db}.${slurmID}.plan 
         echo "MARVEL LArepeat $(git --git-dir=${MARVEL_SOURCE_PATH}/.git rev-parse --short HEAD)" >corr_11_LArepeat_block_${FIX_DB%.db}.${slurmID}.version
         echo "DAZZLER REPmask $(git --git-dir=${DAZZLER_SOURCE_PATH}/DAMASKER/.git rev-parse --short HEAD)" >> corr_11_LArepeat_block_${FIX_DB%.db}.${slurmID}.version         
