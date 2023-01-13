@@ -1427,7 +1427,7 @@ then
 		fi
 
 		## clean up: remove the dev files at some point  
-		for q in "" 1 10 20 #.q1-dev .q10-dev .q20-dev
+		for q in "" 1 20 #.q1-dev .q10-dev .q20-dev
 		do 
 			if [[ "x${q}" == "x"  ]]
 			then 
@@ -1437,6 +1437,14 @@ then
 				x=".q${q}-dev"
 			fi 	
 			
+			for f in mergedHiC finalHiC
+			do 
+				ext=".dups"
+				if [[ ${f} == "finalHiC" ]] 
+				then 
+					ext=".NOdups"
+				fi					
+				
 #			cmd1="samtools view -@${SC_HIC_SAMTOOLS_THREADS} -u -F0x400 -q ${q} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
 #			cmd2="bamToBed"
 #			cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
@@ -1448,13 +1456,14 @@ then
 #
 #			echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5} | ${cmd6} | ${cmd7} | ${cmd8}" 
 
-			cmd1="samtools view -@${SC_HIC_SAMTOOLS_THREADS} -u -F0x400 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC.bam"
-			cmd2="bamToBed"
-			cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
-			cmd4="paste -d '\t' - -"
-			cmd5="awk -v q=${q} 'BEGIN {FS=\"\t\"; OFS=\"\t\"} { if(int(\$5) >= int(q) && int(\$11) >= int(q)) {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} } }' > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed"
-			
-			echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5}"		 
+				cmd1="samtools view -@${SC_HIC_SAMTOOLS_THREADS} -u -F0x400 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam"
+				cmd2="bamToBed"
+				cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
+				cmd4="paste -d '\t' - -"
+				cmd5="awk -v q=${q} 'BEGIN {FS=\"\t\"; OFS=\"\t\"} { if(int(\$5) >= int(q) && int(\$11) >= int(q)) {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} } }' > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.bed"
+				
+				echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5}"
+			done 		 
 		done > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.plan
 		
        	echo "${CONDA_HIC_ENV} && bedtools --version && conda deactivate" > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.version
@@ -1483,33 +1492,41 @@ then
 		
 		## run those steps in parallel 
 		
-		for x in "" .q1-dev .q10-dev .q20-dev
+		for x in "" .q1-dev .q20-dev
 		do 
-			cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.1000.genome"
-			cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.1000.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.cool"
-			cmd_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.cool"
+			for f in mergedHiC finalHiC
+			do 
+				ext=".dups"
+				if [[ ${f} == "finalHiC" ]] 
+				then 
+					ext=".NOdups"
+				fi
 			
-			echo "${cmd_1000_1} && ${cmd_1000_2} && ${cmd_1000_3}"
+				cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}${ext}.genome"
+				cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}${ext}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}_${x}${ext}.cool"
+				cmd_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}_${x}${ext}.cool"
+				
+				echo "${cmd_1000_1} && ${cmd_1000_2} && ${cmd_1000_3}"
+			done 
+#			cmd_bal_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.b.1000.genome"
+#			cmd_bal_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.b.1000.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
+#			cmd_bal_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
+#			cmd_bal_1000_4="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
+			
+#			echo "${cmd_bal_1000_1} && ${cmd_bal_1000_2} && ${cmd_bal_1000_3} && ${cmd_bal_1000_4}"
 	
-			cmd_bal_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.b.1000.genome"
-			cmd_bal_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.b.1000.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-			cmd_bal_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-			cmd_bal_1000_4="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
+#			cmd_5000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.5000.genome"
+#			cmd_5000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.5000.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
+#			cmd_5000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
 			
-			echo "${cmd_bal_1000_1} && ${cmd_bal_1000_2} && ${cmd_bal_1000_3} && ${cmd_bal_1000_4}"
+#			echo "${cmd_5000_1} && ${cmd_5000_2} && ${cmd_5000_3}"
 	
-			cmd_5000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.5000.genome"
-			cmd_5000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.5000.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
-			cmd_5000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
+#			cmd_bal_5000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.b.5000.genome"
+#			cmd_bal_5000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.b.5000.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
+#			cmd_bal_5000_3="HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
+#			cmd_bal_5000_4="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
 			
-			echo "${cmd_5000_1} && ${cmd_5000_2} && ${cmd_5000_3}"
-	
-			cmd_bal_5000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.b.5000.genome"
-			cmd_bal_5000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.b.5000.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-			cmd_bal_5000_3="HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-			cmd_bal_5000_4="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-			
-			echo "${cmd_bal_5000_1} && ${cmd_bal_5000_2} && ${cmd_bal_5000_3} && ${cmd_bal_5000_4}"
+#			echo "${cmd_bal_5000_1} && ${cmd_bal_5000_2} && ${cmd_bal_5000_3} && ${cmd_bal_5000_4}"
 		
 		done > hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.plan
 
@@ -1577,12 +1594,35 @@ then
 		then
 			pretextmap_opt="${pretextmap_opt} --highRes"
 		fi
+		
+
+		for q in "" 1 20 #.q1-dev .q10-dev .q20-dev
+		do 
+			if [[ "x${q}" == "x"  ]]
+			then 
+				x=""
+				q=0
+			else 
+				x=".q${q}-dev"
+			fi 	
+			
+			for f in mergedHiC finalHiC
+			do 
+				ext=".dups"
+				if [[ ${f} == "finalHiC" ]] 
+				then 
+					ext=".NOdups"
+				fi
+				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.pretext --sortby length --mapq q --highRes"
+			done 	
 				
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q${SC_HIC_PRETEXTMAP_QV}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		done > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		
+		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q${SC_HIC_PRETEXTMAP_QV}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
 		### add some additional output - only for development reason TODO remove later 
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q1-dev.pretext --sortby length --mapq 1 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q10-dev.pretext --sortby length --mapq 10 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q20-dev.pretext --sortby length --mapq 20 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q1-dev.pretext --sortby length --mapq 1 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q10-dev.pretext --sortby length --mapq 10 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q20-dev.pretext --sortby length --mapq 20 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.version 
 	#09_UploadAndIngestCoolerFiles
  	elif [[ ${currentStep} -eq 9 ]]
@@ -1599,7 +1639,7 @@ then
 		echo -n "	if [[ -f \$x ]]; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
 		echo -n "	then" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 
 		echo -n "		cmd1=\"cp \$(pwd | sed -e \"s:/lustre::\")/\${x} ~/hg-tmp/\$(basename \${x})\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
-        echo -n "		cmd2=\"docker exec higlass-container python higlass-server/manage.py ingest_tileset --filename /opt/prog/higlass/tmp/\$(basename \${x}) --filetype cooler --datatype matrix --project-name ${SC_HIC_HIGLASS_PROJECT}\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+        echo -n "		cmd2=\"docker exec higlass-container python higlass-server/manage.py ingest_tileset --filename /opt/prog/higlass/tmp/\$(basename \${x}) --filetype cooler --datatype matrix --project-name ${SC_HIC_HIGLASS_PROJECT}_v2\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
         echo -n "		cmd3=\"rm  ~/hg-tmp/\$(basename \${x})\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
         echo -n "		ssh -tt myers-pc-20 \"\${cmd1} && \${cmd2} && \${cmd3}\"; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
 		echo -n "	fi; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
