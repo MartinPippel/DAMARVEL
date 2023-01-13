@@ -1580,9 +1580,9 @@ then
 				
 		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q${SC_HIC_PRETEXTMAP_QV}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
 		### add some additional output - only for development reason TODO remove later 
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q1-dev.pretext --sortby length --mapq 1 --highRes" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q10-dev.pretext --sortby length --mapq 10 --highRes" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q20-dev.pretext --sortby length --mapq 20 --highRes" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q1-dev.pretext --sortby length --mapq 1 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q10-dev.pretext --sortby length --mapq 10 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
+		echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q20-dev.pretext --sortby length --mapq 20 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.version 
 	#09_UploadAndIngestCoolerFiles
  	elif [[ ${currentStep} -eq 9 ]]
