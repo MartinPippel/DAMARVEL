@@ -1503,8 +1503,8 @@ then
 				fi
 			
 				cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}${ext}.genome"
-				cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}${ext}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}_${x}${ext}.cool"
-				cmd_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}_${x}${ext}.cool"
+				cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}${ext}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
+				cmd_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
 				
 				echo "${cmd_1000_1} && ${cmd_1000_2} && ${cmd_1000_3}"
 			done 
@@ -1634,7 +1634,7 @@ then
             rm $x
         done
         
-		echo -n "for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.*.mcool; " > hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
+		echo -n "for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}*.mcool; " > hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
 		echo -n "do" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
 		echo -n "	if [[ -f \$x ]]; " >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan
 		echo -n "	then" >> hic_09_HICrapidCurHiGlassIngest_single_${CONT_DB}.${slurmID}.plan 
