@@ -1460,7 +1460,7 @@ then
 				cmd2="bamToBed"
 				cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
 				cmd4="paste -d '\t' - -"
-				cmd5="awk -v q=${q} 'BEGIN {FS=\"\t\"; OFS=\"\t\"} { if(int(\$5) >= int(q) && int(\$11) >= int(q)) { if (\$1 > \$7) { substr(\$4,1,length(\$4)-2),\$7,\$8,\$1,\$2,\$12,\$6,\"UU\"} else { substr(\$4,1,length(\$4)-2),\$1,\$2,\$7,\$8,\$6,\$12,\"UU\"} } }'"
+				cmd5="awk -v q=${q} 'BEGIN {FS=\"\t\"; OFS=\"\t\"} { if(int(\$5) >= int(q) && int(\$11) >= int(q)) { if (\$1 > \$7) { print substr(\$4,1,length(\$4)-2),\$7,\$8,\$1,\$2,\$12,\$6,\"UU\"} else { print substr(\$4,1,length(\$4)-2),\$1,\$2,\$7,\$8,\$6,\$12,\"UU\"} } }'"
 				cmd6="sort -k2,2V -k4,4V -k3,3n -k5,5n --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.pairs"
 				
 				echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5} | ${cmd6}" 
