@@ -1460,9 +1460,10 @@ then
 				cmd2="bamToBed"
 				cmd3="sort -k4 --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}"
 				cmd4="paste -d '\t' - -"
-				cmd5="awk -v q=${q} 'BEGIN {FS=\"\t\"; OFS=\"\t\"} { if(int(\$5) >= int(q) && int(\$11) >= int(q)) {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} } }' > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.bed"
+				cmd5="awk -v q=${q} 'BEGIN {FS=\"\t\"; OFS=\"\t\"} { if(int(\$5) >= int(q) && int(\$11) >= int(q)) { if (\$1 > \$7) { substr(\$4,1,length(\$4)-2),\$7,\$8,\$1,\$2,\$12,\$6,\"UU\"} else { substr(\$4,1,length(\$4)-2),\$1,\$2,\$7,\$8,\$6,\$12,\"UU\"} } }'"
+				cmd6="sort -k2,2V -k4,4V -k3,3n -k5,5n --parallel=${SC_HIC_SAMTOOLS_THREADS} -S50G -T ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.pairs"
 				
-				echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5}"
+				echo "${cmd1} | ${cmd2} | ${cmd3} | ${cmd4} | ${cmd5} | ${cmd6}" 
 			done 		 
 		done > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.plan
 		
@@ -1503,7 +1504,7 @@ then
 				fi
 			
 				cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}${ext}.genome"
-				cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}${ext}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
+				cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 2 -p1 3 -c2 4 -p2 5 ${ref}${x}${ext}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
 				cmd_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
 				
 				echo "${cmd_1000_1} && ${cmd_1000_2} && ${cmd_1000_3}"
