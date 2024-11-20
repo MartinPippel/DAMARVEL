@@ -47,6 +47,16 @@ function setbwaOptions()
 	then 
 		CONTIG_BWA_OPT="${CONTIG_BWA_OPT} -B ${SC_HIC_BWA_MISMATCHPENALTY}"
 	fi	
+
+	if [[ -n ${SC_HIC_BWA_SCORE} ]]
+	then
+            CONTIG_BWA_OPT="${CONTIG_BWA_OPT} -T ${SC_HIC_BWA_SCORE}"
+	fi	
+
+	if [[ -n ${SC_HIC_BWA_SPLITA5} && ${SC_HIC_BWA_SPLITA5} -gt 0 ]]
+	then
+            CONTIG_BWA_OPT="${CONTIG_BWA_OPT} -5"
+	fi	
 }
 
 
@@ -122,7 +132,7 @@ function setJuicerOptions()
 	then
 		SC_HIC_JUICER_OPT="${SC_HIC_JUICER_OPT} -Q ${SC_HIC_JUICER_SHORTQUEUETLIMIIT}"
 	fi
-	 
+
 	# set submission queue - long queue
 	if [[ -n ${SC_HIC_JUICER_LONGQUEUE} ]]
 	then
@@ -382,8 +392,8 @@ then
 			echo "bwa mem${CONTIG_BWA_OPT} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f2} | samtools view -Sb - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa_2.bam" 				 
 		done > hic_02_HICsalsaBwa_block_${CONT_DB}.${slurmID}.plan
 		
-   		echo "bwa $(${CONDA_HIC_ENV} && bwa 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_02_HICsalsaBwa_block_${CONT_DB}.${slurmID}.version
-   		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> hic_02_HICsalsaBwa_block_${CONT_DB}.${slurmID}.version
+		echo "bwa $(${CONDA_HIC_ENV} && bwa 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_02_HICsalsaBwa_block_${CONT_DB}.${slurmID}.version
+		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" >> hic_02_HICsalsaBwa_block_${CONT_DB}.${slurmID}.version
 	### 03_HICsalsaFilter
     elif [[ ${currentStep} -eq 3 ]]
     then
@@ -395,10 +405,10 @@ then
 
 		if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" ]]
         then
-        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
-        	exit 1
-   		fi
-   		   		   				
+			(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
+			exit 1
+		fi
+
 		for b1 in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwa_1.bam
 		do
 			d=$(dirname ${b1})
@@ -422,23 +432,23 @@ then
         
         if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams" ]]
         then
-        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
-        	exit 1
-   		fi
-   		
-   		ref=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})
-   		
-   		if [[ ! -f ${ref}.fai ]]
-   		then  
-   		 	(>&2 echo "ERROR - cannot access reference fasta index ${ref}.fai!")
-        	exit 1
+			(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams!")
+			exit 1
 		fi
-		 
+
+		ref=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})
+
+		if [[ ! -f ${ref}.fai ]]
+		then  
+			(>&2 echo "ERROR - cannot access reference fasta index ${ref}.fai!")
+			exit 1
+		fi
+
 		if [[ -z ${SC_HIC_MINMAPQV} ]]
 		then
 			SC_HIC_MINMAPQV=10	
 		fi
-		 
+
 		for b1 in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/*_bwaFilt_1.bam
 		do
 			b2="${b1%_1.bam}_2.bam"
@@ -446,9 +456,9 @@ then
 			
 			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner.pl ${b1} ${b2} $(which samtools) ${SC_HIC_MINMAPQV} | samtools view -bS -t ${ref}.fai - | samtools sort -o ${o} -"			 				 
 			done > hic_04_HICsalsaMerge_single_${CONT_DB}.${slurmID}.plan
-		   
+
 		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_04_HICsalsaMerge_single_${CONT_DB}.${slurmID}.version		
-   	### 05_HICsalsaMarkduplicates
+	### 05_HICsalsaMarkduplicates
     elif [[ ${currentStep} -eq 5 ]]
     then
         ### clean up plans 
@@ -737,7 +747,7 @@ then
     	echo "cd ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID} && ${THREEDDNA_PATH}/run-asm-pipeline.sh${THREEDDNA_OPT} references/${PROJECT_ID}.fasta aligned/merged_nodups.txt" > hic_03_HIC3dnaAssemblyPipeline_single_${CONT_DB}.${slurmID}.plan
         
         echo "3d-dna $(git --git-dir=${THREEDDNA_PATH}/.git rev-parse --short HEAD)" > hic_03_HIC3dnaAssemblyPipeline_single_${CONT_DB}.${slurmID}.version
-  	else
+	else
     	(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
     	(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
     	exit 1
@@ -1212,34 +1222,34 @@ then
 		
 		if [[ ! -d "${SC_HIC_READS}" ]]
         then
-        	(>&2 echo "ERROR - set SC_HIC_READS to directory that contain the PROJECT_ID*.fastq.qz read files")
-        	exit 1
-   		fi   		   				
+			(>&2 echo "ERROR - set SC_HIC_READS to directory that contain the PROJECT_ID*.fastq.qz read files")
+			exit 1
+		fi   		   				
         
         if [[ ! -d "${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads" ]]
         then
-        	(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads!")
-        	exit 1
-   		fi
-   		
-   		ref=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})
-   		
-   		if [[ ! -f "${ref}" ]]
+			(>&2 echo "ERROR - cannot access directory ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads!")
+			exit 1
+		fi
+
+		ref=${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})
+
+		if [[ ! -f "${ref}" ]]
         then
         (>&2 echo "ERROR - cannot reference fasta file ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})!")
-        	exit 1
-   		fi
-   		
-   		### link HiC reads into current reads sub directory
-   		for x in ${SC_HIC_READS}/${PROJECT_ID}_*_*_R[12].fastq.gz
+			exit 1
+		fi
+
+		### link HiC reads into current reads sub directory
+		for x in ${SC_HIC_READS}/${PROJECT_ID}_*_*_R[12].fastq.gz
 		do
 			if [[ -f ${x} ]]
 			then	
 				ln -s -r -f ${x} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads 
 			fi
 		done
-   		   				
-   		numR1Files=0
+
+		numR1Files=0
 		for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz
 		do
 			if [[ -f ${x} ]]
@@ -1250,11 +1260,11 @@ then
 		
 		if [[ ${numR1Files} -eq 0 ]]
         then
-        	(>&2 echo "ERROR - cannot read HiC R1 files with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz")
-        	exit 1
-   		fi
-   		
-   		numR2Files=0
+			(>&2 echo "ERROR - cannot read HiC R1 files with following pattern: ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R1.fastq.gz")
+			exit 1
+		fi
+
+		numR2Files=0
 		for x in ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${PROJECT_ID}_*_*_R2.fastq.gz
 		do
 			if [[ -f ${x} ]]
@@ -1352,10 +1362,10 @@ then
 			
 			## ugly hack to use an older samtools version: prepend $(CONDA_BIOBAMBAM_ENV) &&  
 			## TODO bugfix: sam header format needs to be corrected -R: Sanger is using: rgline=$(samtools view -H {bam1} | grep "@RG"| perl -spe 's/\t/\\t/g') and bwa mem -t15 -B8 -H'$rgline' {assembly}.fa - see: https://gitlab.com/wtsi-grit/rapid-curation/-/blob/main/README_software.md
-			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner_sanger.pl ${b1} ${b2} samtools ${SC_HIC_MINMAPQV} | samtools view -@ ${SC_HIC_SAMTOOLS_THREADS} -bS -t ${ref}.fai - | samtools sort -@ ${SC_HIC_SAMTOOLS_THREADS} -o ${o} -"			 				 
-			done > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.plan
-		   
-		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_04_HICrapidCurMerge_single_${CONT_DB}.${slurmID}.version		
+			#echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner_sanger.pl ${b1} ${b2} samtools ${SC_HIC_MINMAPQV} | samtools view -@ ${SC_HIC_SAMTOOLS_THREADS} -bS -t ${ref}.fai - | samtools sort -@ ${SC_HIC_SAMTOOLS_THREADS} -o ${o} -"                                                    
+			echo "perl ${MARVEL_PATH}/scripts/two_read_bam_combiner_sanger.pl ${b1} ${b2} samtools ${SC_HIC_MINMAPQV} | grep -v -e \"^@HD\" | samtools view -@ ${SC_HIC_SAMTOOLS_THREADS} -bS -t ${ref}.fai - | samtools sort -@ ${SC_HIC_SAMTOOLS_THREADS} -o ${o} -"			
+		done > hic_04_HICrapidCurMerge_block_${CONT_DB}.${slurmID}.plan
+		echo "samtools $(${CONDA_HIC_ENV} && samtools 2>&1 | grep Version | awk '{print $2}' && conda deactivate)" > hic_04_HICrapidCurMerge_block_${CONT_DB}.${slurmID}.version		
    	### 05_HICrapidCurMarkduplicates
     elif [[ ${currentStep} -eq 5 ]]
     then
@@ -1427,7 +1437,7 @@ then
 		fi
 
 		## clean up: remove the dev files at some point  
-		for q in "" 1 20 #.q1-dev .q10-dev .q20-dev
+		for q in "" 1 #.q1-dev
 		do 
 			if [[ "x${q}" == "x"  ]]
 			then 
@@ -1467,9 +1477,9 @@ then
 			done 		 
 		done > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.plan
 		
-       	echo "${CONDA_HIC_ENV} && bedtools --version && conda deactivate" > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.version
- 	#07_HICrapidCurHiGlass
- 	elif [[ ${currentStep} -eq 7 ]]
+		echo "${CONDA_HIC_ENV} && bedtools --version && conda deactivate" > hic_06_HICrapidCurBam2Bed_block_${CONT_DB}.${slurmID}.version
+	#07_HICrapidCurHiGlass
+	elif [[ ${currentStep} -eq 7 ]]
     then
         ### clean up plans 
         for x in $(ls hic_07_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
@@ -1480,20 +1490,20 @@ then
 		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
 		
 		if [[ ! -f ${ref} ]]
-       	then
-    		(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
-        	exit 1
+		then
+			(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
+			exit 1
 		fi
 		
 		if [[ ! -f ${ref}.fai ]]
-       	then
-    		(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
-        	exit 1
+		then
+			(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
+			exit 1
 		fi
 		
 		## run those steps in parallel 
 		
-		for x in "" .q1-dev .q20-dev
+		for x in "" .q1-dev
 		do 
 			for f in mergedHiC finalHiC
 			do 
@@ -1509,78 +1519,32 @@ then
 				
 				echo "${cmd_1000_1} && ${cmd_1000_2} && ${cmd_1000_3}"
 			done 
-#			cmd_bal_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.b.1000.genome"
-#			cmd_bal_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.b.1000.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-#			cmd_bal_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-#			cmd_bal_1000_4="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-			
-#			echo "${cmd_bal_1000_1} && ${cmd_bal_1000_2} && ${cmd_bal_1000_3} && ${cmd_bal_1000_4}"
-	
-#			cmd_5000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.5000.genome"
-#			cmd_5000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.5000.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
-#			cmd_5000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
-			
-#			echo "${cmd_5000_1} && ${cmd_5000_2} && ${cmd_5000_3}"
-	
-#			cmd_bal_5000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}.b.5000.genome"
-#			cmd_bal_5000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}${x}.b.5000.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-#			cmd_bal_5000_3="HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-#			cmd_bal_5000_4="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-			
-#			echo "${cmd_bal_5000_1} && ${cmd_bal_5000_2} && ${cmd_bal_5000_3} && ${cmd_bal_5000_4}"
-		
 		done > hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.plan
 
-#		echo "cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}.genome"  > hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
-#		echo "paste -d '\t' - - < ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.bed | sed 's/-/_/g' | awk 'BEGIN {FS=\"\t\"; OFS=\"\t\"} {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} }' | tr '\-+' '01'  | sort --parallel=${SC_HIC_SORT_THREADS} -S${SC_HIC_SORT_MEM}M -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.bed" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
-#		echo "paste -d '\t' - - < ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.q1-dev.bed | sed 's/-/_/g' | awk 'BEGIN {FS=\"\t\"; OFS=\"\t\"} {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} }' | tr '\-+' '01'  | sort --parallel=${SC_HIC_SORT_THREADS} -S${SC_HIC_SORT_MEM}M -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.q1-dev.bed" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
-#		echo "paste -d '\t' - - < ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.q10-dev.bed | sed 's/-/_/g' | awk 'BEGIN {FS=\"\t\"; OFS=\"\t\"} {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} }' | tr '\-+' '01'  | sort --parallel=${SC_HIC_SORT_THREADS} -S${SC_HIC_SORT_MEM}M -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.q10-dev.bed" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
-#		echo "paste -d '\t' - - < ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_finalHiC_sortByName.q20-dev.bed | sed 's/-/_/g' | awk 'BEGIN {FS=\"\t\"; OFS=\"\t\"} {if (\$1 > \$7) {print substr(\$4,1,length(\$4)-2),\$12,\$7,\$8,\"16\",\$6,\$1,\$2,\"8\",\$11,\$5} else { print substr(\$4,1,length(\$4)-2),\$6,\$1,\$2,\"8\",\$12,\$7,\$8,\"16\",\$5,\$11} }' | tr '\-+' '01'  | sort --parallel=${SC_HIC_SORT_THREADS} -S${SC_HIC_SORT_MEM}M -k3,3d -k7,7d > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre.q20-dev.bed" >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan
-#		
-#		for x in "" .q1-dev .q10-dev .q20-dev
-#		do 
-#			## set min resolution to 1000 
-#			echo "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.cool" 
-#			echo "cp ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.cool ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool" 
-#			# normalization - (matrix balancing)
-#	        echo "HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-#			## zoomify 
-#			echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.cool"
-#			echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.1000${x}.bal.cool"
-#	
-#			## set min resolution to 5000 
-#			echo "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 3 -p1 4 -c2 7 -p2 8 ${ref}.genome:5000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}.bed ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
-#			echo "cp ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-#			# normalization - (matrix balancing)
-#	        echo "HDF5_USE_FILE_LOCKING=FALSE cooler balance --max-iters 1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-#			## zoomify 
-#			echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.cool"
-#			echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --balance --resolutions 5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}.5000${x}.bal.cool"
-#		done >> hic_07_HICrapidCurHiGlass_single_${CONT_DB}.${slurmID}.plan		
-       	echo "sed --version | head -n 1" > hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.version
-       	echo "awk --version | head -n 1" >> hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.version
- 	  	echo "cooler --version" >> hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.version
- 	#08_HICrapidCurPretext
- 	elif [[ ${currentStep} -eq 8 ]]
+		echo "sed --version | head -n 1" > hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.version
+		echo "awk --version | head -n 1" >> hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.version
+		echo "cooler --version" >> hic_07_HICrapidCurHiGlass_block_${CONT_DB}.${slurmID}.version
+	#08_HICrapidCurPretext
+	elif [[ ${currentStep} -eq 8 ]]
     then
         ### clean up plans 
         for x in $(ls hic_08_*_*_${CONT_DB}.${slurmID}.* 2> /dev/null)
         do            
             rm $x
         done
-        		
+
 		ref="${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF})"
 		
 		if [[ ! -f ${ref} ]]
-       	then
-    		(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
-        	exit 1
+		then
+			(>&2 echo "ERROR - cannot access reference fasta file: \"${ref}\"!")
+			exit 1
 		fi
 		
 		if [[ ! -f ${ref}.fai ]]
-       	then
-    		(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
-        	exit 1
+		then
+			(>&2 echo "ERROR - cannot access reference fasta index file: \"${ref}.fai\"!")
+			exit 1
 		fi	
 		
 		pretextmap_opt=""
@@ -1597,7 +1561,7 @@ then
 		fi
 		
 
-		for q in "" 1 20 #.q1-dev .q10-dev .q20-dev
+		for q in "" 1 #.q1-dev .q10-dev .q20-dev
 		do 
 			if [[ "x${q}" == "x"  ]]
 			then 
@@ -1619,11 +1583,6 @@ then
 				
 		done > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
 		
-		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q${SC_HIC_PRETEXTMAP_QV}.pretext --sortby length ${pretextmap_opt}" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		### add some additional output - only for development reason TODO remove later 
-		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q1-dev.pretext --sortby length --mapq 1 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q10-dev.pretext --sortby length --mapq 10 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
-		#echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_mergedHiC.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.q20-dev.pretext --sortby length --mapq 20 --highRes" >> hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
 		echo "${CONDA_PRETEXT_ENV} &&  $(PretextMap | grep Version)" > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.version 
 	#09_UploadAndIngestCoolerFiles
  	elif [[ ${currentStep} -eq 9 ]]
