@@ -1055,9 +1055,9 @@ then
 			
 			if [[ ${numR2Files} -eq 1 ]]
 			then
-				echo "bwa mem${CONTIG_BWA_OPT} ${addBwaOpt} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f1} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f2} | samtools view -bhS - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam | pairtools parse ${addPairToolsOpt} --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -c ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.parsed.pairsam.gz && pairtools sort --tmpdir ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/tmp --memory 8G --nproc ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.parsed.pairsam.gz"              				
+				echo "bwa mem${CONTIG_BWA_OPT} ${addBwaOpt} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f1} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f2} | samtools view -bhS - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam | pairtools parse ${addPairToolsOpt} --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -c ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.parsed.pairsam.stats.txt -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.parsed.pairsam.gz && pairtools sort --tmpdir ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/tmp --memory 8G --nproc ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.sorted.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.parsed.pairsam.gz"              				
 			else
-				echo "bwa mem${CONTIG_BWA_OPT} ${addBwaOpt} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f1} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f2} | samtools view -bhS - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam | pairtools parse ${addPairToolsOpt} --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -c ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.parsed.pairsam.gz && pairtools sort --tmpdir ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/tmp --memory 8G --nproc ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.sorted.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.parsed.pairsam.gz" 					
+				echo "bwa mem${CONTIG_BWA_OPT} ${addBwaOpt} -R \"@RG\tID:${o}\tSM:${PROJECT_ID}_HIC\tLB:${PROJECT_ID}_HIC\tPL:ILLUMINA\tPU:none\" ${ref} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f1} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/reads/${f2} | samtools view -bhS - > ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${o}_bwa.bam | pairtools parse ${addPairToolsOpt} --nproc-in ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --nproc-out ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -c ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes --output-stats ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.parsed.pairsam.stats.txt -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.parsed.pairsam.gz && pairtools sort --tmpdir ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/tmp --memory 8G --nproc ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.sorted.pairsam.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${o}_bwa.parsed.pairsam.gz" 					
 			fi			 				 
 		done > hic_02_HiChiglassBwa_block_${CONT_DB}.${slurmID}.plan
 		
@@ -1151,15 +1151,28 @@ then
         do            
             rm $x
         done        
+
+		zoomify_resolutions="10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000"
+		if [[ ${gsize} -lt 400000000 ]]
+		then 
+			zoomify_resolutions="10000,20000,40000,60000,80000,100000,120000,150000,200000,300000"
+		elif [[ ${gsize} -lt 500000000 ]]
+		then 
+			zoomify_resolutions="10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000"
+		elif [[ ${gsize} -gt 3000000000 ]]
+		then 
+			zoomify_resolutions="10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000,750000"
+		fi
         
         for i in "${SC_HIC_HIGLASS_COOLERRESOLUTION[@]}"
 		do
-			echo "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairix -p ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes:${i} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"   	
+			echo -n "bgzip -c -${BGZIP_THREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz | "			
+			echo -n "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairix -p ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes:${i} - ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"   	
 			# normalization - (matrix balancing)
-			echo "HDF5_USE_FILE_LOCKING=FALSE cooler balance ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"
+			echo -n " && HDF5_USE_FILE_LOCKING=FALSE cooler balance -p ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"
 			# aggregation - (for HiGlass view)
-			echo "HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"
-		done > hic_04_HiChiglassMatrix_single_${CONT_DB}.${slurmID}.plan
+			echo -e " && HDF5_USE_FILE_LOCKING=FALSE cooler zoomify -p ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} --resolutions ${zoomify_resolutions} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"
+		done > hic_04_HiChiglassMatrix_block_${CONT_DB}.${slurmID}.plan
 	else	
 		(>&2 echo "step ${currentStep} in SC_HIC_TYPE ${SC_HIC_TYPE} not supported")
 		(>&2 echo "valid steps are: ${myTypes[${SC_HIC_TYPE}]}")
