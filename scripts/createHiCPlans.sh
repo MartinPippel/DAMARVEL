@@ -1167,7 +1167,7 @@ then
         for i in "${SC_HIC_HIGLASS_COOLERRESOLUTION[@]}"
 		do
 			echo -n "bgzip -c -@${BGZIP_THREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/filter/${PROJECT_ID}_allHiC.filtered.pairs.gz | "			
-			echo -n "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairix -p ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes:${i} - ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"   	
+			echo -n "HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 2 -p1 3 -c2 4 -p2 5 --temp-dir  ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/tmp ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/ref/$(basename ${SC_HIC_REF%.fasta}).chrom.sizes:${i} - ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"   	
 			# normalization - (matrix balancing)
 			echo -n " && HDF5_USE_FILE_LOCKING=FALSE cooler balance -p ${SC_HIC_HIGLASS_PAIRTOOLSTHREADS} ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/matrix/${PROJECT_ID}_allHiC.output.${i}.cool"
 			# aggregation - (for HiGlass view)
