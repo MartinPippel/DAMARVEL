@@ -751,7 +751,7 @@ then
                         bash ${SUBMIT_SCRIPTS_PATH}/slurmStats.sh ${configFile}
                 else
                         cwd=$(pwd)
-                        ssh falcon "cd ${cwd} && bash ${SUBMIT_SCRIPTS_PATH}/slurmStats.sh ${configFile}"
+                        bash ${SUBMIT_SCRIPTS_PATH}/slurmStats.sh ${configFile}
                 fi
                 fi
 
