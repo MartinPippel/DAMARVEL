@@ -1579,11 +1579,13 @@ then
 		else 
 			pretextmap_opt="${pretextmap_opt} --mapq ${SC_HIC_PRETEXTMAP_QV}"			
 		fi
-		if [[ -n "${SC_HIC_PRETEXTMAP_HIGHRES}" && "${SC_HIC_PRETEXTMAP_HIGHRES}" != "0" ]]
+
+		if [[ -n "${SC_HIC_PRETEXTMAP_SORT}" ]]
 		then
-			pretextmap_opt="${pretextmap_opt} --highRes"
+			pretextmap_opt="${pretextmap_opt} --sortby ${SC_HIC_PRETEXTMAP_SORT}"
 		fi
 		
+
 
 		for q in "" 1 #.q1-dev .q10-dev .q20-dev
 		do 
@@ -1602,8 +1604,8 @@ then
 				then 
 					ext=".NOdups"
 				fi
-				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.hr.pretext --sortby length --mapq ${q} --highRes"
-				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.lr.pretext --sortby length --mapq ${q}"
+				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.hr.pretext ${pretextmap_opt} --highRes"
+				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.lr.pretext ${pretextmap_opt} ${q}"
 			done 	
 				
 		done > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
