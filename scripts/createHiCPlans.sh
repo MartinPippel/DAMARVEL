@@ -1537,7 +1537,7 @@ then
 					ext=".NOdups"
 				fi
 			
-				// keep the higlass maps in sync with the pretext maps
+				## keep the higlass maps in sync with the pretext maps
 				if [[ "${SC_HIC_PRETEXTMAP_SORT}" == "nosort" ]]
 				then 
 					cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g' > ${ref}${x}${ext}.genome"
