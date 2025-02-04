@@ -1537,7 +1537,16 @@ then
 					ext=".NOdups"
 				fi
 			
-				cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g'|sort -k2,2 -nr > ${ref}${x}${ext}.genome"
+				// keep the higlass maps in sync with the pretext maps
+				if [[ "${SC_HIC_PRETEXTMAP_SORT}" == "nosort" ]]
+				then 
+					cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g' > ${ref}${x}${ext}.genome"
+				elif [[ "${SC_HIC_PRETEXTMAP_SORT}" == "name" ]]
+				then
+					cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g' | sort -k1,1 -V > ${ref}${x}${ext}.genome"
+				else
+					cmd_1000_1="cut -f1,2 ${ref}.fai | sed 's/-/_/g' | sort -k2,2 -nr  > ${ref}${x}${ext}.genome"
+				fi
 				cmd_1000_2="HDF5_USE_FILE_LOCKING=FALSE cooler cload pairs -0 -c1 2 -p1 3 -c2 4 -p2 5 ${ref}${x}${ext}.genome:1000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_pre${x}${ext}.pairs ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
 				cmd_1000_3="HDF5_USE_FILE_LOCKING=FALSE cooler zoomify --resolutions 1000,5000,10000,20000,40000,60000,80000,100000,120000,150000,200000,300000,400000,500000 ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/cooler/${PROJECT_ID}${x}${ext}.cool"
 				
