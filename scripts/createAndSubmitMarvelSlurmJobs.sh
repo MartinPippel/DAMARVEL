@@ -264,7 +264,7 @@ then
 #SBATCH -e ${log_folder}/${prefix}_${cjobid}_${db}_${d}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=$((${MEM}/${CORES}))
-#SBATCH --mail-user=pippel@mpi-cbg.de
+#SBATCH --mail-user=martin.pippel@icm.uu.se
 #SBATCH --mail-type=FAIL" > ${file}.slurm
             if [[ -n ${NTASKS_PER_NODE} ]]
             then
@@ -384,7 +384,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 #SBATCH -e ${log_folder}/${prefix}_${cjobid}_${db}_%A_%a.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=$((${MEM}/${CORES}))
-#SBATCH --mail-user=pippel@mpi-cbg.de
+#SBATCH --mail-user=martin.pippel@icm.uu.se
 #SBATCH --mail-type=FAIL" > ${file}.slurm
 	        if [[ -n ${NTASKS_PER_NODE} ]]
 	        then
@@ -489,7 +489,7 @@ echo \"${file}.plan run time: \$((\${end}-\${beg}))\"" >> ${file}.slurm
 #SBATCH -e ${log_folder}/${prefix}_${cjobid}_${db}_%A.err # Standard error
 #SBATCH --time=${TIME}
 #SBATCH --mem-per-cpu=$((${MEM}/${CORES}))
-#SBATCH --mail-user=pippel@mpi-cbg.de
+#SBATCH --mail-user=martin.pippel@icm.uu.se
 #SBATCH --mail-type=FAIL" > ${file}.slurm
 
 #			if [[ -n ${SLURM_NUMACTL} && ${SLURM_NUMACTL} -gt 0  ]]
