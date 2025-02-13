@@ -1614,7 +1614,7 @@ then
 					ext=".NOdups"
 				fi
 				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.hr.pretext ${pretextmap_opt} --highRes"
-				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.lr.pretext ${pretextmap_opt} ${q}"
+				echo "${CONDA_PRETEXT_ENV} && samtools view -h ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/bams/${PROJECT_ID}_${f}.bam | PretextMap -o ${SC_HIC_OUTDIR}/hic_${SC_HIC_RUNID}/pretext/${PROJECT_ID}.${x}${ext}.lr.pretext ${pretextmap_opt}"
 			done 	
 				
 		done > hic_08_HICrapidCurPretext_block_${CONT_DB}.${slurmID}.plan
